@@ -91,6 +91,40 @@ func GetEmbedOrOSFS(path string, embedFs embed.FS) (fs.FS, error) {
 	return staticFiles, nil
 }
 
+
+func unauthorized(w http.ResponseWriter, realm string) {
+	w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
+	w.WriteHeader(http.StatusUnauthorized)
+}
+
+func BasicAuthHandler(realm string, credentials map[string]string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			username, password, ok := r.BasicAuth()
+			if !ok {
+				unauthorized(w, realm)
+				return
+			}
+			if credentials[username] == password {
+				next.ServeHTTP(w, r)
+				return
+			}
+			unauthorized(w, realm)
+		})
+	}
+}
+
+func BasicAuthFromEnv() func(http.Handler) http.Handler {
+	if *realm == "" {
+		return func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				next.ServeHTTP(w, r)
+			})
+		}
+	}
+	return BasicAuthHandler(*realm, map[string]string{*username: *password})
+}
+
 type PageProvider interface {
 	GetPage(title string) (*Page, error)
 }

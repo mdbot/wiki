@@ -25,6 +25,9 @@ var templateFS embed.FS
 var templateFiles fs.FS
 
 var workDir = flag.String("workdir", "./data", "Working directory")
+var username = flag.String("authusername", "", "username protecting edit page")
+var password = flag.String("authpassword", "", "password protecting edit page")
+var realm = flag.String("authrealm", "", "realm protecting edit page.  If unset no auth will be used")
 
 func main() {
 	err := envflag.Parse()
@@ -50,12 +53,13 @@ func main() {
 		GitDirectory: *workDir,
 		GitRepo:      gitRepo,
 	}
+	authHandler := BasicAuthFromEnv()
 	router := mux.NewRouter()
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
 	router.Use(NewLoggingHandler(os.Stdout))
 	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitPageProvider), staticFiles)).Methods(http.MethodGet)
-	router.PathPrefix("/edit/").Handler(NotFoundHandler(SubmitPageHandler(gitPageProvider), staticFiles)).Methods(http.MethodPost)
+	router.PathPrefix("/edit/").Handler(authHandler(NotFoundHandler(SubmitPageHandler(gitPageProvider), staticFiles))).Methods(http.MethodPost)
 	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles, gitPageProvider), staticFiles)).Methods(http.MethodGet)
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), staticFiles))
 
