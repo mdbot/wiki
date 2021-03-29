@@ -20,7 +20,7 @@ import (
 var staticFS embed.FS
 var staticFiles fs.FS
 
-// go:embed templates
+//go:embed templates
 var templateFS embed.FS
 var templateFiles fs.FS
 
