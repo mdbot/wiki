@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"flag"
 	"io/fs"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gomarkdown/markdown"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kouhin/envflag"
@@ -18,6 +20,8 @@ import (
 //go:embed static
 var staticFS embed.FS
 var staticFiles fs.FS
+
+var workDir = flag.String("workdir", "./data", "Working directory")
 
 func main() {
 	err := envflag.Parse()
@@ -28,6 +32,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to get static folder: %s", err.Error())
 	}
+	_, err = openOrInit(*workDir)
+	if err != nil {
+		log.Fatalf("Unable to open working directory: %s", err.Error())
+	}
+	md := []byte("## markdown document")
+	_ = markdown.ToHTML(md, nil, nil)
 	router := mux.NewRouter()
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
