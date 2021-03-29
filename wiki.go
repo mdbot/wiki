@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"os"
-	"time"
 )
 
 type GitPageProvider struct {
@@ -55,7 +59,7 @@ func (g *GitPageProvider) GetPage(path string) (*Page, error) {
 
 func (g *GitPageProvider) PutPage(title string, content []byte, user string, message string) error {
 	title = title + ".md"
-	err := os.WriteFile(g.GitDirectory + "/" + title, content, os.FileMode(0644))
+	err := os.WriteFile(g.GitDirectory+"/"+title, content, os.FileMode(0644))
 	if err != nil {
 		return err
 	}
@@ -70,7 +74,7 @@ func (g *GitPageProvider) PutPage(title string, content []byte, user string, mes
 	_, err = worktree.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  user,
-			Email: user+"@wiki",
+			Email: user + "@wiki",
 			When:  time.Now(),
 		},
 	})
@@ -78,4 +82,21 @@ func (g *GitPageProvider) PutPage(title string, content []byte, user string, mes
 		return err
 	}
 	return nil
+}
+
+func resolvePath(base, title string) (string, error) {
+	p := filepath.Clean(filepath.Join(base, fmt.Sprintf("%s.md", title)))
+
+	if rel, err := filepath.Rel(base, p); err != nil || strings.HasPrefix(rel, ".") {
+		return "", fmt.Errorf("attempt to escape directory")
+	}
+
+	parts := strings.Split(p, string(filepath.Separator))
+	for i := range parts {
+		if strings.EqualFold(".git", parts[i]) {
+			return "", fmt.Errorf("git directories cannot be written to")
+		}
+	}
+
+	return p, nil
 }
