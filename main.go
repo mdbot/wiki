@@ -43,16 +43,19 @@ func main() {
 		log.Fatalf("Unable to get templates folder: %s", err.Error())
 	}
 
-	_, err = openOrInit(*workDir)
+	gitRepo, err := openOrInit(*workDir)
 	if err != nil {
 		log.Fatalf("Unable to open working directory: %s", err.Error())
 	}
-
+	gitPageProvider := &GitPageProvider{
+		GitDirectory: *workDir,
+		GitRepo:      gitRepo,
+	}
 	router := mux.NewRouter()
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
 	router.Use(NewLoggingHandler(os.Stdout))
-	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles, &DummyPageProvider{}), staticFiles))
+	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles, gitPageProvider), staticFiles))
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), staticFiles))
 
 	log.Print("Starting server.")

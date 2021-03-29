@@ -5,6 +5,11 @@ import (
 	"os"
 )
 
+type GitPageProvider struct {
+	GitDirectory string
+	GitRepo      *git.Repository
+}
+
 func openOrInit(dataDirectory string) (*git.Repository, error) {
 	gitRepo, err := git.PlainOpen(dataDirectory)
 	if err == nil {
@@ -17,8 +22,9 @@ func openOrInit(dataDirectory string) (*git.Repository, error) {
 	return nil, err
 }
 
-func getPage(repo *git.Repository, path string) (*Page, error) {
-	commitIter, err := repo.Log(&git.LogOptions{
+func (g *GitPageProvider) GetPage(path string) (*Page, error) {
+	path = path + ".md"
+	commitIter, err := g.GitRepo.Log(&git.LogOptions{
 		FileName: &path,
 	})
 	if err != nil {
@@ -28,13 +34,12 @@ func getPage(repo *git.Repository, path string) (*Page, error) {
 	if err != nil {
 		return nil, err
 	}
-	bytes, err := os.ReadFile(*workDir+"/"+path)
+	bytes, err := os.ReadFile(g.GitDirectory + "/" + path)
 	if err != nil {
 		return nil, err
 	}
 	return &Page{
-		Title:        path,
-		Content:      string(bytes),
+		Content: string(bytes),
 		LastModified: &LogEntry{
 			ChangeId: commit.Hash.String(),
 			User:     commit.Author.Name,
