@@ -54,6 +54,10 @@ func main() {
 		GitDirectory: *workDir,
 		GitRepo:      gitRepo,
 	}
+	err = gitPageProvider.CreateDefaultMainPage()
+	if err != nil {
+		log.Fatalf("Unable to create default main page: %s", err.Error())
+	}
 	authHandler := BasicAuthFromEnv()
 	router := mux.NewRouter()
 	router.Use(handlers.ProxyHeaders)

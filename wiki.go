@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +27,15 @@ func openOrInit(dataDirectory string) (*git.Repository, error) {
 		return gitRepo, nil
 	}
 	return nil, err
+}
+
+func (g *GitPageProvider) CreateDefaultMainPage() error {
+	_, err := g.GetPage("MainPage")
+	if err != nil {
+		log.Printf("Creating default main page")
+		return g.PutPage("MainPage", []byte("<h1>Welcome</h1>Welcome to the wiki."), "system", "Create welcome page")
+	}
+	return nil
 }
 
 func (g *GitPageProvider) GetPage(path string) (*Page, error) {
