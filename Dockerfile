@@ -11,4 +11,5 @@ RUN go get github.com/google/go-licenses && go-licenses save ./... --save_path=/
 FROM gcr.io/distroless/static:nonroot
 COPY --from=build /go/bin/app /wiki
 COPY --from=build /notices /notices
+WORKDIR /
 CMD ["/wiki"]
