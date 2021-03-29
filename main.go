@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"embed"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/kouhin/envflag"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/kouhin/envflag"
 )
 
 //go:embed static
