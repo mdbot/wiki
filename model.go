@@ -10,7 +10,6 @@ type LogEntry struct {
 }
 
 type Page struct {
-	Title        string
 	Content      string
 	LastModified *LogEntry
 }

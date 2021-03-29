@@ -8,5 +8,6 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
+	github.com/microcosm-cc/bluemonday v1.0.5
 	golang.org/x/text v0.3.5 // indirect
 )
