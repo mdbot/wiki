@@ -2,14 +2,12 @@ package main
 
 import (
 	"bytes"
-	"embed"
 	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -73,22 +71,6 @@ func NotFoundHandler(h http.Handler, files fs.FS) http.HandlerFunc {
 			}
 		}
 	}
-}
-
-func GetEmbedOrOSFS(path string, embedFs embed.FS) (fs.FS, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return os.DirFS(path), nil
-	}
-	_, err = embedFs.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	staticFiles, err := fs.Sub(embedFs, path)
-	if err != nil {
-		return nil, err
-	}
-	return staticFiles, nil
 }
 
 func unauthorized(w http.ResponseWriter, realm string) {

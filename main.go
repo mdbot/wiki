@@ -14,14 +14,13 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kouhin/envflag"
+	"github.com/yalue/merged_fs"
 )
 
-//go:embed static
-var staticFS embed.FS
-var staticFiles fs.FS
+//go:embed static templates
+var embeddedFiles embed.FS
 
-//go:embed templates
-var templateFS embed.FS
+var staticFiles fs.FS
 var templateFiles fs.FS
 
 var workDir = flag.String("workdir", "./data", "Working directory")
@@ -36,15 +35,11 @@ func main() {
 		log.Fatalf("Unable to parse flags: %s", err.Error())
 	}
 
-	staticFiles, err = GetEmbedOrOSFS("static", staticFS)
-	if err != nil {
-		log.Fatalf("Unable to get static folder: %s", err.Error())
-	}
+	staticFs, _ := fs.Sub(embeddedFiles, "static")
+	staticFiles = merged_fs.NewMergedFS(os.DirFS("static"), staticFs)
 
-	templateFiles, err = GetEmbedOrOSFS("templates", templateFS)
-	if err != nil {
-		log.Fatalf("Unable to get templates folder: %s", err.Error())
-	}
+	templateFs, _ := fs.Sub(embeddedFiles, "templates")
+	templateFiles = merged_fs.NewMergedFS(os.DirFS("templates"), templateFs)
 
 	gitRepo, err := openOrInit(*workDir)
 	if err != nil {
