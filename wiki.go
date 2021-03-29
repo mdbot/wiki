@@ -67,18 +67,22 @@ func (g *GitPageProvider) PutPage(title string, content []byte, user string, mes
 		return err
 	}
 
-	err = os.WriteFile(filePath, content, os.FileMode(0644))
-	if err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), os.FileMode(0644)); err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(filePath, content, os.FileMode(0644)); err != nil {
 		return err
 	}
 	worktree, err := g.GitRepo.Worktree()
 	if err != nil {
 		return err
 	}
-	_, err = worktree.Add(gitPath)
-	if err != nil {
+
+	if _, err := worktree.Add(gitPath); err != nil {
 		return err
 	}
+
 	_, err = worktree.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  user,
@@ -86,10 +90,7 @@ func (g *GitPageProvider) PutPage(title string, content []byte, user string, mes
 			When:  time.Now(),
 		},
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func resolvePath(base, title string) (string, string, error) {
