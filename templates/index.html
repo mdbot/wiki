@@ -5,19 +5,21 @@
     <link rel="stylesheet" href="/res/style.css" type="text/css"/>
 </head>
 <body>
-<nav>
-    {{if .CanEdit}}
-    <a href="/edit/{{.PageTitle}}">Edit</a>
-    {{end}}
-</nav>
-<main>
-    <h1>{{.PageTitle}}</h1>
-    {{.PageContent}}
-</main>
-<footer>
-    Last modified at {{.LastModified.Time.Format "Jan 02, 2006 15:04:05 UTC"}}
-    by {{.LastModified.User}}
-    <a href="/history/{{.PageTitle}}">[History]</a>
-</footer>
+<div class="container">
+    <nav>
+        {{if .CanEdit}}
+        <a href="/edit/{{.PageTitle}}">Edit</a>
+        {{end}}
+    </nav>
+    <main>
+        <h1>{{.PageTitle}}</h1>
+        {{.PageContent}}
+    </main>
+    <footer>
+        Last modified at {{.LastModified.Time.Format "Jan 02, 2006 15:04:05 UTC"}}
+        by {{.LastModified.User}}
+        <a href="/history/{{.PageTitle}}">[History]</a>
+    </footer>
+</div>
 </body>
 </html>
