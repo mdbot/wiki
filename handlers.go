@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"html/template"
@@ -12,9 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gomarkdown/markdown"
 	"github.com/gorilla/handlers"
-	"github.com/microcosm-cc/bluemonday"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
 )
 
 type notFoundInterceptWriter struct {
@@ -108,6 +110,11 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 
 	renderTpl := template.Must(template.ParseFS(templateFs, "index.html"))
 
+	md := goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
+	)
+
 	return func(writer http.ResponseWriter, request *http.Request) {
 		pageTitle := strings.TrimPrefix(request.URL.Path, "/view/")
 
@@ -117,13 +124,18 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			return
 		}
 
-		unsafe := markdown.ToHTML([]byte(page.Content), nil, nil)
-		html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
+		b := &bytes.Buffer{}
+		if err := md.Convert([]byte(page.Content), b); err != nil {
+			log.Printf("Failed to render markdown: %v\n", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 
 		if err := renderTpl.Execute(writer, RenderPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
-			PageContent: template.HTML(html),
+			PageContent: template.HTML(b.String()),
 			LastModified: LastModifiedDetails{
 				User: page.LastModified.User,
 				Time: page.LastModified.Time,
