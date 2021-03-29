@@ -91,7 +91,6 @@ func GetEmbedOrOSFS(path string, embedFs embed.FS) (fs.FS, error) {
 	return staticFiles, nil
 }
 
-
 func unauthorized(w http.ResponseWriter, realm string) {
 	w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
 	w.WriteHeader(http.StatusUnauthorized)
@@ -143,8 +142,6 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		LastModified LastModifiedDetails
 	}
 
-	renderTpl := template.Must(template.ParseFS(templateFs, "index.html"))
-
 	md := goldmark.New(
 		goldmark.WithExtensions(extension.GFM),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
@@ -155,7 +152,14 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 
 		page, err := pp.GetPage(pageTitle)
 		if err != nil {
+			notFoundTpl := template.Must(template.ParseFS(templateFs, "notfound.html"))
 			writer.WriteHeader(http.StatusNotFound)
+			if err := notFoundTpl.Execute(writer, &RenderPageArgs{
+				PageTitle: pageTitle,
+				CanEdit:   true,
+			}); err != nil {
+				log.Printf("Error rendering template: %v\n", err)
+			}
 			return
 		}
 
@@ -166,7 +170,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			return
 		}
 
-
+		renderTpl := template.Must(template.ParseFS(templateFs, "index.html"))
 		if err := renderTpl.Execute(writer, RenderPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
@@ -189,8 +193,6 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		CanEdit     bool
 	}
 
-	editTpl := template.Must(template.ParseFS(templateFs, "edit.html"))
-
 	return func(writer http.ResponseWriter, request *http.Request) {
 		pageTitle := strings.TrimPrefix(request.URL.Path, "/edit/")
 
@@ -199,6 +201,7 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			content = page.Content
 		}
 
+		editTpl := template.Must(template.ParseFS(templateFs, "edit.html"))
 		if err := editTpl.Execute(writer, EditPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
