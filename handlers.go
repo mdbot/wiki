@@ -13,6 +13,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 )
@@ -125,7 +126,9 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 	}
 
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(extension.GFM, highlighting.NewHighlighting(
+			highlighting.WithStyle(*codeStyle),
+		)),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 	)
 
