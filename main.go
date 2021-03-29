@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"flag"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/gomarkdown/markdown"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kouhin/envflag"
@@ -20,6 +20,7 @@ import (
 //go:embed static
 var staticFS embed.FS
 var staticFiles fs.FS
+
 // go:embed templates
 var templateFS embed.FS
 var templateFiles fs.FS
@@ -46,13 +47,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to open working directory: %s", err.Error())
 	}
-	md := []byte("## markdown document")
-	_ = markdown.ToHTML(md, nil, nil)
+
 	router := mux.NewRouter()
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
 	router.Use(NewLoggingHandler(os.Stdout))
-	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles), staticFiles))
+	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles, &DummyPageProvider{}), staticFiles))
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), staticFiles))
 
 	log.Print("Starting server.")
@@ -72,4 +72,18 @@ func main() {
 		log.Fatalf("Unable to shutdown: %s", err.Error())
 	}
 	log.Print("Finishing server.")
+}
+
+type DummyPageProvider struct{}
+
+func (*DummyPageProvider) GetPage(title string) (*Page, error) {
+	return &Page{
+		Content: fmt.Sprintf("Amazing page about **%s** coming soon!", title),
+		LastModified: &LogEntry{
+			Time:     time.Now(),
+			User:     "System",
+			Message:  "Magical new page creation",
+			ChangeId: "0",
+		},
+	}, nil
 }
