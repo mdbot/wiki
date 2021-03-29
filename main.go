@@ -28,6 +28,7 @@ var workDir = flag.String("workdir", "./data", "Working directory")
 var username = flag.String("authusername", "", "username protecting edit page")
 var password = flag.String("authpassword", "", "password protecting edit page")
 var realm = flag.String("authrealm", "", "realm protecting edit page.  If unset no auth will be used")
+var mainPage = flag.String("mainpage", "MainPage", "Title of the main page for the wiki")
 
 func main() {
 	err := envflag.Parse()
@@ -58,6 +59,8 @@ func main() {
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
 	router.Use(NewLoggingHandler(os.Stdout))
+	router.Path("/view/").Handler(RedirectMainPageHandler())
+	router.Path("/").Handler(RedirectMainPageHandler())
 	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitPageProvider), staticFiles)).Methods(http.MethodGet)
 	router.PathPrefix("/edit/").Handler(authHandler(NotFoundHandler(SubmitPageHandler(gitPageProvider), staticFiles))).Methods(http.MethodPost)
 	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles, gitPageProvider), staticFiles)).Methods(http.MethodGet)

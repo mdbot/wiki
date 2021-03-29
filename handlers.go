@@ -230,3 +230,10 @@ func SubmitPageHandler(pe PageEditor) http.HandlerFunc {
 		}
 	}
 }
+
+func RedirectMainPageHandler() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Add("Location", fmt.Sprintf("/view/%s", *mainPage))
+		writer.WriteHeader(http.StatusSeeOther)
+	}
+}
