@@ -91,7 +91,6 @@ func GetEmbedOrOSFS(path string, embedFs embed.FS) (fs.FS, error) {
 	return staticFiles, nil
 }
 
-
 func unauthorized(w http.ResponseWriter, realm string) {
 	w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
 	w.WriteHeader(http.StatusUnauthorized)
@@ -144,6 +143,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 	}
 
 	renderTpl := template.Must(template.ParseFS(templateFs, "index.html"))
+	notFoundTpl := template.Must(template.ParseFS(templateFs, "notfound.html"))
 
 	md := goldmark.New(
 		goldmark.WithExtensions(extension.GFM),
@@ -156,6 +156,12 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		page, err := pp.GetPage(pageTitle)
 		if err != nil {
 			writer.WriteHeader(http.StatusNotFound)
+			if err := notFoundTpl.Execute(writer, &RenderPageArgs{
+				PageTitle: pageTitle,
+				CanEdit:   true,
+			}); err != nil {
+				log.Printf("Error rendering template: %v\n", err)
+			}
 			return
 		}
 
@@ -165,7 +171,6 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
 
 		if err := renderTpl.Execute(writer, RenderPageArgs{
 			PageTitle:   pageTitle,
