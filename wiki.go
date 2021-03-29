@@ -29,10 +29,14 @@ func openOrInit(dataDirectory string) (*git.Repository, error) {
 }
 
 func (g *GitPageProvider) GetPage(path string) (*Page, error) {
-	path = path + ".md"
+	filePath, gitPath, err := resolvePath(g.GitDirectory, path)
+	if err != nil {
+		return nil, err
+	}
+
 	commitIter, err := g.GitRepo.Log(&git.LogOptions{
 		PathFilter: func(s string) bool {
-			return s == path
+			return s == gitPath
 		},
 	})
 	if err != nil {
@@ -42,7 +46,7 @@ func (g *GitPageProvider) GetPage(path string) (*Page, error) {
 	if err != nil {
 		return nil, err
 	}
-	bytes, err := os.ReadFile(g.GitDirectory + "/" + path)
+	bytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +62,12 @@ func (g *GitPageProvider) GetPage(path string) (*Page, error) {
 }
 
 func (g *GitPageProvider) PutPage(title string, content []byte, user string, message string) error {
-	title = title + ".md"
-	err := os.WriteFile(g.GitDirectory+"/"+title, content, os.FileMode(0644))
+	filePath, gitPath, err := resolvePath(g.GitDirectory, title)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filePath, content, os.FileMode(0644))
 	if err != nil {
 		return err
 	}
@@ -67,7 +75,7 @@ func (g *GitPageProvider) PutPage(title string, content []byte, user string, mes
 	if err != nil {
 		return err
 	}
-	_, err = worktree.Add(title)
+	_, err = worktree.Add(gitPath)
 	if err != nil {
 		return err
 	}
@@ -84,19 +92,20 @@ func (g *GitPageProvider) PutPage(title string, content []byte, user string, mes
 	return nil
 }
 
-func resolvePath(base, title string) (string, error) {
+func resolvePath(base, title string) (string, string, error) {
 	p := filepath.Clean(filepath.Join(base, fmt.Sprintf("%s.md", title)))
 
-	if rel, err := filepath.Rel(base, p); err != nil || strings.HasPrefix(rel, ".") {
-		return "", fmt.Errorf("attempt to escape directory")
+	rel, err := filepath.Rel(base, p)
+	if err != nil || strings.HasPrefix(rel, ".") {
+		return "", "", fmt.Errorf("attempt to escape directory")
 	}
 
 	parts := strings.Split(p, string(filepath.Separator))
 	for i := range parts {
 		if strings.EqualFold(".git", parts[i]) {
-			return "", fmt.Errorf("git directories cannot be written to")
+			return "", "", fmt.Errorf("git directories cannot be written to")
 		}
 	}
 
-	return p, nil
+	return p, rel, nil
 }
