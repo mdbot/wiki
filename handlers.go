@@ -2,12 +2,16 @@ package main
 
 import (
 	"embed"
-	"github.com/gorilla/handlers"
+	"html/template"
 	"io"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
+
+	"github.com/gorilla/handlers"
 )
 
 type notFoundInterceptWriter struct {
@@ -80,4 +84,34 @@ func GetEmbedOrOSFS(path string, embedFs embed.FS) (fs.FS, error) {
 		return nil, err
 	}
 	return staticFiles, nil
+}
+
+func RenderPageHandler(templateFs fs.FS) http.HandlerFunc {
+	type LastModifiedDetails struct {
+		User string
+		Time time.Time
+	}
+
+	type RenderPageArgs struct {
+		PageTitle    string
+		PageContent  template.HTML
+		CanEdit      bool
+		LastModified LastModifiedDetails
+	}
+
+	renderTpl := template.Must(template.ParseFS(templateFs, "index.html"))
+
+	return func(writer http.ResponseWriter, request *http.Request) {
+		pageTitle := strings.TrimPrefix(request.URL.Path, "/view/")
+		// Do something to get a page object
+		renderTpl.Execute(writer, RenderPageArgs{
+			PageTitle:   pageTitle,
+			CanEdit:     false,
+			PageContent: "TODO: Content :D",
+			LastModified: LastModifiedDetails{
+				User: "System",
+				Time: time.Now(),
+			},
+		})
+	}
 }

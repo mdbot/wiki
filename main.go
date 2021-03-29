@@ -20,6 +20,9 @@ import (
 //go:embed static
 var staticFS embed.FS
 var staticFiles fs.FS
+// go:embed templates
+var templateFS embed.FS
+var templateFiles fs.FS
 
 var workDir = flag.String("workdir", "./data", "Working directory")
 
@@ -28,10 +31,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to parse flags: %s", err.Error())
 	}
+
 	staticFiles, err = GetEmbedOrOSFS("static", staticFS)
 	if err != nil {
 		log.Fatalf("Unable to get static folder: %s", err.Error())
 	}
+
+	templateFiles, err = GetEmbedOrOSFS("templates", templateFS)
+	if err != nil {
+		log.Fatalf("Unable to get templates folder: %s", err.Error())
+	}
+
 	_, err = openOrInit(*workDir)
 	if err != nil {
 		log.Fatalf("Unable to open working directory: %s", err.Error())
@@ -42,7 +52,9 @@ func main() {
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
 	router.Use(NewLoggingHandler(os.Stdout))
+	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles), staticFiles))
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), staticFiles))
+
 	log.Print("Starting server.")
 	server := http.Server{
 		Addr:    ":8080",
