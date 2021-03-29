@@ -27,7 +27,9 @@ func openOrInit(dataDirectory string) (*git.Repository, error) {
 func (g *GitPageProvider) GetPage(path string) (*Page, error) {
 	path = path + ".md"
 	commitIter, err := g.GitRepo.Log(&git.LogOptions{
-		FileName: &path,
+		PathFilter: func(s string) bool {
+			return s == path
+		},
 	})
 	if err != nil {
 		return nil, err
