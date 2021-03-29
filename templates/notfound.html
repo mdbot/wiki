@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Page not found</title>
+    <link rel="stylesheet" href="/res/style.css" type="text/css"/>
+</head>
+<body>
+<div class="container">
+    <nav>
+        {{if .CanEdit}}
+        <a href="/edit/{{.PageTitle}}">Edit</a>
+        {{end}}
+    </nav>
+    <main>
+        <h1>Page not found</h1>
+        {{if .CanEdit}}
+        <p><a href="/edit/{{.PageTitle}}">Create it</a></p>
+        {{end}}
+    </main>
+</div>
+</body>
+</html>
