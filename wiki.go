@@ -33,7 +33,7 @@ func (g *GitPageProvider) CreateDefaultMainPage() error {
 	_, err := g.GetPage("MainPage")
 	if err != nil {
 		log.Printf("Creating default main page")
-		return g.PutPage("MainPage", []byte("<h1>Welcome</h1>Welcome to the wiki."), "system", "Create welcome page")
+		return g.PutPage("MainPage", []byte("<h1>Welcome</h1>\r\n\r\nWelcome to the wiki."), "system", "Create welcome page")
 	}
 	return nil
 }
