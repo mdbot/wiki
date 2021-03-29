@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Editing {{.PageTitle}} &middot; Wiki</title>
+    <link rel="stylesheet" href="/res/style.css" type="text/css"/>
+</head>
+<body>
+<div class="container">
+    <nav>
+        {{if .CanEdit}}
+        <a href="/edit/{{.PageTitle}}">Edit</a>
+        {{end}}
+    </nav>
+    <main>
+        <h1>Editing {{.PageTitle}}</h1>
+        <form action="/edit/{{.PageTitle}}" method="post">
+            <textarea name="content" class="editor">{{.PageContent}}</textarea>
+            <label>Message: <input type="text" name="message"></label>
+            <input type="submit" value="Edit">
+        </form>
+    </main>
+</div>
+</body>
+</html>

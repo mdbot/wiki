@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
@@ -121,7 +122,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 
 		if err := renderTpl.Execute(writer, RenderPageArgs{
 			PageTitle:   pageTitle,
-			CanEdit:     false,
+			CanEdit:     true,
 			PageContent: template.HTML(html),
 			LastModified: LastModifiedDetails{
 				User: page.LastModified.User,
@@ -130,6 +131,56 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		}); err != nil {
 			// TODO: We should probably send an error to the client
 			log.Printf("Error rendering template: %v\n", err)
+		}
+	}
+}
+
+func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
+	type EditPageArgs struct {
+		PageTitle   string
+		PageContent string
+		CanEdit     bool
+	}
+
+	editTpl := template.Must(template.ParseFS(templateFs, "edit.html"))
+
+	return func(writer http.ResponseWriter, request *http.Request) {
+		pageTitle := strings.TrimPrefix(request.URL.Path, "/edit/")
+
+		var content string
+		if page, err := pp.GetPage(pageTitle); err == nil {
+			content = page.Content
+		}
+
+		if err := editTpl.Execute(writer, EditPageArgs{
+			PageTitle:   pageTitle,
+			CanEdit:     true,
+			PageContent: content,
+		}); err != nil {
+			// TODO: We should probably send an error to the client
+			log.Printf("Error rendering template: %v\n", err)
+		}
+	}
+}
+
+type PageEditor interface {
+	PutPage(title string, content []byte, user string, message string) error
+}
+
+func SubmitPageHandler(pe PageEditor) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		pageTitle := strings.TrimPrefix(request.URL.Path, "/edit/")
+
+		content := request.FormValue("content")
+		message := request.FormValue("message")
+		user := "Anonymoose"
+
+		if err := pe.PutPage(pageTitle, []byte(content), user, message); err != nil {
+			// TODO: We should probably send an error to the client
+			log.Printf("Error saving page: %v\n", err)
+		} else {
+			writer.Header().Add("Location", fmt.Sprintf("/view/%s", pageTitle))
+			writer.WriteHeader(http.StatusSeeOther)
 		}
 	}
 }

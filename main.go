@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"flag"
-	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -55,7 +54,9 @@ func main() {
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
 	router.Use(NewLoggingHandler(os.Stdout))
-	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles, gitPageProvider), staticFiles))
+	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitPageProvider), staticFiles)).Methods(http.MethodGet)
+	router.PathPrefix("/edit/").Handler(NotFoundHandler(SubmitPageHandler(gitPageProvider), staticFiles)).Methods(http.MethodPost)
+	router.PathPrefix("/view/").Handler(NotFoundHandler(RenderPageHandler(templateFiles, gitPageProvider), staticFiles)).Methods(http.MethodGet)
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), staticFiles))
 
 	log.Print("Starting server.")
@@ -75,18 +76,4 @@ func main() {
 		log.Fatalf("Unable to shutdown: %s", err.Error())
 	}
 	log.Print("Finishing server.")
-}
-
-type DummyPageProvider struct{}
-
-func (*DummyPageProvider) GetPage(title string) (*Page, error) {
-	return &Page{
-		Content: fmt.Sprintf("Amazing page about **%s** coming soon!", title),
-		LastModified: &LogEntry{
-			Time:     time.Now(),
-			User:     "System",
-			Message:  "Magical new page creation",
-			ChangeId: "0",
-		},
-	}, nil
 }
