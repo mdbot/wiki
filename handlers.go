@@ -224,6 +224,9 @@ func SubmitPageHandler(pe PageEditor) http.HandlerFunc {
 		content := request.FormValue("content")
 		message := request.FormValue("message")
 		user := "Anonymoose"
+		if len(*realm) > 0 {
+			user, _, _ = request.BasicAuth()
+		}
 
 		if err := pe.PutPage(pageTitle, []byte(content), user, message); err != nil {
 			// TODO: We should probably send an error to the client
