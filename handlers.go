@@ -11,7 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gomarkdown/markdown"
 	"github.com/gorilla/handlers"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 type notFoundInterceptWriter struct {
@@ -86,7 +88,11 @@ func GetEmbedOrOSFS(path string, embedFs embed.FS) (fs.FS, error) {
 	return staticFiles, nil
 }
 
-func RenderPageHandler(templateFs fs.FS) http.HandlerFunc {
+type PageProvider interface {
+	GetPage(title string) (*Page, error)
+}
+
+func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 	type LastModifiedDetails struct {
 		User string
 		Time time.Time
@@ -103,15 +109,27 @@ func RenderPageHandler(templateFs fs.FS) http.HandlerFunc {
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 		pageTitle := strings.TrimPrefix(request.URL.Path, "/view/")
-		// Do something to get a page object
-		renderTpl.Execute(writer, RenderPageArgs{
+
+		page, err := pp.GetPage(pageTitle)
+		if err != nil {
+			writer.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		unsafe := markdown.ToHTML([]byte(page.Content), nil, nil)
+		html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
+
+		if err := renderTpl.Execute(writer, RenderPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     false,
-			PageContent: "TODO: Content :D",
+			PageContent: template.HTML(html),
 			LastModified: LastModifiedDetails{
-				User: "System",
-				Time: time.Now(),
+				User: page.LastModified.User,
+				Time: page.LastModified.Time,
 			},
-		})
+		}); err != nil {
+			// TODO: We should probably send an error to the client
+			log.Printf("Error rendering template: %v\n", err)
+		}
 	}
 }
