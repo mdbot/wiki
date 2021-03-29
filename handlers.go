@@ -105,7 +105,8 @@ func BasicAuthHandler(realm string, credentials map[string]string) func(http.Han
 				unauthorized(w, realm)
 				return
 			}
-			if credentials[username] == password {
+			_, ok = credentials[username]
+			if ok && credentials[username] == password {
 				next.ServeHTTP(w, r)
 				return
 			}
