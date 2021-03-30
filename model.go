@@ -10,7 +10,7 @@ type LogEntry struct {
 }
 
 type Page struct {
-	Content      string
+	Content      []byte
 	LastModified *LogEntry
 }
 

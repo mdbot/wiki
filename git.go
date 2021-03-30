@@ -74,7 +74,7 @@ func (g *GitBackend) GetPage(path string) (*Page, error) {
 		return nil, err
 	}
 	return &Page{
-		Content: string(bytes),
+		Content: bytes,
 		LastModified: &LogEntry{
 			ChangeId: commit.Hash.String(),
 			User:     commit.Author.Name,

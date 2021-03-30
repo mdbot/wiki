@@ -169,7 +169,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		}
 
 		b := &bytes.Buffer{}
-		if err := md.Convert([]byte(page.Content), b); err != nil {
+		if err := md.Convert(page.Content, b); err != nil {
 			log.Printf("Failed to render markdown: %v\n", err)
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
@@ -202,7 +202,7 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 
 		var content string
 		if page, err := pp.GetPage(pageTitle); err == nil {
-			content = page.Content
+			content = string(page.Content)
 		}
 
 		renderTemplate(templateFs, EditPage, http.StatusOK, writer, &EditPageArgs{
