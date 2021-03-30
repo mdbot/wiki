@@ -28,6 +28,7 @@ var username = flag.String("authusername", "", "username protecting edit page")
 var password = flag.String("authpassword", "", "password protecting edit page")
 var realm = flag.String("authrealm", "", "realm protecting edit page.  If unset no auth will be used")
 var mainPage = flag.String("mainpage", "MainPage", "Title of the main page for the wiki")
+var codeStyle = flag.String("codestyle", "monokai", "Style to use for code highlighting. See https://github.com/alecthomas/chroma/tree/master/styles")
 
 func main() {
 	err := envflag.Parse()
