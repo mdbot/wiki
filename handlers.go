@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/gorilla/sessions"
 )
 
 type TemplateName string
@@ -28,6 +30,8 @@ type CommonPageArgs struct {
 	PageTitle    string
 	IsWikiPage   bool
 	CanEdit      bool
+	Error        *string
+	User         *User
 	LastModified *LastModifiedDetails
 }
 
@@ -57,6 +61,8 @@ func RenderPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) htt
 			renderTemplate(templateFs, NotFound, http.StatusNotFound, writer, &NotFoundPageArgs{
 				CommonPageArgs: CommonPageArgs{
 					PageTitle:  pageTitle,
+					Error: getErrorForRequest(request),
+					User: getUserForRequest(request),
 					CanEdit:    true,
 					IsWikiPage: true,
 				},
@@ -74,6 +80,8 @@ func RenderPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) htt
 		renderTemplate(templateFs, ViewPage, http.StatusOK, writer, &RenderPageArgs{
 			CommonPageArgs: CommonPageArgs{
 				PageTitle:  pageTitle,
+				Error: getErrorForRequest(request),
+				User: getUserForRequest(request),
 				CanEdit:    true,
 				IsWikiPage: true,
 				LastModified: &LastModifiedDetails{
@@ -104,6 +112,8 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		renderTemplate(templateFs, EditPage, http.StatusOK, writer, &EditPageArgs{
 			CommonPageArgs: CommonPageArgs{
 				PageTitle: pageTitle,
+				Error: getErrorForRequest(request),
+				User: getUserForRequest(request),
 			},
 			PageContent: content,
 		})
@@ -156,6 +166,8 @@ func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
 		renderTemplate(templateFs, ListPage, http.StatusOK, writer, &ListPagesArgs{
 			CommonPageArgs: CommonPageArgs{
 				PageTitle:  "Index",
+				Error: getErrorForRequest(request),
+				User: getUserForRequest(request),
 				IsWikiPage: false,
 				CanEdit:    false,
 			},
@@ -168,6 +180,34 @@ func RedirectMainPageHandler() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Add("Location", fmt.Sprintf("/view/%s", *mainPage))
 		writer.WriteHeader(http.StatusSeeOther)
+	}
+}
+
+type Authenticator interface {
+	Authenticate(username, password string) (*User, error)
+}
+
+func LoginHandler(store sessions.Store, auth Authenticator) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		username := request.FormValue("username")
+		password := request.FormValue("password")
+		redirect := request.FormValue("redirect")
+
+		// Only allow relative redirects
+		if !strings.HasPrefix(redirect, "/") || strings.HasPrefix(redirect, "//") {
+			redirect = "/"
+		}
+
+		user, err := auth.Authenticate(username, password)
+		if err != nil {
+			putSession(store, writer, request, sessionErrorKey, fmt.Sprintf("Failed to login: %v", err))
+			writer.Header().Set("location", redirect)
+			writer.WriteHeader(http.StatusSeeOther)
+		} else {
+			putSession(store, writer, request, sessionUserKey, user.Name)
+			writer.Header().Set("location", redirect)
+			writer.WriteHeader(http.StatusSeeOther)
+		}
 	}
 }
 

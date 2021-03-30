@@ -11,29 +11,60 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-const sessionName = "wiki"
-const sessionUserKey = "user"
-const contextUser = "user"
+const (
+	sessionName     = "wiki"
+	sessionUserKey  = "user"
+	sessionErrorKey = "error"
+	contextUserKey  = "user"
+	contextErrorKey = "error"
+)
 
 type UserProvider interface {
 	User(string) *User
 }
 
-func SessionHandler(up UserProvider, sessionKey []byte) func(http.Handler) http.Handler {
-	store := sessions.NewCookieStore(sessionKey)
+func SessionHandler(up UserProvider, store sessions.Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			s, _ := store.Get(request, sessionName)
+
 			if username, ok := s.Values[sessionUserKey]; ok {
 				user := up.User(username.(string))
 				if user != nil {
-					request = request.WithContext(context.WithValue(request.Context(), contextUser, user))
+					request = request.WithContext(context.WithValue(request.Context(), contextUserKey, user))
 				}
+			}
+
+			if e, ok := s.Values[sessionErrorKey]; ok {
+				request = request.WithContext(context.WithValue(request.Context(), contextErrorKey, e))
+				delete(s.Values, sessionErrorKey)
+				_ = store.Save(request, writer, s)
 			}
 
 			next.ServeHTTP(writer, request)
 		})
 	}
+}
+
+func putSession(store sessions.Store, w http.ResponseWriter, r *http.Request, key string, value interface{}) {
+	s, _ := store.Get(r, sessionName)
+	s.Values[key] = value
+
+	if s.IsNew {
+		s.Options.HttpOnly = true
+		s.Options.SameSite = http.SameSiteStrictMode
+		s.Options.MaxAge = 60 * 60 * 24 * 31
+	}
+
+	_ = store.Save(r, w, s)
+}
+
+func getUserForRequest(r *http.Request) *User {
+	return r.Context().Value(contextUserKey).(*User)
+}
+
+func getErrorForRequest(r *http.Request) *string {
+	return r.Context().Value(contextErrorKey).(*string)
 }
 
 func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
@@ -110,6 +141,8 @@ func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 			renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
 				CommonPageArgs{
 					PageTitle:  "Page not found",
+					Error: getErrorForRequest(r),
+					User: getUserForRequest(r),
 					IsWikiPage: false,
 					CanEdit:    false,
 				},

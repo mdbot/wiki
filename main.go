@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/greboid/wiki/markdown"
 	"github.com/kouhin/envflag"
 	"github.com/yalue/merged_fs"
@@ -78,12 +79,14 @@ func main() {
 		log.Fatalf("Unable to create default main page: %s", err.Error())
 	}
 
+	sessionStore := sessions.NewCookieStore(userManager.sessionKey)
+
 	renderer := markdown.NewRenderer(gitBackend, *codeStyle)
 	authHandler := BasicAuthFromEnv()
 	router := mux.NewRouter()
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
-	router.Use(SessionHandler(userManager, userManager.sessionKey))
+	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(NewLoggingHandler(os.Stdout))
 	router.Path("/view/").Handler(RedirectMainPageHandler())
 	router.Path("/").Handler(RedirectMainPageHandler())
@@ -91,6 +94,7 @@ func main() {
 	router.PathPrefix("/edit/").Handler(authHandler(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles))).Methods(http.MethodPost)
 	router.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
 	router.PathPrefix("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	router.PathPrefix("/wiki/login").Handler(LoginHandler(sessionStore, userManager)).Methods(http.MethodPost)
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), templateFiles))
 
 	log.Print("Starting server.")

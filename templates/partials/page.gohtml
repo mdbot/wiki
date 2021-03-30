@@ -17,7 +17,20 @@
                     </small>
                 {{end}}
             </h1>
+            {{if .User}}
+                Logged in as {{.User.Name}}
+            {{else}}
+                <form action="/wiki/login" method="post">
+                    <input type="text" name="username" placeholder="Username">
+                    <input type="password" name="password" placeholder="Password">
+                    <input type="submit" value="Login">
+                </form>
+            {{end}}
         </nav>
+
+        {{if .Error}}
+            <aside class="error">{{.Error}}</aside>
+        {{end}}
 
         <main class="container content">
             {{end}}
