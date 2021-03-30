@@ -22,8 +22,6 @@ github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239/go.mod h1:2FmKhYU
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
-github.com/csmith/goldmark-wikilink v1.3.1-0.20210330002521-50303decd116 h1:W8TPh0aNzcfIiaXuq5VuWH3p3kOwLAHV6AEPnassda4=
-github.com/csmith/goldmark-wikilink v1.3.1-0.20210330002521-50303decd116/go.mod h1:DJWqN9PEH+mLVYg3YpIdmVWaKdTBdMJrJR0hrIt70EI=
 github.com/daaku/go.zipexe v1.0.0/go.mod h1:z8IiR6TsVLEYKwXAoE/I+8ys/sDkgTzSL0CLnGVd57E=
 github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 h1:y5HC9v93H5EPKqaS1UYVg1uYah5Xf51mBfIoWehClUQ=
 github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964/go.mod h1:Xd9hchkHSWYkEqJwUGisez3G1QY8Ryz0sdWrLPMGjLk=
@@ -109,7 +107,6 @@ github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6e
 github.com/yalue/merged_fs v1.0.3 h1:hk2/rmEWi1cSew1iQrohblMSXo5FWY2B1OjBY6gg4iU=
 github.com/yalue/merged_fs v1.0.3/go.mod h1:WqqchfVYQyclV2tnR7wtRhBddzBvLVR83Cjw9BKQw0M=
 github.com/yuin/goldmark v1.1.22/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
-github.com/yuin/goldmark v1.3.0/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.3.3 h1:37BdQwPx8VOSic8eDSWee6QL9mRpZRm9VJp/QugNrW0=
 github.com/yuin/goldmark v1.3.3/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark-highlighting v0.0.0-20200307114337-60d527fdb691 h1:VWSxtAiQNh3zgHJpdpkpVYjTPqRE3P6UZCOPa1nRDio=

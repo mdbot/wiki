@@ -1,6 +1,7 @@
 :root {
     --divider: #6c757d;
     --linkColour: #1E69CA;
+    --linkColourNewPage: #ca1e1e;
     --footerColour: #6c757d;
     --backgroundColour: #eee;
     --mainBackgroundcolour: #fff;
@@ -14,6 +15,7 @@
     :root {
         --divider: #6c757d;
         --linkColour: #6eb9ff;
+        --linkColourNewPage: #ff6e6e;
         --footerColour: #6c757d;
         --backgroundColour: #1c1c1c;
         --mainBackgroundcolour: #1c1c1c;
@@ -75,6 +77,10 @@ footer .container {
 
 a, a:hover, a:focus {
     color: var(--linkColour);
+}
+
+a.newpage, a.newpage:hover, a.newpage:focus {
+    color: var(--linkColourNewPage);
 }
 
 main {

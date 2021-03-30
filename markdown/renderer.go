@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"net/url"
 
-	wikilink "github.com/13rac1/goldmark-wikilink"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
 	"github.com/yuin/goldmark/extension"
@@ -27,7 +26,7 @@ func NewRenderer(checker PageChecker, codeStyle string) *Renderer {
 			goldmark.WithExtensions(
 				extension.GFM,
 				highlighting.NewHighlighting(highlighting.WithStyle(codeStyle)),
-				wikilink.New(wikilink.WithFilenameNormalizer(FileNameNormalizer{})),
+				newWikiLinks(checker),
 			),
 			goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		),
