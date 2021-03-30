@@ -12,9 +12,21 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-type GitPageProvider struct {
+type GitBackend struct {
 	GitDirectory string
 	GitRepo      *git.Repository
+}
+
+func NewGitBackend(dataDirectory string) (*GitBackend, error) {
+	gitRepo, err := openOrInit(dataDirectory)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open working directory: %w", err)
+	}
+
+	return &GitBackend{
+		GitDirectory: dataDirectory,
+		GitRepo:      gitRepo,
+	}, nil
 }
 
 func openOrInit(dataDirectory string) (*git.Repository, error) {
@@ -29,7 +41,7 @@ func openOrInit(dataDirectory string) (*git.Repository, error) {
 	return nil, err
 }
 
-func (g *GitPageProvider) CreateDefaultMainPage() error {
+func (g *GitBackend) CreateDefaultMainPage() error {
 	_, err := g.GetPage("MainPage")
 	if err != nil {
 		log.Printf("Creating default main page")
@@ -38,7 +50,7 @@ func (g *GitPageProvider) CreateDefaultMainPage() error {
 	return nil
 }
 
-func (g *GitPageProvider) GetPage(path string) (*Page, error) {
+func (g *GitBackend) GetPage(path string) (*Page, error) {
 	filePath, gitPath, err := resolvePath(g.GitDirectory, path)
 	if err != nil {
 		return nil, err
@@ -71,7 +83,7 @@ func (g *GitPageProvider) GetPage(path string) (*Page, error) {
 	}, nil
 }
 
-func (g *GitPageProvider) PutPage(title string, content []byte, user string, message string) error {
+func (g *GitBackend) PutPage(title string, content []byte, user string, message string) error {
 	filePath, gitPath, err := resolvePath(g.GitDirectory, title)
 	if err != nil {
 		return err
