@@ -12,9 +12,9 @@ import (
 const userSettingsName = "users"
 
 type User struct {
-	Name     string `yaml:"name"`
-	Salt     []byte `yaml:"salt"`
-	Password []byte `yaml:"password"`
+	Name     string
+	Salt     []byte
+	Password []byte
 }
 
 type ConfigStore interface {
@@ -29,8 +29,8 @@ type UserManager struct {
 }
 
 type UserSettings struct {
-	Key   []byte  `yaml:"session_key"`
-	Users []*User `yaml:"users"`
+	Key   []byte
+	Users []*User
 }
 
 func NewUserManager(store ConfigStore) (*UserManager, error) {
@@ -48,6 +48,7 @@ func NewUserManager(store ConfigStore) (*UserManager, error) {
 		if _, err := io.ReadFull(rand.Reader, newKey); err != nil {
 			return nil, err
 		}
+		am.sessionKey = newKey
 	}
 
 	return am, nil
@@ -91,7 +92,7 @@ func (a *UserManager) Authenticate(username, password string) (*User, error) {
 	}
 
 	salted := append([]byte(password), user.Salt...)
-	if err := bcrypt.CompareHashAndPassword(salted, []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(user.Password, salted); err != nil {
 		return nil, fmt.Errorf("invalid username/password")
 	}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/handlers"
@@ -37,8 +38,6 @@ func SessionHandler(up UserProvider, store sessions.Store) func(http.Handler) ht
 
 			if e, ok := s.Values[sessionErrorKey]; ok {
 				request = request.WithContext(context.WithValue(request.Context(), contextErrorKey, e))
-				delete(s.Values, sessionErrorKey)
-				_ = store.Save(request, writer, s)
 			}
 
 			next.ServeHTTP(writer, request)
@@ -56,15 +55,20 @@ func putSession(store sessions.Store, w http.ResponseWriter, r *http.Request, ke
 		s.Options.MaxAge = 60 * 60 * 24 * 31
 	}
 
-	_ = store.Save(r, w, s)
+	if err := store.Save(r, w, s); err != nil {
+		log.Printf("Unable to save session: %v", err)
+	}
+
 }
 
 func getUserForRequest(r *http.Request) *User {
-	return r.Context().Value(contextUserKey).(*User)
+	v, _ :=  r.Context().Value(contextUserKey).(*User)
+	return v
 }
 
-func getErrorForRequest(r *http.Request) *string {
-	return r.Context().Value(contextErrorKey).(*string)
+func getErrorForRequest(r *http.Request) string {
+	v, _ := r.Context().Value(contextErrorKey).(string)
+	return v
 }
 
 func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {

@@ -135,7 +135,7 @@ func (g *GitBackend) GetPage(path string) (*Page, error) {
 }
 
 func (g *GitBackend) GetConfig(name string) ([]byte, error) {
-	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.yml.enc", name))
+	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.json.enc", name))
 	return os.ReadFile(filePath)
 }
 
@@ -185,8 +185,8 @@ func (g *GitBackend) PutPage(title string, content []byte, user string, message 
 }
 
 func (g *GitBackend) PutConfig(name string, content []byte, user string, message string) error {
-	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.yml.enc", name))
-	gitPath := filepath.Join(".wiki", fmt.Sprintf("%s.yml.enc", name))
+	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.json.enc", name))
+	gitPath := filepath.Join(".wiki", fmt.Sprintf("%s.json.enc", name))
 
 	return g.writeFile(filePath, gitPath, content, user, message)
 }

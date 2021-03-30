@@ -30,7 +30,7 @@ type CommonPageArgs struct {
 	PageTitle    string
 	IsWikiPage   bool
 	CanEdit      bool
-	Error        *string
+	Error        string
 	User         *User
 	LastModified *LastModifiedDetails
 }

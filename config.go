@@ -4,12 +4,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
 	"os"
-
-	"gopkg.in/yaml.v2"
 )
 
 type ConfigBackend interface {
@@ -54,11 +53,11 @@ func (c EncryptedConfigStore) GetSettings(name string, val interface{}) error {
 		return err
 	}
 
-	return yaml.Unmarshal(decrypted, &val)
+	return json.Unmarshal(decrypted, &val)
 }
 
 func (c EncryptedConfigStore) PutSettings(name, user, message string, val interface{}) error {
-	data, err := yaml.Marshal(&val)
+	data, err := json.Marshal(&val)
 	if err != nil {
 		return err
 	}
