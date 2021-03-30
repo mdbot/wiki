@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -81,6 +82,42 @@ func (g *GitBackend) GetPage(path string) (*Page, error) {
 			Message:  commit.Message,
 		},
 	}, nil
+}
+
+func (g *GitBackend) ListPages() ([]string, error) {
+	pages, err := g.listPages(g.GitDirectory, "")
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(pages)
+	return pages, nil
+}
+
+// listPages recursively finds pages within the given directory. The prefix is prepended to each returned path.
+func (g *GitBackend) listPages(dir string, prefix string) ([]string, error) {
+	var res []string
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range files {
+		if files[i].IsDir() {
+			files, err := g.listPages(
+				filepath.Join(dir, files[i].Name()),
+				filepath.Join(prefix, files[i].Name()),
+			)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, files...)
+		} else if filepath.Ext(files[i].Name()) == ".md" {
+			res = append(res, strings.TrimSuffix(filepath.Join(prefix, files[i].Name()), ".md"))
+		}
+	}
+
+	return res, nil
 }
 
 func (g *GitBackend) PutPage(title string, content []byte, user string, message string) error {

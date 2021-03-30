@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Index &middot; Wiki</title>
+        <link rel="stylesheet" href="/res/style.css" type="text/css"/>
+    </head>
+    <body>
+        <nav class="container">
+            <h1>
+                Index
+            </h1>
+        </nav>
+
+        <main class="container content">
+            All wiki content:
+            <ol>
+                {{range .Pages}}
+                <li><a href="/view/{{.}}">{{.}}</a></li>
+                {{end}}
+            </ol>
+        </main>
+
+        <footer>
+            <div class="container">
+                Hello.
+            </div>
+        </footer>
+    </body>
+</html>

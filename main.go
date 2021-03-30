@@ -63,6 +63,7 @@ func main() {
 	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitBackend), templateFiles)).Methods(http.MethodGet)
 	router.PathPrefix("/edit/").Handler(authHandler(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles))).Methods(http.MethodPost)
 	router.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	router.PathPrefix("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), templateFiles))
 
 	log.Print("Starting server.")

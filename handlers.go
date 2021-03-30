@@ -51,9 +51,9 @@ func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
 
 func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 	type NotFoundPageArgs struct {
-		PageTitle   string
-		IsWikiPage  bool
-		CanEdit     bool
+		PageTitle  string
+		IsWikiPage bool
+		CanEdit    bool
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -113,6 +113,7 @@ type PageProvider interface {
 }
 
 type FileNameNormalizer struct{}
+
 func (_ FileNameNormalizer) Normalize(linkText string) string {
 	return url.PathEscape(linkText)
 }
@@ -234,6 +235,34 @@ func SubmitPageHandler(pe PageEditor) http.HandlerFunc {
 		} else {
 			writer.Header().Add("Location", fmt.Sprintf("/view/%s", pageTitle))
 			writer.WriteHeader(http.StatusSeeOther)
+		}
+	}
+}
+
+type PageLister interface {
+	ListPages() ([]string, error)
+}
+
+func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
+	type ListPagesArgs struct {
+		Pages []string
+	}
+
+	return func(writer http.ResponseWriter, request *http.Request) {
+		pages, err := pl.ListPages()
+		if err != nil {
+			log.Printf("Failed to list pages: %v\n", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		editTpl := template.Must(template.ParseFS(templateFs, "list.html"))
+		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if err := editTpl.Execute(writer, ListPagesArgs{
+			Pages: pages,
+		}); err != nil {
+			// TODO: We should probably send an error to the client
+			log.Printf("Error rendering template: %v\n", err)
 		}
 	}
 }
