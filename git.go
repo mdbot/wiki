@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-git/go-git/v5/plumbing"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
