@@ -21,12 +21,25 @@ import (
 )
 
 type TemplateName string
+
 const (
 	NotFound TemplateName = "404"
 	EditPage TemplateName = "edit"
 	ViewPage TemplateName = "index"
 	ListPage TemplateName = "list"
 )
+
+type LastModifiedDetails struct {
+	User string
+	Time time.Time
+}
+
+type CommonPageArgs struct {
+	PageTitle    string
+	IsWikiPage   bool
+	CanEdit      bool
+	LastModified *LastModifiedDetails
+}
 
 type notFoundInterceptWriter struct {
 	realWriter http.ResponseWriter
@@ -58,9 +71,7 @@ func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
 }
 
 type NotFoundPageArgs struct {
-	PageTitle  string
-	IsWikiPage bool
-	CanEdit    bool
+	CommonPageArgs
 }
 
 func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
@@ -71,9 +82,11 @@ func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 
 		if fakeWriter.status == http.StatusNotFound {
 			renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
-				PageTitle:  "Page not found",
-				IsWikiPage: false,
-				CanEdit:    false,
+				CommonPageArgs{
+					PageTitle:  "Page not found",
+					IsWikiPage: false,
+					CanEdit:    false,
+				},
 			})
 		}
 	}
@@ -123,17 +136,9 @@ func (_ FileNameNormalizer) Normalize(linkText string) string {
 	return url.PathEscape(linkText)
 }
 
-type LastModifiedDetails struct {
-	User string
-	Time time.Time
-}
-
 type RenderPageArgs struct {
-	PageTitle    string
-	PageContent  template.HTML
-	CanEdit      bool
-	IsWikiPage   bool
-	LastModified LastModifiedDetails
+	CommonPageArgs
+	PageContent template.HTML
 }
 
 func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
@@ -154,9 +159,11 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		page, err := pp.GetPage(pageTitle)
 		if err != nil {
 			renderTemplate(templateFs, NotFound, http.StatusNotFound, writer, &RenderPageArgs{
-				PageTitle:  pageTitle,
-				CanEdit:    true,
-				IsWikiPage: true,
+				CommonPageArgs: CommonPageArgs{
+					PageTitle:  pageTitle,
+					CanEdit:    true,
+					IsWikiPage: true,
+				},
 			})
 			return
 		}
@@ -169,22 +176,24 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		}
 
 		renderTemplate(templateFs, ViewPage, http.StatusOK, writer, &RenderPageArgs{
-			PageTitle:   pageTitle,
-			CanEdit:     true,
-			IsWikiPage:  true,
-			PageContent: template.HTML(b.String()),
-			LastModified: LastModifiedDetails{
-				User: page.LastModified.User,
-				Time: page.LastModified.Time,
+			CommonPageArgs: CommonPageArgs{
+				PageTitle:  pageTitle,
+				CanEdit:    true,
+				IsWikiPage: true,
+				LastModified: &LastModifiedDetails{
+					User: page.LastModified.User,
+					Time: page.LastModified.Time,
+				},
 			},
+
+			PageContent: template.HTML(b.String()),
 		})
 	}
 }
 
 type EditPageArgs struct {
-	PageTitle   string
+	CommonPageArgs
 	PageContent string
-	CanEdit     bool
 }
 
 func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
@@ -197,8 +206,9 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		}
 
 		renderTemplate(templateFs, EditPage, http.StatusOK, writer, &EditPageArgs{
-			PageTitle:   pageTitle,
-			CanEdit:     true,
+			CommonPageArgs: CommonPageArgs{
+				PageTitle: pageTitle,
+			},
 			PageContent: content,
 		})
 	}
@@ -234,6 +244,7 @@ type PageLister interface {
 }
 
 type ListPagesArgs struct {
+	CommonPageArgs
 	Pages []string
 }
 
@@ -247,6 +258,11 @@ func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
 		}
 
 		renderTemplate(templateFs, ListPage, http.StatusOK, writer, &ListPagesArgs{
+			CommonPageArgs: CommonPageArgs{
+				PageTitle:  "Index",
+				IsWikiPage: false,
+				CanEdit:    false,
+			},
 			Pages: pages,
 		})
 	}
@@ -263,7 +279,7 @@ func renderTemplate(fs fs.FS, name TemplateName, statusCode int, wr http.Respons
 	wr.Header().Set("Content-Type", "text/html; charset=utf-8")
 	wr.WriteHeader(statusCode)
 
-	tpl := template.Must(template.ParseFS(fs, fmt.Sprintf("%s.gohtml", name)))
+	tpl := template.Must(template.ParseFS(fs, fmt.Sprintf("%s.gohtml", name), "partials/*.gohtml"))
 	if err := tpl.Execute(wr, data); err != nil {
 		// TODO: We should probably send an error to the client
 		log.Printf("Error rendering template: %v\n", err)

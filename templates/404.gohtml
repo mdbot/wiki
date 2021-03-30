@@ -1,28 +1,7 @@
 {{- /*gotype: github.com/greboid/wiki.NotFoundPageArgs*/ -}}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>Page not found &middot; Wiki</title>
-        <link rel="stylesheet" href="/res/style.css" type="text/css"/>
-    </head>
-    <body>
-        <nav class="container">
-            <h1>
-                {{.PageTitle}}
-                {{if and .IsWikiPage .CanEdit}}
-                    <small>
-                        <a href="/edit/{{.PageTitle}}">Edit</a>
-                    </small>
-                {{end}}
-            </h1>
-        </nav>
-
-        <main class="container content">
-            <h1>Page not found</h1>
-            {{if and .IsWikiPage .CanEdit}}
-                <p><a href="/edit/{{.PageTitle}}">Create it</a></p>
-            {{end}}
-        </main>
-    </body>
-</html>
+{{template "header" .CommonPageArgs}}
+<h1>Page not found</h1>
+{{if and .IsWikiPage .CanEdit}}
+    <p><a href="/edit/{{.PageTitle}}">Create it</a></p>
+{{end}}
+{{template "footer" .CommonPageArgs}}

@@ -1,33 +1,4 @@
 {{- /*gotype: github.com/greboid/wiki.RenderPageArgs*/ -}}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>{{.PageTitle}} &middot; Wiki</title>
-        <link rel="stylesheet" href="/res/style.css" type="text/css"/>
-    </head>
-    <body>
-        <nav class="container">
-            <h1>
-                {{.PageTitle}}
-                {{if .CanEdit}}
-                    <small>
-                        <a href="/edit/{{.PageTitle}}">Edit</a>
-                    </small>
-                {{end}}
-            </h1>
-        </nav>
-
-        <main class="container content">
-            {{.PageContent}}
-        </main>
-
-        <footer>
-            <div class="container">
-                Last modified at {{.LastModified.Time.Format "Jan 02, 2006 15:04:05 UTC"}}
-                by {{.LastModified.User}}
-                <a href="/history/{{.PageTitle}}">[History]</a>
-            </div>
-        </footer>
-    </body>
-</html>
+{{template "header" .CommonPageArgs}}
+{{.PageContent}}
+{{template "footer" .CommonPageArgs}}
