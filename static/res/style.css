@@ -46,7 +46,8 @@ input,textarea {
 footer {
     position: absolute;
     bottom: 0;
-    width: 99vw;
+    left: 0;
+    width: 100%;
     margin-bottom: 0;
 }
 
