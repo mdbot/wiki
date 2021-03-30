@@ -126,7 +126,7 @@ func (g *GitBackend) PutPage(title string, content []byte, user string, message 
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(filePath), os.FileMode(0644)); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), os.FileMode(0755)); err != nil {
 		return err
 	}
 
