@@ -148,6 +148,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		page, err := pp.GetPage(pageTitle)
 		if err != nil {
 			notFoundTpl := template.Must(template.ParseFS(templateFs, "404.html"))
+			writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 			writer.WriteHeader(http.StatusNotFound)
 			if err := notFoundTpl.Execute(writer, &RenderPageArgs{
 				PageTitle:  pageTitle,
@@ -167,6 +168,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		}
 
 		renderTpl := template.Must(template.ParseFS(templateFs, "index.html"))
+		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := renderTpl.Execute(writer, RenderPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
@@ -199,6 +201,7 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		}
 
 		editTpl := template.Must(template.ParseFS(templateFs, "edit.html"))
+		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := editTpl.Execute(writer, EditPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
