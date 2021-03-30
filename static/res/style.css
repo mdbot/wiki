@@ -3,6 +3,25 @@
     --linkColour: #1E69CA;
     --footerColour: #6c757d;
     --backgroundColour: #eee;
+    --mainBackgroundcolour: #fff;
+    --foregroundColor: #000;
+    --input-background: #fff;
+    --input-color: #000;
+    --input-border: #5b5b5b;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --divider: #6c757d;
+        --linkColour: #1E69CA;
+        --footerColour: #6c757d;
+        --backgroundColour: #1c1c1c;
+        --mainBackgroundcolour: #1c1c1c;
+        --foregroundColor: #d6d6d6;
+        --input-background: #333333;
+        --input-color: #d6d6d6;
+        --input-border: #5b5b5b;
+    }
 }
 
 html {
@@ -11,27 +30,34 @@ html {
 }
 
 body {
-    padding-top: 40px;
-    padding-bottom: 40px;
+    padding-top: 1.5em;
+    padding-bottom: 1.5em;
     background-color: var(--backgroundColour);
+    color: var(--foregroundColor);
     font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+input,textarea {
+    background-color: var(--input-background);
+    color: var(--input-color);
+    border: 1px solid var(--input-border);
 }
 
 footer {
     position: absolute;
     bottom: 0;
-    width: 100%;
+    width: 99vw;
     margin-bottom: 0;
 }
 
 h1 {
-    margin: 5px 0;
+    margin: 0.5em 0;
 }
 
 .container {
-    width: 80%;
-    padding-right: 15px;
-    padding-left: 15px;
+    width: 80vw;
+    padding-right: 2em;
+    padding-left: 2em;
     margin-right: auto;
     margin-left: auto;
 }
@@ -49,8 +75,8 @@ a, a:hover, a:focus {
 
 main {
     border: 1px solid darkgray;
-    background: white;
-    padding: 10px;
+    background: var(--mainBackgroundcolour);
+    padding: 1em;
 }
 
 .editor #content {
@@ -73,7 +99,7 @@ main {
 
 .editor input, .editor textarea {
     margin: 0;
-    padding: 5px;
+    padding: 0.5em;
 }
 
 .editor textarea {
@@ -92,7 +118,7 @@ main {
     vertical-align: middle;
     cursor: pointer;
     border: 1px solid black;
-    padding: 5px 10px;
+    padding: 0.25em 0.5em;
     font-size: 1rem;
     line-height: 1.5;
     border-radius: .25rem;
