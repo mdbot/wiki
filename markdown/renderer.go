@@ -2,6 +2,7 @@ package markdown
 
 import (
 	"bytes"
+	mathjax "github.com/litao91/goldmark-mathjax"
 	"net/url"
 
 	"github.com/yuin/goldmark"
@@ -24,6 +25,7 @@ func NewRenderer(checker PageChecker, codeStyle string) *Renderer {
 		checker: checker,
 		gm: goldmark.New(
 			goldmark.WithExtensions(
+				mathjax.MathJax,
 				extension.GFM,
 				highlighting.NewHighlighting(highlighting.WithStyle(codeStyle)),
 				newWikiLinks(checker),
