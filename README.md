@@ -18,6 +18,6 @@ All paths are relative to the working directory, in the container this is /
  - <working directory>/templates - Used if you want to overwrite all templates
  - <working directory>/static - Used if you want to overwrite all static content
 
-Docker container
+Docker container~~~~
  - working directory is /
  - runs as user 65532:65532

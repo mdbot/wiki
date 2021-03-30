@@ -30,7 +30,7 @@ var password = flag.String("authpassword", "", "password protecting edit page")
 var realm = flag.String("authrealm", "", "realm protecting edit page.  If unset no auth will be used")
 var mainPage = flag.String("mainpage", "MainPage", "Title of the main page for the wiki")
 var codeStyle = flag.String("codestyle", "monokai", "Style to use for code highlighting. See https://github.com/alecthomas/chroma/tree/master/styles")
-var httpPort = flag.Int("http-port", 8080, "HTTP server port")
+var httpPort = flag.Int("httpport", 8080, "HTTP server port")
 
 func main() {
 	err := envflag.Parse()
