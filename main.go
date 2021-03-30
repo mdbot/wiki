@@ -63,10 +63,10 @@ func main() {
 	router.Use(NewLoggingHandler(os.Stdout))
 	router.Path("/view/").Handler(RedirectMainPageHandler())
 	router.Path("/").Handler(RedirectMainPageHandler())
-	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitPageProvider), staticFiles)).Methods(http.MethodGet)
-	router.PathPrefix("/edit/").Handler(authHandler(NotFoundHandler(SubmitPageHandler(gitPageProvider), staticFiles))).Methods(http.MethodPost)
+	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitPageProvider), templateFiles)).Methods(http.MethodGet)
+	router.PathPrefix("/edit/").Handler(authHandler(NotFoundHandler(SubmitPageHandler(gitPageProvider), templateFiles))).Methods(http.MethodPost)
 	router.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, gitPageProvider)).Methods(http.MethodGet)
-	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), staticFiles))
+	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), templateFiles))
 
 	log.Print("Starting server.")
 	server := http.Server{

@@ -49,28 +49,26 @@ func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
 	}
 }
 
-func NotFoundHandler(h http.Handler, files fs.FS) http.HandlerFunc {
+func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
+	type NotFoundPageArgs struct {
+		PageTitle   string
+		IsWikiPage  bool
+		CanEdit     bool
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		fakeWriter := &notFoundInterceptWriter{realWriter: w}
 		h.ServeHTTP(fakeWriter, r)
 		if fakeWriter.status == http.StatusNotFound {
-			errorFile, err := files.Open("404.html")
-			if err != nil {
-				log.Printf("Unable to output 404: %s", err.Error())
-				http.NotFound(w, r)
-				return
-			}
-			errorbytes, err := io.ReadAll(errorFile)
-			if err != nil {
-				log.Printf("Unable to output 404: %s", err.Error())
-				http.NotFound(w, r)
-				return
-			}
+			notFoundTpl := template.Must(template.ParseFS(templateFs, "404.html"))
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusNotFound)
-			_, err = w.Write(errorbytes)
-			if err != nil {
-				log.Printf("Unable to output 404: %s", err.Error())
+			if err := notFoundTpl.Execute(w, NotFoundPageArgs{
+				PageTitle:  "Page not found",
+				IsWikiPage: false,
+				CanEdit:    false,
+			}); err != nil {
+				log.Printf("Error rendering 404 template: %v\n", err)
 			}
 		}
 	}
@@ -129,6 +127,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		PageTitle    string
 		PageContent  template.HTML
 		CanEdit      bool
+		IsWikiPage   bool
 		LastModified LastModifiedDetails
 	}
 
@@ -148,11 +147,12 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 
 		page, err := pp.GetPage(pageTitle)
 		if err != nil {
-			notFoundTpl := template.Must(template.ParseFS(templateFs, "notfound.html"))
+			notFoundTpl := template.Must(template.ParseFS(templateFs, "404.html"))
 			writer.WriteHeader(http.StatusNotFound)
 			if err := notFoundTpl.Execute(writer, &RenderPageArgs{
-				PageTitle: pageTitle,
-				CanEdit:   true,
+				PageTitle:  pageTitle,
+				CanEdit:    true,
+				IsWikiPage: true,
 			}); err != nil {
 				log.Printf("Error rendering template: %v\n", err)
 			}
@@ -170,6 +170,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 		if err := renderTpl.Execute(writer, RenderPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
+			IsWikiPage:  true,
 			PageContent: template.HTML(b.String()),
 			LastModified: LastModifiedDetails{
 				User: page.LastModified.User,
