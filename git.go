@@ -213,8 +213,8 @@ func resolvePath(base, title string) (string, string, error) {
 
 	parts := strings.Split(p, string(filepath.Separator))
 	for i := range parts {
-		if strings.EqualFold(".git", parts[i]) {
-			return "", "", fmt.Errorf("git directories cannot be written to")
+		if parts[i] == ".git" || parts[i] == ".wiki" {
+			return "", "", fmt.Errorf("attempt to write to reserved directory")
 		}
 	}
 
