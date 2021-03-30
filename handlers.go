@@ -60,16 +60,13 @@ func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 		fakeWriter := &notFoundInterceptWriter{realWriter: w}
 		h.ServeHTTP(fakeWriter, r)
 		if fakeWriter.status == http.StatusNotFound {
-			notFoundTpl := template.Must(template.ParseFS(templateFs, "404.html"))
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusNotFound)
-			if err := notFoundTpl.Execute(w, NotFoundPageArgs{
+
+			renderTemplate(templateFs, "404.html", w, &NotFoundPageArgs{
 				PageTitle:  "Page not found",
 				IsWikiPage: false,
 				CanEdit:    false,
-			}); err != nil {
-				log.Printf("Error rendering 404 template: %v\n", err)
-			}
+			})
 		}
 	}
 }
@@ -168,9 +165,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			return
 		}
 
-		renderTpl := template.Must(template.ParseFS(templateFs, "index.html"))
-		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if err := renderTpl.Execute(writer, RenderPageArgs{
+		renderTemplate(templateFs, "index.html", writer, &RenderPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
 			IsWikiPage:  true,
@@ -179,10 +174,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 				User: page.LastModified.User,
 				Time: page.LastModified.Time,
 			},
-		}); err != nil {
-			// TODO: We should probably send an error to the client
-			log.Printf("Error rendering template: %v\n", err)
-		}
+		})
 	}
 }
 
@@ -201,16 +193,11 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			content = page.Content
 		}
 
-		editTpl := template.Must(template.ParseFS(templateFs, "edit.html"))
-		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if err := editTpl.Execute(writer, EditPageArgs{
+		renderTemplate(templateFs, "edit.html", writer, &EditPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
 			PageContent: content,
-		}); err != nil {
-			// TODO: We should probably send an error to the client
-			log.Printf("Error rendering template: %v\n", err)
-		}
+		})
 	}
 }
 
@@ -256,14 +243,9 @@ func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
 			return
 		}
 
-		editTpl := template.Must(template.ParseFS(templateFs, "list.html"))
-		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if err := editTpl.Execute(writer, ListPagesArgs{
+		renderTemplate(templateFs, "list.html", writer, &ListPagesArgs{
 			Pages: pages,
-		}); err != nil {
-			// TODO: We should probably send an error to the client
-			log.Printf("Error rendering template: %v\n", err)
-		}
+		})
 	}
 }
 
@@ -271,5 +253,14 @@ func RedirectMainPageHandler() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Add("Location", fmt.Sprintf("/view/%s", *mainPage))
 		writer.WriteHeader(http.StatusSeeOther)
+	}
+}
+
+func renderTemplate(fs fs.FS, name string, wr http.ResponseWriter, data interface{}) {
+	tpl := template.Must(template.ParseFS(fs, name))
+	wr.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tpl.Execute(wr, data); err != nil {
+		// TODO: We should probably send an error to the client
+		log.Printf("Error rendering template: %v\n", err)
 	}
 }
