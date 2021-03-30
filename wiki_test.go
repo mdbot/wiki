@@ -80,6 +80,20 @@ func Test_resolvePath(t *testing.T) {
 			"",
 			true,
 		},
+		{
+			"mixed case directory",
+			args{"repo", "Foo/bar"},
+			filepath.Join("repo", "foo", "bar.md"),
+			filepath.Join("foo", "bar.md"),
+			false,
+		},
+		{
+			"mixed case fuke",
+			args{"repo", "foo/Bar"},
+			filepath.Join("repo", "foo", "bar.md"),
+			filepath.Join("foo", "bar.md"),
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

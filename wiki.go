@@ -105,6 +105,7 @@ func (g *GitPageProvider) PutPage(title string, content []byte, user string, mes
 
 func resolvePath(base, title string) (string, string, error) {
 	p := filepath.Clean(filepath.Join(base, fmt.Sprintf("%s.md", title)))
+	p = strings.ToLower(p)
 
 	rel, err := filepath.Rel(base, p)
 	if err != nil || strings.HasPrefix(rel, ".") {
