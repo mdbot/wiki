@@ -1,14 +1,9 @@
-window.MathJax = {
-    chtml: {
-        fontURL: '/mathjax/fonts'
-    }
-};
 (function () {
     if (document.body.textContent.match(/(?:\$|\\\(|\\\[|\\begin\{.*?})/)) {
         if (!window.MathJax) {
             window.MathJax = {
-                tex: {
-                    inlineMath: {'[+]': [['$', '$']]}
+                chtml: {
+                    fontURL: '/mathjax/fonts'
                 }
             };
         }
