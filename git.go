@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-git/go-git/v5/plumbing"
 	"log"
 	"os"
 	"path/filepath"
@@ -59,6 +60,45 @@ func (g *GitBackend) PageExists(path string) bool {
 
 	fi, err := os.Stat(filePath)
 	return err == nil && !fi.IsDir()
+}
+
+func (g *GitBackend) PageHistory(path string, start string, end int) (*History, error) {
+	var history []*LogEntry
+	_, gitPath, err := resolvePath(g.GitDirectory, path)
+	if err != nil {
+		return nil, err
+	}
+	var revision *plumbing.Hash
+	var commitIter object.CommitIter
+	if start == "" {
+		start = "HEAD"
+	}
+	revision, err = g.GitRepo.ResolveRevision(plumbing.Revision(start))
+	if err != nil {
+		return nil, err
+	}
+	commitIter, err = g.GitRepo.Log(&git.LogOptions{
+		From: *revision,
+		PathFilter: func(s string) bool {
+			return s == gitPath
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < end; i++ {
+		commit, err := commitIter.Next()
+		if err != nil {
+			return nil, err
+		}
+		history = append(history, &LogEntry{
+			ChangeId: commit.Hash.String(),
+			User:     commit.Author.Name,
+			Time:     commit.Author.When,
+			Message:  commit.Message,
+		})
+	}
+	return &History{Entries: history}, nil
 }
 
 func (g *GitBackend) GetPage(path string) (*Page, error) {
