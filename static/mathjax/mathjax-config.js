@@ -1,5 +1,5 @@
 (function () {
-    if (document.body.textContent.match(/(?:\$|\\\(|\\\[|\\begin\{.*?})/)) {
+    if (document.body.textContent.match(/\$|\\\(|\\\[|\\begin{.*?}/)) {
         if (!window.MathJax) {
             window.MathJax = {
                 chtml: {
