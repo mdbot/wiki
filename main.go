@@ -14,6 +14,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/greboid/wiki/markdown"
 	"github.com/kouhin/envflag"
 	"github.com/yalue/merged_fs"
 )
@@ -53,6 +54,7 @@ func main() {
 		log.Fatalf("Unable to create default main page: %s", err.Error())
 	}
 
+	renderer := markdown.NewRenderer(gitBackend, *codeStyle)
 	authHandler := BasicAuthFromEnv()
 	router := mux.NewRouter()
 	router.Use(handlers.ProxyHeaders)
@@ -62,7 +64,7 @@ func main() {
 	router.Path("/").Handler(RedirectMainPageHandler())
 	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitBackend), templateFiles)).Methods(http.MethodGet)
 	router.PathPrefix("/edit/").Handler(authHandler(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles))).Methods(http.MethodPost)
-	router.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	router.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
 	router.PathPrefix("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), templateFiles))
 

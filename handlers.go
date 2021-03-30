@@ -1,23 +1,16 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
-	wikilink "github.com/13rac1/goldmark-wikilink"
 	"github.com/gorilla/handlers"
-	"github.com/yuin/goldmark"
-	highlighting "github.com/yuin/goldmark-highlighting"
-	"github.com/yuin/goldmark/extension"
-	"github.com/yuin/goldmark/parser"
 )
 
 type TemplateName string
@@ -130,29 +123,16 @@ type PageProvider interface {
 	GetPage(title string) (*Page, error)
 }
 
-type FileNameNormalizer struct{}
-
-func (_ FileNameNormalizer) Normalize(linkText string) string {
-	return url.PathEscape(linkText)
-}
-
 type RenderPageArgs struct {
 	CommonPageArgs
 	PageContent template.HTML
 }
 
-func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
-	md := goldmark.New(
-		goldmark.WithExtensions(
-			extension.GFM,
-			highlighting.NewHighlighting(
-				highlighting.WithStyle(*codeStyle),
-			),
-			wikilink.New(wikilink.WithFilenameNormalizer(FileNameNormalizer{})),
-		),
-		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
-	)
+type ContentRenderer interface {
+	Render([]byte) (string, error)
+}
 
+func RenderPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		pageTitle := strings.TrimPrefix(request.URL.Path, "/view/")
 
@@ -168,8 +148,8 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			return
 		}
 
-		b := &bytes.Buffer{}
-		if err := md.Convert(page.Content, b); err != nil {
+		content, err := r.Render(page.Content)
+		if err != nil {
 			log.Printf("Failed to render markdown: %v\n", err)
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
@@ -186,7 +166,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 				},
 			},
 
-			PageContent: template.HTML(b.String()),
+			PageContent: template.HTML(content),
 		})
 	}
 }

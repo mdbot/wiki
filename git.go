@@ -51,6 +51,16 @@ func (g *GitBackend) CreateDefaultMainPage() error {
 	return nil
 }
 
+func (g *GitBackend) PageExists(path string) bool {
+	filePath, _, err := resolvePath(g.GitDirectory, path)
+	if err != nil {
+		return false
+	}
+
+	fi, err := os.Stat(filePath)
+	return err == nil && !fi.IsDir()
+}
+
 func (g *GitBackend) GetPage(path string) (*Page, error) {
 	filePath, gitPath, err := resolvePath(g.GitDirectory, path)
 	if err != nil {
