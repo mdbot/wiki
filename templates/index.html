@@ -4,8 +4,6 @@
         <meta charset="utf-8">
         <title>{{.PageTitle}} &middot; Wiki</title>
         <link rel="stylesheet" href="/res/style.css" type="text/css"/>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800" rel="stylesheet" type="text/css">
     </head>
     <body>
         <nav class="container">
@@ -25,13 +23,9 @@
 
         <footer>
             <div class="container">
-                <div class="row">
-                    <div class="col text-right text-muted text-small text-nowrap">
-                        Last modified at {{.LastModified.Time.Format "Jan 02, 2006 15:04:05 UTC"}}
-                        by {{.LastModified.User}}
-                        <a href="/history/{{.PageTitle}}">[History]</a>
-                    </div>
-                </div>
+                Last modified at {{.LastModified.Time.Format "Jan 02, 2006 15:04:05 UTC"}}
+                by {{.LastModified.User}}
+                <a href="/history/{{.PageTitle}}">[History]</a>
             </div>
         </footer>
     </body>

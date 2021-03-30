@@ -1,6 +1,8 @@
 :root {
     --divider: #6c757d;
-    --linkHighlight: #1E69CA;
+    --linkColour: #1E69CA;
+    --footerColour: #6c757d;
+    --backgroundColour: #eee;
 }
 
 html {
@@ -9,10 +11,10 @@ html {
 }
 
 body {
-    font-family:'Open Sans', sans-serif;
     padding-top: 40px;
     padding-bottom: 40px;
-    background-color: #eee !important;
+    background-color: var(--backgroundColour);
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 footer {
@@ -22,13 +24,27 @@ footer {
     margin-bottom: 0;
 }
 
+h1 {
+    margin: 5px 0;
+}
+
+.container {
+    width: 80%;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
 footer .container {
     margin-top: 2em;
     border-top: 1px solid var(--divider);
+    color: var(--footerColour);
+    text-align: right;
 }
 
-footer a, footer a:hover, footer a:focus {
-    color: var(--linkHighlight);
+a, a:hover, a:focus {
+    color: var(--linkColour);
 }
 
 main {
@@ -44,4 +60,40 @@ main {
 
 .editor #message {
     width: 100%;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: inline-block;
+    margin-bottom: .5rem;
+}
+
+.editor input, .editor textarea {
+    margin: 0;
+    padding: 5px;
+}
+
+.editor textarea {
+    overflow: auto;
+    resize: vertical;
+}
+
+.editor input {
+    overflow: visible;
+}
+
+.editor .btn {
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid black;
+    padding: 5px 10px;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
 }
