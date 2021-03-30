@@ -20,6 +20,14 @@ import (
 	"github.com/yuin/goldmark/parser"
 )
 
+type TemplateName string
+const (
+	NotFound TemplateName = "404"
+	EditPage TemplateName = "edit"
+	ViewPage TemplateName = "index"
+	ListPage TemplateName = "list"
+)
+
 type notFoundInterceptWriter struct {
 	realWriter http.ResponseWriter
 	status     int
@@ -58,11 +66,11 @@ func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		fakeWriter := &notFoundInterceptWriter{realWriter: w}
-		h.ServeHTTP(fakeWriter, r)
-		if fakeWriter.status == http.StatusNotFound {
-			w.WriteHeader(http.StatusNotFound)
 
-			renderTemplate(templateFs, "404.html", w, &NotFoundPageArgs{
+		h.ServeHTTP(fakeWriter, r)
+
+		if fakeWriter.status == http.StatusNotFound {
+			renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
 				PageTitle:  "Page not found",
 				IsWikiPage: false,
 				CanEdit:    false,
@@ -145,16 +153,11 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 
 		page, err := pp.GetPage(pageTitle)
 		if err != nil {
-			notFoundTpl := template.Must(template.ParseFS(templateFs, "404.html"))
-			writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-			writer.WriteHeader(http.StatusNotFound)
-			if err := notFoundTpl.Execute(writer, &RenderPageArgs{
+			renderTemplate(templateFs, NotFound, http.StatusNotFound, writer, &RenderPageArgs{
 				PageTitle:  pageTitle,
 				CanEdit:    true,
 				IsWikiPage: true,
-			}); err != nil {
-				log.Printf("Error rendering template: %v\n", err)
-			}
+			})
 			return
 		}
 
@@ -165,7 +168,7 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			return
 		}
 
-		renderTemplate(templateFs, "index.html", writer, &RenderPageArgs{
+		renderTemplate(templateFs, ViewPage, http.StatusOK, writer, &RenderPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
 			IsWikiPage:  true,
@@ -193,7 +196,7 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 			content = page.Content
 		}
 
-		renderTemplate(templateFs, "edit.html", writer, &EditPageArgs{
+		renderTemplate(templateFs, EditPage, http.StatusOK, writer, &EditPageArgs{
 			PageTitle:   pageTitle,
 			CanEdit:     true,
 			PageContent: content,
@@ -243,7 +246,7 @@ func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
 			return
 		}
 
-		renderTemplate(templateFs, "list.html", writer, &ListPagesArgs{
+		renderTemplate(templateFs, ListPage, http.StatusOK, writer, &ListPagesArgs{
 			Pages: pages,
 		})
 	}
@@ -256,9 +259,11 @@ func RedirectMainPageHandler() http.HandlerFunc {
 	}
 }
 
-func renderTemplate(fs fs.FS, name string, wr http.ResponseWriter, data interface{}) {
-	tpl := template.Must(template.ParseFS(fs, name))
+func renderTemplate(fs fs.FS, name TemplateName, statusCode int, wr http.ResponseWriter, data interface{}) {
 	wr.Header().Set("Content-Type", "text/html; charset=utf-8")
+	wr.WriteHeader(statusCode)
+
+	tpl := template.Must(template.ParseFS(fs, fmt.Sprintf("%s.gohtml", name)))
 	if err := tpl.Execute(wr, data); err != nil {
 		// TODO: We should probably send an error to the client
 		log.Printf("Error rendering template: %v\n", err)
