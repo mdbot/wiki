@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -32,6 +33,7 @@ var realm = flag.String("authrealm", "", "realm protecting edit page.  If unset 
 var mainPage = flag.String("mainpage", "MainPage", "Title of the main page for the wiki")
 var codeStyle = flag.String("codestyle", "monokai", "Style to use for code highlighting. See https://github.com/alecthomas/chroma/tree/master/styles")
 var httpPort = flag.Int("httpport", 8080, "HTTP server port")
+var configKey = flag.String("key", "", "Key to use to encrypt config data (32 byes, hex encoded, e.g. from `openssl rand -hex 32`)")
 
 func main() {
 	err := envflag.Parse()
@@ -50,6 +52,28 @@ func main() {
 		log.Fatalf("Unable to open working directory: %s", err.Error())
 	}
 
+	var configStore ConfigStore
+	keyBytes, _ := hex.DecodeString(*configKey)
+	if len(keyBytes) == 32 {
+		var key [32]byte
+		copy(key[:], keyBytes)
+		configStore = &EncryptedConfigStore{
+			key:     key,
+			backend: gitBackend,
+		}
+	} else {
+		configStore = &DummyConfigStore{}
+	}
+
+	userManager, err := NewUserManager(configStore)
+	if err != nil {
+		log.Fatalf("Unable to create user manager: %v", err.Error())
+	}
+
+	if userManager.Empty() && *username != "" && *password != "" {
+		_ = userManager.AddUser("System", *username, *password)
+	}
+
 	if err := gitBackend.CreateDefaultMainPage(); err != nil {
 		log.Fatalf("Unable to create default main page: %s", err.Error())
 	}
@@ -59,6 +83,7 @@ func main() {
 	router := mux.NewRouter()
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
+	router.Use(SessionHandler(userManager, userManager.sessionKey))
 	router.Use(NewLoggingHandler(os.Stdout))
 	router.Path("/view/").Handler(RedirectMainPageHandler())
 	router.Path("/").Handler(RedirectMainPageHandler())

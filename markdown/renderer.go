@@ -2,9 +2,8 @@ package markdown
 
 import (
 	"bytes"
-	mathjax "github.com/litao91/goldmark-mathjax"
-	"net/url"
 
+	mathjax "github.com/litao91/goldmark-mathjax"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
 	"github.com/yuin/goldmark/extension"
@@ -41,10 +40,4 @@ func (r *Renderer) Render(markdown []byte) (string, error) {
 		return "", err
 	}
 	return b.String(), nil
-}
-
-type FileNameNormalizer struct{}
-
-func (_ FileNameNormalizer) Normalize(linkText string) string {
-	return url.PathEscape(linkText)
 }

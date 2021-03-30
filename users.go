@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
+	"io"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -16,26 +17,44 @@ type User struct {
 	Password []byte `yaml:"password"`
 }
 
-type SettingsStore interface {
+type ConfigStore interface {
 	GetSettings(name string, val interface{}) error
-	PutSettings(name string, val interface{}) error
+	PutSettings(name, user, message string, val interface{}) error
 }
 
 type UserManager struct {
-	users map[string]*User
-	store SettingsStore
+	sessionKey []byte
+	users      map[string]*User
+	store      ConfigStore
 }
 
 type UserSettings struct {
+	Key   []byte  `yaml:"session_key"`
 	Users []*User `yaml:"users"`
 }
 
-func NewUserManager(store SettingsStore) (*UserManager, error) {
+func NewUserManager(store ConfigStore) (*UserManager, error) {
 	am := &UserManager{
 		users: map[string]*User{},
 		store: store,
 	}
-	return am, am.load()
+
+	if err := am.load(); err != nil {
+		return nil, err
+	}
+
+	if am.sessionKey == nil || len(am.sessionKey) < 32 {
+		newKey := make([]byte, 32)
+		if _, err := io.ReadFull(rand.Reader, newKey); err != nil {
+			return nil, err
+		}
+	}
+
+	return am, nil
+}
+
+func (a *UserManager) Empty() bool {
+	return len(a.users) == 0
 }
 
 func (a *UserManager) load() error {
@@ -48,16 +67,21 @@ func (a *UserManager) load() error {
 		u := settings.Users[i]
 		a.users[strings.ToLower(u.Name)] = u
 	}
+
+	a.sessionKey = settings.Key
 	return nil
 }
 
-func (a *UserManager) save() error {
-	settings := &UserSettings{}
+func (a *UserManager) save(user, message string) error {
+	settings := &UserSettings{
+		Key: a.sessionKey,
+	}
+
 	for i := range a.users {
 		settings.Users = append(settings.Users, a.users[i])
 	}
 
-	return a.store.PutSettings(userSettingsName, &settings)
+	return a.store.PutSettings(userSettingsName, user, message, &settings)
 }
 
 func (a *UserManager) Authenticate(username, password string) (*User, error) {
@@ -78,8 +102,8 @@ func (a *UserManager) User(username string) *User {
 	return a.users[strings.ToLower(username)]
 }
 
-func (a *UserManager) AddUser(username, password string) error {
-	if _, ok := a.users[strings.ToLower(username)]; ok {
+func (a *UserManager) AddUser(user, newUsername, newPassword string) error {
+	if _, ok := a.users[strings.ToLower(newUsername)]; ok {
 		return fmt.Errorf("user already exists")
 	}
 
@@ -88,19 +112,19 @@ func (a *UserManager) AddUser(username, password string) error {
 		return err
 	}
 
-	salted := append([]byte(password), salt...)
+	salted := append([]byte(newPassword), salt...)
 	hash, err := bcrypt.GenerateFromPassword(salted, bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	a.users[strings.ToLower(username)] = &User{
-		Name:     username,
+	a.users[strings.ToLower(newUsername)] = &User{
+		Name:     newUsername,
 		Salt:     salt,
 		Password: hash,
 	}
 
-	return a.save()
+	return a.save(user, fmt.Sprintf("Adding new user: %s", newUsername))
 }
 
 func (a *UserManager) generateSalt() ([]byte, error) {

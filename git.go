@@ -134,6 +134,11 @@ func (g *GitBackend) GetPage(path string) (*Page, error) {
 	}, nil
 }
 
+func (g *GitBackend) GetConfig(name string) ([]byte, error) {
+	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.yml.enc", name))
+	return os.ReadFile(filePath)
+}
+
 func (g *GitBackend) ListPages() ([]string, error) {
 	pages, err := g.listPages(g.GitDirectory, "")
 	if err != nil {
@@ -176,6 +181,17 @@ func (g *GitBackend) PutPage(title string, content []byte, user string, message 
 		return err
 	}
 
+	return g.writeFile(filePath, gitPath, content, user, message)
+}
+
+func (g *GitBackend) PutConfig(name string, content []byte, user string, message string) error {
+	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.yml.enc", name))
+	gitPath := filepath.Join(".wiki", fmt.Sprintf("%s.yml.enc", name))
+
+	return g.writeFile(filePath, gitPath, content, user, message)
+}
+
+func (g *GitBackend) writeFile(filePath, gitPath string, content []byte, user, message string) error {
 	if err := os.MkdirAll(filepath.Dir(filePath), os.FileMode(0755)); err != nil {
 		return err
 	}
