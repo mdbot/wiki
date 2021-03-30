@@ -57,13 +57,13 @@ func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
 	}
 }
 
-func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
-	type NotFoundPageArgs struct {
-		PageTitle  string
-		IsWikiPage bool
-		CanEdit    bool
-	}
+type NotFoundPageArgs struct {
+	PageTitle  string
+	IsWikiPage bool
+	CanEdit    bool
+}
 
+func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fakeWriter := &notFoundInterceptWriter{realWriter: w}
 
@@ -123,20 +123,20 @@ func (_ FileNameNormalizer) Normalize(linkText string) string {
 	return url.PathEscape(linkText)
 }
 
+type LastModifiedDetails struct {
+	User string
+	Time time.Time
+}
+
+type RenderPageArgs struct {
+	PageTitle    string
+	PageContent  template.HTML
+	CanEdit      bool
+	IsWikiPage   bool
+	LastModified LastModifiedDetails
+}
+
 func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
-	type LastModifiedDetails struct {
-		User string
-		Time time.Time
-	}
-
-	type RenderPageArgs struct {
-		PageTitle    string
-		PageContent  template.HTML
-		CanEdit      bool
-		IsWikiPage   bool
-		LastModified LastModifiedDetails
-	}
-
 	md := goldmark.New(
 		goldmark.WithExtensions(
 			extension.GFM,
@@ -181,13 +181,13 @@ func RenderPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 	}
 }
 
-func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
-	type EditPageArgs struct {
-		PageTitle   string
-		PageContent string
-		CanEdit     bool
-	}
+type EditPageArgs struct {
+	PageTitle   string
+	PageContent string
+	CanEdit     bool
+}
 
+func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		pageTitle := strings.TrimPrefix(request.URL.Path, "/edit/")
 
@@ -233,11 +233,11 @@ type PageLister interface {
 	ListPages() ([]string, error)
 }
 
-func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
-	type ListPagesArgs struct {
-		Pages []string
-	}
+type ListPagesArgs struct {
+	Pages []string
+}
 
+func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		pages, err := pl.ListPages()
 		if err != nil {
