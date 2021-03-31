@@ -1,7 +1,7 @@
 {{- /*gotype: github.com/greboid/wiki.NotFoundPageArgs*/ -}}
 {{template "header" .CommonPageArgs}}
 <h1>Page not found</h1>
-{{if and .IsWikiPage .CanEdit}}
+{{if and .CommonPageArgs.IsWikiPage .CommonPageArgs.Session.CanEdit}}
     <p><a href="/edit/{{.PageTitle}}">Create it</a></p>
 {{end}}
 {{template "footer" .CommonPageArgs}}
