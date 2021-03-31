@@ -9,6 +9,8 @@
     --input-background: #fff;
     --input-color: #000;
     --input-border: #5b5b5b;
+    --error-color: #650f0f;
+    --error-text-color: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +25,8 @@
         --input-background: #333333;
         --input-color: #d6d6d6;
         --input-border: #5b5b5b;
+        --error-color: #650f0f;
+        --error-text-color: #ffffff;
     }
 }
 
@@ -47,6 +51,34 @@ input,textarea {
     background-color: var(--input-background);
     color: var(--input-color);
     border: 1px solid var(--input-border);
+}
+
+header {
+    margin: 1em 0 0.5em 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+aside {
+    position: absolute;
+    top: 0;
+    left: 20vw;
+    width: 60vw;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    text-align: center;
+    padding: 5px;
+}
+
+aside.error {
+    background-color: var(--error-color);
+    color: var(--error-text-color);
 }
 
 footer {
