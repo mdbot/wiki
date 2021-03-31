@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -89,6 +90,9 @@ func (g *GitBackend) PageHistory(path string, start string, end int) (*History, 
 	for i := 0; i < end; i++ {
 		commit, err := commitIter.Next()
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			return nil, err
 		}
 		history = append(history, &LogEntry{
