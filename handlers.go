@@ -129,12 +129,12 @@ func SubmitPageHandler(pe PageEditor) http.HandlerFunc {
 
 		content := request.FormValue("content")
 		message := request.FormValue("message")
-		user := "Anonymoose"
-		if len(*realm) > 0 {
-			user, _, _ = request.BasicAuth()
+		username := "Anonymoose"
+		if user := getUserForRequest(request); user != nil {
+			username = user.Name
 		}
 
-		if err := pe.PutPage(pageTitle, []byte(content), user, message); err != nil {
+		if err := pe.PutPage(pageTitle, []byte(content), username, message); err != nil {
 			// TODO: We should probably send an error to the client
 			log.Printf("Error saving page: %v\n", err)
 		} else {

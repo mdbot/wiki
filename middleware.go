@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"io/fs"
 	"log"
@@ -80,45 +79,23 @@ func getSessionArgs(r *http.Request) SessionArgs {
 	}
 }
 
+func RequireAnyUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if user := getUserForRequest(request); user != nil {
+			next.ServeHTTP(writer, request)
+		} else {
+			writer.WriteHeader(http.StatusForbidden)
+		}
+	})
+}
+
 func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return handlers.LoggingHandler(dst, h)
 	}
 }
 
-func BasicAuthHandler(realm string, credentials map[string]string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			username, password, ok := r.BasicAuth()
-			if !ok {
-				unauthorized(w, realm)
-				return
-			}
-			_, ok = credentials[username]
-			if ok && credentials[username] == password {
-				next.ServeHTTP(w, r)
-				return
-			}
-			unauthorized(w, realm)
-		})
-	}
-}
 
-func BasicAuthFromEnv() func(http.Handler) http.Handler {
-	if *realm == "" {
-		return func(next http.Handler) http.Handler {
-			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				next.ServeHTTP(w, r)
-			})
-		}
-	}
-	return BasicAuthHandler(*realm, map[string]string{*username: *password})
-}
-
-func unauthorized(w http.ResponseWriter, realm string) {
-	w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
-	w.WriteHeader(http.StatusUnauthorized)
-}
 
 type notFoundInterceptWriter struct {
 	realWriter http.ResponseWriter
