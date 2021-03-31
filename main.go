@@ -86,6 +86,7 @@ func main() {
 	router.Use(handlers.CompressHandler)
 	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(NewLoggingHandler(os.Stdout))
+	router.Use(LowerCaseCanonical)
 	router.Path("/view/").Handler(RedirectMainPageHandler())
 	router.Path("/").Handler(RedirectMainPageHandler())
 	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitBackend), templateFiles)).Methods(http.MethodGet)

@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/sessions"
@@ -135,4 +136,14 @@ func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 			})
 		}
 	}
+}
+
+func LowerCaseCanonical(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if strings.ToLower(request.RequestURI) != request.RequestURI {
+			http.Redirect(writer, request, strings.ToLower(request.RequestURI), http.StatusPermanentRedirect)
+		} else {
+			next.ServeHTTP(writer, request)
+		}
+	})
 }
