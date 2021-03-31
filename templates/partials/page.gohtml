@@ -13,7 +13,7 @@
                 {{.PageTitle}}
             </h1>
             <nav>
-                {{if and .IsWikiPage .CanEdit}}
+                {{if and .IsWikiPage .Session.CanEdit}}
                     <a href="/edit/{{.PageTitle}}">Edit</a>
                 {{end}}
                 {{if .IsWikiPage}}
@@ -21,8 +21,8 @@
                 {{end}}
             </nav>
             <div class="login">
-                {{if .User}}
-                    Logged in as {{.User.Name}}
+                {{if .Session.User}}
+                    Logged in as {{.Session.User.Name}}
                 {{else}}
                     <form action="/wiki/login" method="post">
                         <input type="hidden" name="redirect" value="/view/MainPage">
@@ -34,8 +34,8 @@
             </div>
         </header>
 
-        {{if .Error}}
-            <aside class="error">{{.Error}}</aside>
+        {{if .Session.Error}}
+            <aside class="error">{{.Session.Error}}</aside>
         {{end}}
 
         <main class="container content">

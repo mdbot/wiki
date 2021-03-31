@@ -21,18 +21,22 @@ const (
 	ListPage TemplateName = "list"
 )
 
+type CommonPageArgs struct {
+	Session      SessionArgs
+	PageTitle    string
+	IsWikiPage   bool
+	LastModified *LastModifiedDetails
+}
+
+type SessionArgs struct {
+	CanEdit bool
+	Error   string
+	User    *User
+}
+
 type LastModifiedDetails struct {
 	User string
 	Time time.Time
-}
-
-type CommonPageArgs struct {
-	PageTitle    string
-	IsWikiPage   bool
-	CanEdit      bool
-	Error        string
-	User         *User
-	LastModified *LastModifiedDetails
 }
 
 type PageProvider interface {
@@ -60,10 +64,8 @@ func RenderPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) htt
 		if err != nil {
 			renderTemplate(templateFs, NotFound, http.StatusNotFound, writer, &NotFoundPageArgs{
 				CommonPageArgs: CommonPageArgs{
+					Session:    getSessionArgs(request),
 					PageTitle:  pageTitle,
-					Error: getErrorForRequest(request),
-					User: getUserForRequest(request),
-					CanEdit:    true,
 					IsWikiPage: true,
 				},
 			})
@@ -79,10 +81,8 @@ func RenderPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) htt
 
 		renderTemplate(templateFs, ViewPage, http.StatusOK, writer, &RenderPageArgs{
 			CommonPageArgs: CommonPageArgs{
+				Session:    getSessionArgs(request),
 				PageTitle:  pageTitle,
-				Error: getErrorForRequest(request),
-				User: getUserForRequest(request),
-				CanEdit:    true,
 				IsWikiPage: true,
 				LastModified: &LastModifiedDetails{
 					User: page.LastModified.User,
@@ -111,9 +111,8 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 
 		renderTemplate(templateFs, EditPage, http.StatusOK, writer, &EditPageArgs{
 			CommonPageArgs: CommonPageArgs{
+				Session:   getSessionArgs(request),
 				PageTitle: pageTitle,
-				Error: getErrorForRequest(request),
-				User: getUserForRequest(request),
 			},
 			PageContent: content,
 		})
@@ -165,11 +164,8 @@ func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
 
 		renderTemplate(templateFs, ListPage, http.StatusOK, writer, &ListPagesArgs{
 			CommonPageArgs: CommonPageArgs{
-				PageTitle:  "Index",
-				Error: getErrorForRequest(request),
-				User: getUserForRequest(request),
-				IsWikiPage: false,
-				CanEdit:    false,
+				Session:   getSessionArgs(request),
+				PageTitle: "Index",
 			},
 			Pages: pages,
 		})

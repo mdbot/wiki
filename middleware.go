@@ -62,13 +62,22 @@ func putSession(store sessions.Store, w http.ResponseWriter, r *http.Request, ke
 }
 
 func getUserForRequest(r *http.Request) *User {
-	v, _ :=  r.Context().Value(contextUserKey).(*User)
+	v, _ := r.Context().Value(contextUserKey).(*User)
 	return v
 }
 
 func getErrorForRequest(r *http.Request) string {
 	v, _ := r.Context().Value(contextErrorKey).(string)
 	return v
+}
+
+func getSessionArgs(r *http.Request) SessionArgs {
+	user := getUserForRequest(r)
+	return SessionArgs{
+		CanEdit: user != nil,
+		Error:   getErrorForRequest(r),
+		User:    user,
+	}
 }
 
 func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
@@ -134,7 +143,6 @@ func (w *notFoundInterceptWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-
 func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fakeWriter := &notFoundInterceptWriter{realWriter: w}
@@ -144,11 +152,8 @@ func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 		if fakeWriter.status == http.StatusNotFound {
 			renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
 				CommonPageArgs{
-					PageTitle:  "Page not found",
-					Error: getErrorForRequest(r),
-					User: getUserForRequest(r),
-					IsWikiPage: false,
-					CanEdit:    false,
+					Session:   getSessionArgs(r),
+					PageTitle: "Page not found",
 				},
 			})
 		}
