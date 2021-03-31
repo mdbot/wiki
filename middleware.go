@@ -16,8 +16,10 @@ const (
 	sessionName     = "wiki"
 	sessionUserKey  = "user"
 	sessionErrorKey = "error"
-	contextUserKey  = "user"
-	contextErrorKey = "error"
+
+	contextUserKey    = "user"
+	contextErrorKey   = "error"
+	contextSessionKey = "session"
 )
 
 type UserProvider interface {
@@ -40,12 +42,14 @@ func SessionHandler(up UserProvider, store sessions.Store) func(http.Handler) ht
 				request = request.WithContext(context.WithValue(request.Context(), contextErrorKey, e))
 			}
 
+			request = request.WithContext(context.WithValue(request.Context(), contextSessionKey, s))
+
 			next.ServeHTTP(writer, request)
 		})
 	}
 }
 
-func putSession(store sessions.Store, w http.ResponseWriter, r *http.Request, key string, value interface{}) {
+func putSessionKey(store sessions.Store, w http.ResponseWriter, r *http.Request, key string, value interface{}) {
 	s, _ := store.Get(r, sessionName)
 	s.Values[key] = value
 
@@ -58,7 +62,6 @@ func putSession(store sessions.Store, w http.ResponseWriter, r *http.Request, ke
 	if err := store.Save(r, w, s); err != nil {
 		log.Printf("Unable to save session: %v", err)
 	}
-
 }
 
 func getUserForRequest(r *http.Request) *User {
@@ -71,11 +74,30 @@ func getErrorForRequest(r *http.Request) string {
 	return v
 }
 
-func getSessionArgs(r *http.Request) SessionArgs {
+func getSessionForRequest(r *http.Request) *sessions.Session {
+	v, _ := r.Context().Value(contextSessionKey).(*sessions.Session)
+	return v
+}
+
+func clearSessionKey(w http.ResponseWriter, r *http.Request, key string) {
+	s := getSessionForRequest(r)
+	if s != nil {
+		delete(s.Values, key)
+		_ = s.Save(r, w)
+	}
+}
+
+func getSessionArgs(w http.ResponseWriter, r *http.Request) SessionArgs {
 	user := getUserForRequest(r)
+	e := getErrorForRequest(r)
+
+	if e != "" {
+		clearSessionKey(w, r, sessionErrorKey)
+	}
+
 	return SessionArgs{
 		CanEdit: user != nil,
-		Error:   getErrorForRequest(r),
+		Error:   e,
 		User:    user,
 	}
 }
@@ -95,8 +117,6 @@ func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
 		return handlers.LoggingHandler(dst, h)
 	}
 }
-
-
 
 type notFoundInterceptWriter struct {
 	realWriter http.ResponseWriter
@@ -130,7 +150,7 @@ func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
 		if fakeWriter.status == http.StatusNotFound {
 			renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
 				CommonPageArgs{
-					Session:   getSessionArgs(r),
+					Session:   getSessionArgs(w, r),
 					PageTitle: "Page not found",
 				},
 			})

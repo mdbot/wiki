@@ -64,7 +64,7 @@ func RenderPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) htt
 		if err != nil {
 			renderTemplate(templateFs, NotFound, http.StatusNotFound, writer, &NotFoundPageArgs{
 				CommonPageArgs: CommonPageArgs{
-					Session:    getSessionArgs(request),
+					Session:    getSessionArgs(writer, request),
 					PageTitle:  pageTitle,
 					IsWikiPage: true,
 				},
@@ -81,7 +81,7 @@ func RenderPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) htt
 
 		renderTemplate(templateFs, ViewPage, http.StatusOK, writer, &RenderPageArgs{
 			CommonPageArgs: CommonPageArgs{
-				Session:    getSessionArgs(request),
+				Session:    getSessionArgs(writer, request),
 				PageTitle:  pageTitle,
 				IsWikiPage: true,
 				LastModified: &LastModifiedDetails{
@@ -111,7 +111,7 @@ func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
 
 		renderTemplate(templateFs, EditPage, http.StatusOK, writer, &EditPageArgs{
 			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(request),
+				Session:   getSessionArgs(writer, request),
 				PageTitle: pageTitle,
 			},
 			PageContent: content,
@@ -164,7 +164,7 @@ func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
 
 		renderTemplate(templateFs, ListPage, http.StatusOK, writer, &ListPagesArgs{
 			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(request),
+				Session:   getSessionArgs(writer, request),
 				PageTitle: "Index",
 			},
 			Pages: pages,
@@ -196,11 +196,11 @@ func LoginHandler(store sessions.Store, auth Authenticator) http.HandlerFunc {
 
 		user, err := auth.Authenticate(username, password)
 		if err != nil {
-			putSession(store, writer, request, sessionErrorKey, fmt.Sprintf("Failed to login: %v", err))
+			putSessionKey(store, writer, request, sessionErrorKey, fmt.Sprintf("Failed to login: %v", err))
 			writer.Header().Set("location", redirect)
 			writer.WriteHeader(http.StatusSeeOther)
 		} else {
-			putSession(store, writer, request, sessionUserKey, user.Name)
+			putSessionKey(store, writer, request, sessionUserKey, user.Name)
 			writer.Header().Set("location", redirect)
 			writer.WriteHeader(http.StatusSeeOther)
 		}
