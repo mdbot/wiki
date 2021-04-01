@@ -1,23 +1,29 @@
 # Wiki
 
-Stores data in git
+Stores data in git.
 
-Supports basic auth for editing from either CLI arguments
-   - -authrealm 
-   - -authusername 
-   - -authpassword
+## Encryption key
 
-or from environment variables 
-   - AUTHREALM 
-   - AUTHUSERNAME 
-   - AUTHPASSWORD
+In order to persist settings (user accounts, session keys, CSRF tokens),
+you must provide an encryption key either as a CLI argument (`-key`) or
+an environment variable (`KEY`). The key should be 32 bytes and
+hex-encoded; you can generate such a key using `openssl rand -hex 32`.
+
+## User accounts
+
+You can specify a default username and password using the `username`
+and `password` CLI flags, or the `USERNAME` and `PASSWORD` env vars.
+These will be used to create a new user if no others exist.
+
+## Directories
 
 All paths are relative to the working directory, in the container this is /
 
  - <working directory>/data - Used to store data
- - <working directory>/templates - Used if you want to overwrite all templates
- - <working directory>/static - Used if you want to overwrite all static content
+ - <working directory>/templates - Used to provide custom templates
+ - <working directory>/static - Used to provide custom static content
 
-Docker container
+## Docker
+
  - working directory is /
  - runs as user 65532:65532
