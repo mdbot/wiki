@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greboid/wiki/config"
+	"github.com/mdbot/wiki/config"
 )
 
 type TemplateName string

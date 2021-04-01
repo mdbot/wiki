@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/sessions"
-	"github.com/greboid/wiki/config"
+	"github.com/mdbot/wiki/config"
 )
 
 const (

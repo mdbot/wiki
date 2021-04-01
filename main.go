@@ -16,9 +16,9 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/greboid/wiki/config"
-	"github.com/greboid/wiki/markdown"
 	"github.com/kouhin/envflag"
+	"github.com/mdbot/wiki/config"
+	"github.com/mdbot/wiki/markdown"
 	"github.com/yalue/merged_fs"
 )
 
