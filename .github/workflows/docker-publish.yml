@@ -7,7 +7,7 @@ on:
     tags:
       - v*
 env:
-  IMAGE_NAME: greboid/wiki
+  IMAGE_NAME: mdbot/wiki
 
 jobs:
   push:
