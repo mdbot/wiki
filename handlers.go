@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
+	"github.com/greboid/wiki/config"
 )
 
 type TemplateName string
@@ -32,7 +33,7 @@ type CommonPageArgs struct {
 type SessionArgs struct {
 	CanEdit bool
 	Error   string
-	User    *User
+	User    *config.User
 }
 
 type LastModifiedDetails struct {
@@ -262,7 +263,7 @@ func RedirectMainPageHandler() http.HandlerFunc {
 }
 
 type Authenticator interface {
-	Authenticate(username, password string) (*User, error)
+	Authenticate(username, password string) (*config.User, error)
 }
 
 func LoginHandler(store sessions.Store, auth Authenticator) http.HandlerFunc {

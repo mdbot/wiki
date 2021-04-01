@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"encoding/hex"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -16,6 +15,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"github.com/greboid/wiki/config"
 	"github.com/greboid/wiki/markdown"
 	"github.com/kouhin/envflag"
 	"github.com/yalue/merged_fs"
@@ -52,20 +52,8 @@ func main() {
 		log.Fatalf("Unable to open working directory: %s", err.Error())
 	}
 
-	var configStore ConfigStore
-	keyBytes, _ := hex.DecodeString(*configKey)
-	if len(keyBytes) == 32 {
-		var key [32]byte
-		copy(key[:], keyBytes)
-		configStore = &EncryptedConfigStore{
-			key:     key,
-			backend: gitBackend,
-		}
-	} else {
-		configStore = &DummyConfigStore{}
-	}
-
-	userManager, err := NewUserManager(configStore)
+	configStore := config.NewStore(gitBackend, *configKey)
+	userManager, err := config.NewUserManager(configStore)
 	if err != nil {
 		log.Fatalf("Unable to create user manager: %v", err.Error())
 	}
@@ -78,7 +66,7 @@ func main() {
 		log.Fatalf("Unable to create default main page: %s", err.Error())
 	}
 
-	sessionStore := sessions.NewCookieStore(userManager.sessionKey)
+	sessionStore := sessions.NewCookieStore(userManager.SessionKey())
 
 	renderer := markdown.NewRenderer(gitBackend, *codeStyle)
 	router := mux.NewRouter()

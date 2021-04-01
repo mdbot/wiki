@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"crypto/rand"
@@ -17,15 +17,10 @@ type User struct {
 	Password []byte
 }
 
-type ConfigStore interface {
-	GetSettings(name string, val interface{}) error
-	PutSettings(name, user, message string, val interface{}) error
-}
-
 type UserManager struct {
 	sessionKey []byte
 	users      map[string]*User
-	store      ConfigStore
+	store      Store
 }
 
 type UserSettings struct {
@@ -33,7 +28,7 @@ type UserSettings struct {
 	Users []*User
 }
 
-func NewUserManager(store ConfigStore) (*UserManager, error) {
+func NewUserManager(store Store) (*UserManager, error) {
 	am := &UserManager{
 		users: map[string]*User{},
 		store: store,
@@ -56,6 +51,10 @@ func NewUserManager(store ConfigStore) (*UserManager, error) {
 
 func (a *UserManager) Empty() bool {
 	return len(a.users) == 0
+}
+
+func (a *UserManager) SessionKey() []byte {
+	return a.sessionKey
 }
 
 func (a *UserManager) load() error {

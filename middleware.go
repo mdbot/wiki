@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/sessions"
+	"github.com/greboid/wiki/config"
 )
 
 const (
@@ -23,7 +24,7 @@ const (
 )
 
 type UserProvider interface {
-	User(string) *User
+	User(string) *config.User
 }
 
 func SessionHandler(up UserProvider, store sessions.Store) func(http.Handler) http.Handler {
@@ -64,8 +65,8 @@ func putSessionKey(store sessions.Store, w http.ResponseWriter, r *http.Request,
 	}
 }
 
-func getUserForRequest(r *http.Request) *User {
-	v, _ := r.Context().Value(contextUserKey).(*User)
+func getUserForRequest(r *http.Request) *config.User {
+	v, _ := r.Context().Value(contextUserKey).(*config.User)
 	return v
 }
 
