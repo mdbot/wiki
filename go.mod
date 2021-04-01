@@ -1,4 +1,4 @@
-module github.com/greboid/wiki
+module github.com/mdbot/wiki
 
 go 1.16
 
