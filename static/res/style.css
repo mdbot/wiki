@@ -169,3 +169,6 @@ main {
 .commitish {
     font-family: monospace;
 }
+.math {
+    visibility: hidden;
+}
