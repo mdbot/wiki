@@ -88,6 +88,7 @@ func main() {
 	router.PathPrefix("/edit/").Handler(RequireAnyUser(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles))).Methods(http.MethodPost)
 	router.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
 	router.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	router.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
 	router.Path("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	router.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
 	router.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)

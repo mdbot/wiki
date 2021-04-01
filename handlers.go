@@ -6,7 +6,9 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"mime"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -361,6 +363,40 @@ func UploadFormHandler(templateFs fs.FS) http.HandlerFunc {
 			},
 		})
 	}
+}
+
+type FileProvider interface {
+	GetFile(name string) (io.ReadCloser, error)
+}
+
+func FileHandler(provider FileProvider) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		name := strings.TrimPrefix(request.URL.Path, "/file/")
+		reader, err := provider.GetFile(name)
+		if err != nil {
+			writer.WriteHeader(http.StatusNotFound)
+			return
+		}
+		defer reader.Close()
+
+		mimeType := mime.TypeByExtension(filepath.Ext(name))
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+
+		writer.Header().Add("Content-Type", mimeType)
+		writer.Header().Add("X-Content-Type-Options", "nosniff")
+		if !canEmbed(mimeType) {
+			writer.Header().Add("Content-Disposition", "attachment")
+		}
+		_, _ = io.Copy(writer, reader)
+	}
+}
+
+func canEmbed(mimeType string) bool {
+	return strings.HasPrefix(mimeType, "image/") ||
+		strings.HasPrefix(mimeType, "video/") ||
+		strings.HasPrefix(mimeType, "audio/")
 }
 
 func renderTemplate(fs fs.FS, name TemplateName, statusCode int, wr http.ResponseWriter, data interface{}) {
