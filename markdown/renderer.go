@@ -28,6 +28,7 @@ func NewRenderer(checker PageChecker, codeStyle string) *Renderer {
 				extension.GFM,
 				highlighting.NewHighlighting(highlighting.WithStyle(codeStyle)),
 				newWikiLinks(checker),
+				newEmbedExtension(),
 			),
 			goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		),
