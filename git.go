@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -185,24 +186,35 @@ func (g *GitBackend) PutPage(title string, content []byte, user string, message 
 		return err
 	}
 
-	return g.writeFile(filePath, gitPath, content, user, message)
+	return g.writeFile(filePath, gitPath, bytes.NewReader(content), user, message)
 }
 
 func (g *GitBackend) PutConfig(name string, content []byte, user string, message string) error {
 	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.json.enc", name))
 	gitPath := filepath.Join(".wiki", fmt.Sprintf("%s.json.enc", name))
 
-	return g.writeFile(filePath, gitPath, content, user, message)
+	return g.writeFile(filePath, gitPath, bytes.NewReader(content), user, message)
 }
 
-func (g *GitBackend) writeFile(filePath, gitPath string, content []byte, user, message string) error {
+func (g *GitBackend) writeFile(filePath, gitPath string, content io.Reader, user, message string) error {
 	if err := os.MkdirAll(filepath.Dir(filePath), os.FileMode(0755)); err != nil {
 		return err
 	}
 
-	if err := os.WriteFile(filePath, content, os.FileMode(0644)); err != nil {
+	f, err := os.Create(filePath)
+	if err != nil {
 		return err
 	}
+
+	if _, err := io.Copy(f, content); err != nil {
+		_ = f.Close()
+		return err
+	}
+
+	if err := f.Close(); err != nil {
+		return err
+	}
+
 	worktree, err := g.GitRepo.Worktree()
 	if err != nil {
 		return err
