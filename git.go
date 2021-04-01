@@ -53,8 +53,8 @@ func (g *GitBackend) CreateDefaultMainPage() error {
 	return nil
 }
 
-func (g *GitBackend) PageExists(path string) bool {
-	filePath, _, err := resolvePath(g.GitDirectory, path)
+func (g *GitBackend) PageExists(title string) bool {
+	filePath, _, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return false
 	}
@@ -63,9 +63,9 @@ func (g *GitBackend) PageExists(path string) bool {
 	return err == nil && !fi.IsDir()
 }
 
-func (g *GitBackend) PageHistory(path string, start string, end int) (*History, error) {
+func (g *GitBackend) PageHistory(title string, start string, end int) (*History, error) {
 	var history []*LogEntry
-	_, gitPath, err := resolvePath(g.GitDirectory, path)
+	_, gitPath, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return nil, err
 	}
@@ -105,8 +105,8 @@ func (g *GitBackend) PageHistory(path string, start string, end int) (*History, 
 	return &History{Entries: history}, nil
 }
 
-func (g *GitBackend) GetPage(path string) (*Page, error) {
-	filePath, gitPath, err := resolvePath(g.GitDirectory, path)
+func (g *GitBackend) GetPage(title string) (*Page, error) {
+	filePath, gitPath, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (g *GitBackend) listPages(dir string, prefix string) ([]string, error) {
 }
 
 func (g *GitBackend) PutPage(title string, content []byte, user string, message string) error {
-	filePath, gitPath, err := resolvePath(g.GitDirectory, title)
+	filePath, gitPath, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return err
 	}
@@ -222,8 +222,8 @@ func (g *GitBackend) writeFile(filePath, gitPath string, content []byte, user, m
 	return err
 }
 
-func resolvePath(base, title string) (string, string, error) {
-	p := filepath.Clean(filepath.Join(base, fmt.Sprintf("%s.md", title)))
+func resolvePath(base, name string) (string, string, error) {
+	p := filepath.Clean(filepath.Join(base, name))
 	p = strings.ToLower(p)
 
 	rel, err := filepath.Rel(base, p)
