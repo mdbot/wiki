@@ -139,6 +139,15 @@ func (g *GitBackend) GetPage(title string) (*Page, error) {
 	}, nil
 }
 
+func (g *GitBackend) GetFile(name string) (io.ReadCloser, error) {
+	filePath, _, err := resolvePath(g.GitDirectory, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return os.Open(filePath)
+}
+
 func (g *GitBackend) GetConfig(name string) ([]byte, error) {
 	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.json.enc", name))
 	return os.ReadFile(filePath)
@@ -187,6 +196,17 @@ func (g *GitBackend) PutPage(title string, content []byte, user string, message 
 	}
 
 	return g.writeFile(filePath, gitPath, bytes.NewReader(content), user, message)
+}
+
+func (g *GitBackend) PutFile(name string, content io.ReadCloser, user string, message string) error {
+	defer content.Close()
+
+	filePath, gitPath, err := resolvePath(g.GitDirectory, name)
+	if err != nil {
+		return err
+	}
+
+	return g.writeFile(filePath, gitPath, content, user, message)
 }
 
 func (g *GitBackend) PutConfig(name string, content []byte, user string, message string) error {
