@@ -25,7 +25,8 @@
                     Logged in as {{.Session.User.Name}}
                 {{else}}
                     <form action="/wiki/login" method="post">
-                        <input type="hidden" name="redirect" value="/view/MainPage">
+                        {{.Session.CsrfField}}
+                        <input type="hidden" name="redirect" value="{{.Session.RequestedUrl}}">
                         <input type="text" name="username" placeholder="Username">
                         <input type="password" name="password" placeholder="Password">
                         <input type="submit" value="Login">

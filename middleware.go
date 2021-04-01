@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/sessions"
 	"github.com/greboid/wiki/config"
@@ -97,9 +98,11 @@ func getSessionArgs(w http.ResponseWriter, r *http.Request) SessionArgs {
 	}
 
 	return SessionArgs{
-		CanEdit: user != nil,
-		Error:   e,
-		User:    user,
+		CanEdit:      user != nil,
+		Error:        e,
+		User:         user,
+		CsrfField:    csrf.TemplateField(r),
+		RequestedUrl: r.URL.String(),
 	}
 }
 

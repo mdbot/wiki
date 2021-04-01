@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -62,11 +63,16 @@ func main() {
 		_ = userManager.AddUser("System", *username, *password)
 	}
 
+	secrets, err := config.LoadSecrets(configStore)
+	if err != nil {
+		log.Fatalf("Unable to initialise secrets: %v", err.Error())
+	}
+
 	if err := gitBackend.CreateDefaultMainPage(); err != nil {
 		log.Fatalf("Unable to create default main page: %s", err.Error())
 	}
 
-	sessionStore := sessions.NewCookieStore(userManager.SessionKey())
+	sessionStore := sessions.NewCookieStore(secrets.SessionKey)
 
 	renderer := markdown.NewRenderer(gitBackend, *codeStyle)
 	router := mux.NewRouter()
@@ -75,6 +81,7 @@ func main() {
 	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(NewLoggingHandler(os.Stdout))
 	router.Use(LowerCaseCanonical)
+	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
 	router.Path("/view/").Handler(RedirectMainPageHandler())
 	router.Path("/").Handler(RedirectMainPageHandler())
 	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitBackend), templateFiles)).Methods(http.MethodGet)

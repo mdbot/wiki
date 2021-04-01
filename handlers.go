@@ -31,9 +31,11 @@ type CommonPageArgs struct {
 }
 
 type SessionArgs struct {
-	CanEdit bool
-	Error   string
-	User    *config.User
+	CanEdit      bool
+	Error        string
+	User         *config.User
+	CsrfField    template.HTML
+	RequestedUrl string
 }
 
 type LastModifiedDetails struct {

@@ -3,7 +3,6 @@ package config
 import (
 	"crypto/rand"
 	"fmt"
-	"io"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -18,13 +17,11 @@ type User struct {
 }
 
 type UserManager struct {
-	sessionKey []byte
 	users      map[string]*User
 	store      Store
 }
 
 type UserSettings struct {
-	Key   []byte
 	Users []*User
 }
 
@@ -38,23 +35,11 @@ func NewUserManager(store Store) (*UserManager, error) {
 		return nil, err
 	}
 
-	if am.sessionKey == nil || len(am.sessionKey) < 32 {
-		newKey := make([]byte, 32)
-		if _, err := io.ReadFull(rand.Reader, newKey); err != nil {
-			return nil, err
-		}
-		am.sessionKey = newKey
-	}
-
 	return am, nil
 }
 
 func (a *UserManager) Empty() bool {
 	return len(a.users) == 0
-}
-
-func (a *UserManager) SessionKey() []byte {
-	return a.sessionKey
 }
 
 func (a *UserManager) load() error {
@@ -68,14 +53,11 @@ func (a *UserManager) load() error {
 		a.users[strings.ToLower(u.Name)] = u
 	}
 
-	a.sessionKey = settings.Key
 	return nil
 }
 
 func (a *UserManager) save(user, message string) error {
-	settings := &UserSettings{
-		Key: a.sessionKey,
-	}
+	settings := &UserSettings{}
 
 	for i := range a.users {
 		settings.Users = append(settings.Users, a.users[i])

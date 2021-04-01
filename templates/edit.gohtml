@@ -1,6 +1,8 @@
 {{- /*gotype: github.com/greboid/wiki.EditPageArgs*/ -}}
 {{template "header" .CommonPageArgs}}
 <form action="/edit/{{.PageTitle}}" method="post" class="editor">
+    {{.Session.CsrfField}}
+
     <div class="form-group">
         <label for="content">Page content:</label>
         <textarea id="content" name="content">{{.PageContent}}</textarea>

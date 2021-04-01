@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/go-git/go-git/v5 v5.3.0
+	github.com/gorilla/csrf v1.7.0 // indirect
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
