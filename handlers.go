@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -20,6 +21,7 @@ const (
 	HistoryPage TemplateName = "history"
 	ViewPage    TemplateName = "index"
 	ListPage    TemplateName = "list"
+	UploadPage  TemplateName = "upload"
 )
 
 type CommonPageArgs struct {
@@ -301,6 +303,63 @@ func LogoutHandler() http.HandlerFunc {
 		clearSessionKey(writer, request, sessionUserKey)
 		writer.Header().Set("location", redirect)
 		writer.WriteHeader(http.StatusSeeOther)
+	}
+}
+
+type FileStore interface {
+	PutFile(name string, content io.ReadCloser, user string, message string) error
+}
+
+func UploadHandler(store FileStore) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		if err := request.ParseMultipartForm(1 << 30); err != nil {
+			log.Printf("Upload failed: couldn't parse multipart data: %v", err)
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		file, _, err := request.FormFile("file")
+		if err != nil {
+			log.Printf("Upload failed: couldn't read file: %v", err)
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		name := request.FormValue("name")
+		if name == "" || !strings.ContainsRune(name, '.') {
+			log.Printf("Upload failed: invalid file name specified: %v", name)
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		message := request.FormValue("message")
+		username := "Anonymoose"
+		if user := getUserForRequest(request); user != nil {
+			username = user.Name
+		}
+
+		if err := store.PutFile(name, file, username, message); err != nil {
+			log.Printf("Upload failed: couldn't save file: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		writer.WriteHeader(http.StatusNoContent)
+	}
+}
+
+type UploadPageArgs struct {
+	CommonPageArgs
+}
+
+func UploadFormHandler(templateFs fs.FS) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		renderTemplate(templateFs, UploadPage, http.StatusOK, writer, &UploadPageArgs{
+			CommonPageArgs: CommonPageArgs{
+				Session:   getSessionArgs(writer, request),
+				PageTitle: "Upload file",
+			},
+		})
 	}
 }
 
