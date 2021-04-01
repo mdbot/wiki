@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/sessions"
 	"github.com/greboid/wiki/config"
 )
 
@@ -268,7 +267,7 @@ type Authenticator interface {
 	Authenticate(username, password string) (*config.User, error)
 }
 
-func LoginHandler(store sessions.Store, auth Authenticator) http.HandlerFunc {
+func LoginHandler(auth Authenticator) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		username := request.FormValue("username")
 		password := request.FormValue("password")
@@ -281,14 +280,27 @@ func LoginHandler(store sessions.Store, auth Authenticator) http.HandlerFunc {
 
 		user, err := auth.Authenticate(username, password)
 		if err != nil {
-			putSessionKey(store, writer, request, sessionErrorKey, fmt.Sprintf("Failed to login: %v", err))
-			writer.Header().Set("location", redirect)
-			writer.WriteHeader(http.StatusSeeOther)
+			putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Failed to login: %v", err))
 		} else {
-			putSessionKey(store, writer, request, sessionUserKey, user.Name)
-			writer.Header().Set("location", redirect)
-			writer.WriteHeader(http.StatusSeeOther)
+			putSessionKey(writer, request, sessionUserKey, user.Name)
 		}
+		writer.Header().Set("location", redirect)
+		writer.WriteHeader(http.StatusSeeOther)
+	}
+}
+
+func LogoutHandler() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		redirect := request.FormValue("redirect")
+
+		// Only allow relative redirects
+		if !strings.HasPrefix(redirect, "/") || strings.HasPrefix(redirect, "//") {
+			redirect = "/"
+		}
+
+		clearSessionKey(writer, request, sessionUserKey)
+		writer.Header().Set("location", redirect)
+		writer.WriteHeader(http.StatusSeeOther)
 	}
 }
 

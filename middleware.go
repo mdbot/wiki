@@ -51,18 +51,19 @@ func SessionHandler(up UserProvider, store sessions.Store) func(http.Handler) ht
 	}
 }
 
-func putSessionKey(store sessions.Store, w http.ResponseWriter, r *http.Request, key string, value interface{}) {
-	s, _ := store.Get(r, sessionName)
-	s.Values[key] = value
+func putSessionKey(w http.ResponseWriter, r *http.Request, key string, value interface{}) {
+	if s := getSessionForRequest(r); s != nil {
+		s.Values[key] = value
 
-	if s.IsNew {
-		s.Options.HttpOnly = true
-		s.Options.SameSite = http.SameSiteStrictMode
-		s.Options.MaxAge = 60 * 60 * 24 * 31
-	}
+		if s.IsNew {
+			s.Options.HttpOnly = true
+			s.Options.SameSite = http.SameSiteStrictMode
+			s.Options.MaxAge = 60 * 60 * 24 * 31
+		}
 
-	if err := store.Save(r, w, s); err != nil {
-		log.Printf("Unable to save session: %v", err)
+		if err := s.Save(r, w); err != nil {
+			log.Printf("Unable to save session: %v", err)
+		}
 	}
 }
 

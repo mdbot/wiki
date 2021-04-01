@@ -22,7 +22,13 @@
             </nav>
             <div class="login">
                 {{if .Session.User}}
-                    Logged in as {{.Session.User.Name}}
+                    <form action="/wiki/logout" method="post">
+                        Logged in as {{.Session.User.Name}}
+
+                        {{.Session.CsrfField}}
+                        <input type="hidden" name="redirect" value="{{.Session.RequestedUrl}}">
+                        <input type="submit" value="Logout">
+                    </form>
                 {{else}}
                     <form action="/wiki/login" method="post">
                         {{.Session.CsrfField}}

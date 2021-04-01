@@ -89,7 +89,8 @@ func main() {
 	router.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
 	router.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	router.PathPrefix("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
-	router.PathPrefix("/wiki/login").Handler(LoginHandler(sessionStore, userManager)).Methods(http.MethodPost)
+	router.PathPrefix("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
+	router.PathPrefix("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
 	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), templateFiles))
 
 	log.Print("Starting server.")
