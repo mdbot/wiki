@@ -13,7 +13,6 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/kouhin/envflag"
@@ -102,7 +101,6 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.Use(handlers.CompressHandler)
 	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
 	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(NewLoggingHandler(os.Stdout))
