@@ -90,6 +90,7 @@ func main() {
 	wikiRouter.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/files").Handler(ListFilesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/upload").Handler(UploadFormHandler(templateFiles)).Methods(http.MethodGet)

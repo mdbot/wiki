@@ -189,6 +189,53 @@ func (g *GitBackend) listPages(dir string, prefix string) ([]string, error) {
 	return res, nil
 }
 
+func (g *GitBackend) ListFiles() ([]File, error) {
+	files, err := g.listFiles(g.GitDirectory, "")
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Name < files[j].Name
+	})
+	return files, nil
+}
+
+// listFiles recursively finds files (non-pages) within the given directory. The prefix is prepended to each returned
+// path.
+func (g *GitBackend) listFiles(dir string, prefix string) ([]File, error) {
+	var res []File
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range files {
+		if files[i].IsDir() {
+			if strings.EqualFold(files[i].Name(), ".git") || strings.EqualFold(files[i].Name(), ".wiki") {
+				continue
+			}
+
+			files, err := g.listFiles(
+				filepath.Join(dir, files[i].Name()),
+				filepath.Join(prefix, files[i].Name()),
+			)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, files...)
+		} else if filepath.Ext(files[i].Name()) != ".md" {
+			stat, _ := files[i].Info()
+			res = append(res, File{
+				Name: filepath.Join(prefix, files[i].Name()),
+				Size: stat.Size(),
+			})
+		}
+	}
+
+	return res, nil
+}
+
 func (g *GitBackend) PutPage(title string, content []byte, user string, message string) error {
 	filePath, gitPath, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
 	if err != nil {
