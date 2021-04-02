@@ -11,6 +11,8 @@
     --input-border: #5b5b5b;
     --error-color: #650f0f;
     --error-text-color: #ffffff;
+    --notice-color: #1e5f0a;
+    --notice-text-color: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,8 +27,6 @@
         --input-background: #333333;
         --input-color: #d6d6d6;
         --input-border: #5b5b5b;
-        --error-color: #650f0f;
-        --error-text-color: #ffffff;
     }
 }
 
@@ -79,6 +79,11 @@ aside {
 aside.error {
     background-color: var(--error-color);
     color: var(--error-text-color);
+}
+
+aside.notice {
+    background-color: var(--notice-color);
+    color: var(--notice-text-color);
 }
 
 footer {

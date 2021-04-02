@@ -17,12 +17,14 @@ import (
 )
 
 const (
-	sessionName     = "wiki"
-	sessionUserKey  = "user"
-	sessionErrorKey = "error"
+	sessionName      = "wiki"
+	sessionUserKey   = "user"
+	sessionNoticeKey = "notice"
+	sessionErrorKey  = "error"
 
 	contextUserKey    = "user"
 	contextErrorKey   = "error"
+	contextNoticeKey  = "notice"
 	contextSessionKey = "session"
 )
 
@@ -44,6 +46,10 @@ func SessionHandler(up UserProvider, store sessions.Store) func(http.Handler) ht
 
 			if e, ok := s.Values[sessionErrorKey]; ok {
 				request = request.WithContext(context.WithValue(request.Context(), contextErrorKey, e))
+			}
+
+			if e, ok := s.Values[sessionNoticeKey]; ok {
+				request = request.WithContext(context.WithValue(request.Context(), contextNoticeKey, e))
 			}
 
 			request = request.WithContext(context.WithValue(request.Context(), contextSessionKey, s))
@@ -79,6 +85,11 @@ func getErrorForRequest(r *http.Request) string {
 	return v
 }
 
+func getNoticeForRequest(r *http.Request) string {
+	v, _ := r.Context().Value(contextNoticeKey).(string)
+	return v
+}
+
 func getSessionForRequest(r *http.Request) *sessions.Session {
 	v, _ := r.Context().Value(contextSessionKey).(*sessions.Session)
 	return v
@@ -94,15 +105,21 @@ func clearSessionKey(w http.ResponseWriter, r *http.Request, key string) {
 
 func getSessionArgs(w http.ResponseWriter, r *http.Request) SessionArgs {
 	user := getUserForRequest(r)
-	e := getErrorForRequest(r)
 
+	e := getErrorForRequest(r)
 	if e != "" {
 		clearSessionKey(w, r, sessionErrorKey)
+	}
+
+	notice := getNoticeForRequest(r)
+	if notice != "" {
+		clearSessionKey(w, r, sessionNoticeKey)
 	}
 
 	return SessionArgs{
 		CanEdit:      user != nil,
 		Error:        e,
+		Notice: notice,
 		User:         user,
 		CsrfField:    csrf.TemplateField(r),
 		RequestedUrl: r.URL.String(),
@@ -120,6 +137,7 @@ func CheckAuthentication(authForReads bool, authForWrites bool) mux.MiddlewareFu
 		"/wiki/login":  false,
 		"/wiki/logout": false,
 		"/wiki/upload": authForWrites,
+		"/wiki/users":  authForWrites,
 	}
 
 	findPrefix := func(target string) (bool, error) {
