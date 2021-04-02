@@ -17,3 +17,8 @@ type Page struct {
 type History struct {
 	Entries []*LogEntry
 }
+
+type File struct {
+	Name string
+	Size int64
+}

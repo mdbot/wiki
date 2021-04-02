@@ -1,0 +1,9 @@
+{{- /*gotype: github.com/mdbot/wiki.ListFilesArgs*/ -}}
+{{template "header" .CommonPageArgs}}
+All files:
+<ul>
+    {{range .Files}}
+        <li><a href="/file/{{.Name}}">{{.Name}}</a> ({{.Size | bytes}})</li>
+    {{end}}
+</ul>
+{{template "footer" .CommonPageArgs}}

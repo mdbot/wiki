@@ -2,6 +2,7 @@ package markdown
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
@@ -49,7 +50,7 @@ func (w *wikiLinkParser) Parse(_ ast.Node, block text.Reader, _ parser.Context) 
 
 	link := ast.NewLink()
 	link.Title = target
-	link.Destination = target
+	link.Destination = []byte(fmt.Sprintf("/view/%s", target))
 	if w.checker.PageExists(string(target)) {
 		link.SetAttributeString("class", []byte("wikilink"))
 	} else {

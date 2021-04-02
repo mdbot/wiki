@@ -18,12 +18,13 @@ import (
 type TemplateName string
 
 const (
-	NotFound    TemplateName = "404"
-	EditPage    TemplateName = "edit"
-	HistoryPage TemplateName = "history"
-	ViewPage    TemplateName = "index"
-	ListPage    TemplateName = "list"
-	UploadPage  TemplateName = "upload"
+	NotFound      TemplateName = "404"
+	EditPage      TemplateName = "edit"
+	HistoryPage   TemplateName = "history"
+	ViewPage      TemplateName = "index"
+	ListPage      TemplateName = "list"
+	ListFilesPage TemplateName = "listfiles"
+	UploadPage    TemplateName = "upload"
 )
 
 type CommonPageArgs struct {
@@ -249,6 +250,34 @@ func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
 	}
 }
 
+type FileLister interface {
+	ListFiles() ([]File, error)
+}
+
+type ListFilesArgs struct {
+	CommonPageArgs
+	Files []File
+}
+
+func ListFilesHandler(templateFs fs.FS, fl FileLister) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		files, err := fl.ListFiles()
+		if err != nil {
+			log.Printf("Failed to list files: %v\n", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		renderTemplate(templateFs, ListFilesPage, http.StatusOK, writer, &ListFilesArgs{
+			CommonPageArgs: CommonPageArgs{
+				Session:   getSessionArgs(writer, request),
+				PageTitle: "Files",
+			},
+			Files: files,
+		})
+	}
+}
+
 func RedirectMainPageHandler() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Add("Location", fmt.Sprintf("/view/%s", *mainPage))
@@ -392,9 +421,28 @@ func renderTemplate(fs fs.FS, name TemplateName, statusCode int, wr http.Respons
 	wr.Header().Set("Content-Type", "text/html; charset=utf-8")
 	wr.WriteHeader(statusCode)
 
-	tpl := template.Must(template.ParseFS(fs, fmt.Sprintf("%s.gohtml", name), "partials/*.gohtml"))
+	tpl := template.New(fmt.Sprintf("%s.gohtml", name))
+	tpl.Funcs(map[string]interface{}{
+		"bytes": formatBytes,
+	})
+	template.Must(tpl.ParseFS(fs, fmt.Sprintf("%s.gohtml", name), "partials/*.gohtml"))
 	if err := tpl.Execute(wr, data); err != nil {
 		// TODO: We should probably send an error to the client
 		log.Printf("Error rendering template: %v\n", err)
 	}
+}
+
+func formatBytes(size int64) string {
+	const multiple = 1024
+	if size < multiple {
+		return fmt.Sprintf("%d B", size)
+	}
+
+	denominator, power := int64(multiple), 0
+	for n := size / multiple; n >= multiple; n /= multiple {
+		denominator *= multiple
+		power++
+	}
+
+	return fmt.Sprintf("%.1f %ciB", float64(size)/float64(denominator), "KMGTPE"[power])
 }
