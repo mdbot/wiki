@@ -62,7 +62,7 @@ func main() {
 	}
 
 	if userManager.Empty() && *username != "" && *password != "" {
-		_ = userManager.AddUser("System", *username, *password)
+		_ = userManager.AddUser(*username, *password, "System")
 	}
 
 	secrets, err := config.LoadSecrets(configStore)
@@ -97,6 +97,8 @@ func main() {
 	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/upload").Handler(UploadFormHandler(templateFiles)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/upload").Handler(UploadHandler(gitBackend)).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/users").Handler(ManageUsersHandler(templateFiles, userManager)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/users").Handler(ModifyUserHandler(userManager)).Methods(http.MethodPost)
 
 	router := mux.NewRouter()
 

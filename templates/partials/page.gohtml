@@ -47,6 +47,10 @@
             <aside class="error">{{.Session.Error}}</aside>
         {{end}}
 
+        {{if .Session.Notice}}
+            <aside class="notice">{{.Session.Notice}}</aside>
+        {{end}}
+
         <main class="container content">
             {{end}}
 

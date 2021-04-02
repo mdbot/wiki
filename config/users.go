@@ -2,6 +2,7 @@ package config
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -84,29 +85,58 @@ func (a *UserManager) User(username string) *User {
 	return a.users[strings.ToLower(username)]
 }
 
-func (a *UserManager) AddUser(user, newUsername, newPassword string) error {
-	if _, ok := a.users[strings.ToLower(newUsername)]; ok {
+func (a *UserManager) Users() []*User {
+	var res []*User
+	for i := range a.users {
+		res = append(res, a.users[i])
+	}
+	return res
+}
+
+func (a *UserManager) Delete(user, responsible string) error {
+	if _, ok := a.users[strings.ToLower(user)]; !ok {
+		return errors.New("user does not exist")
+	}
+
+	if len(a.users) == 1 {
+		return errors.New("can't delete last remaining user")
+	}
+
+	delete(a.users, strings.ToLower(user))
+	return a.save(responsible, fmt.Sprintf("Deleting user: %s", user))
+}
+
+func (a *UserManager) SetPassword(user, password, responsible string) error {
+	u := a.users[strings.ToLower(user)]
+	if u == nil {
+		return errors.New("user does not exist")
+	}
+
+	if err := a.setPassword(u, password); err != nil {
+		return err
+	}
+	return a.save(responsible, fmt.Sprintf("Changing password for user: %s", user))
+}
+
+func (a *UserManager) AddUser(user, password, responsible string) error {
+	if _, ok := a.users[strings.ToLower(user)]; ok {
 		return fmt.Errorf("user already exists")
 	}
 
-	salt, err := a.generateSalt()
-	if err != nil {
+	if user == "" {
+		return errors.New("invalid username")
+	}
+
+	u := &User{
+		Name:     user,
+	}
+
+	if err := a.setPassword(u, password); err != nil {
 		return err
 	}
 
-	salted := append([]byte(newPassword), salt...)
-	hash, err := bcrypt.GenerateFromPassword(salted, bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-
-	a.users[strings.ToLower(newUsername)] = &User{
-		Name:     newUsername,
-		Salt:     salt,
-		Password: hash,
-	}
-
-	return a.save(user, fmt.Sprintf("Adding new user: %s", newUsername))
+	a.users[strings.ToLower(user)] = u
+	return a.save(responsible, fmt.Sprintf("Adding new user: %s", user))
 }
 
 func (a *UserManager) generateSalt() ([]byte, error) {
@@ -118,4 +148,21 @@ func (a *UserManager) generateSalt() ([]byte, error) {
 	}
 
 	return res, nil
+}
+
+func (a *UserManager) setPassword(u *User, password string) error {
+	salt, err := a.generateSalt()
+	if err != nil {
+		return err
+	}
+
+	salted := append([]byte(password), salt...)
+	hash, err := bcrypt.GenerateFromPassword(salted, bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	u.Salt = salt
+	u.Password = hash
+	return nil
 }

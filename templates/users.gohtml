@@ -1,0 +1,33 @@
+{{- /*gotype: github.com/mdbot/wiki.ManageUsersArgs*/ -}}
+{{template "header" .CommonPageArgs}}
+<h2>Existing users</h2>
+{{range .Users}}
+    <h3>{{.}}</h3>
+
+    <form action="/wiki/users" method="post">
+        {{$.CommonPageArgs.Session.CsrfField}}
+        <input type="hidden" name="user" value="{{.}}">
+        <input type="hidden" name="action" value="password">
+        <input type="password" name="password" placeholder="New password">
+        <input type="submit" value="Change password">
+    </form>
+
+    {{if (gt (len $.Users) 1)}}
+        <form action="/wiki/users" method="post">
+            {{$.CommonPageArgs.Session.CsrfField}}
+            <input type="hidden" name="user" value="{{.}}">
+            <input type="hidden" name="action" value="delete">
+            <input type="submit" value="Delete user">
+        </form>
+    {{end}}
+{{end}}
+
+<h2>Add new user</h2>
+<form action="/wiki/users" method="post">
+    {{$.CommonPageArgs.Session.CsrfField}}
+    <input type="hidden" name="action" value="new">
+    <input type="text" name="user" placeholder="username">
+    <input type="password" name="password" placeholder="password">
+    <input type="submit" value="Create user">
+</form>
+{{template "footer" .CommonPageArgs}}

@@ -28,6 +28,7 @@ const (
 	ListPage      TemplateName = "list"
 	ListFilesPage TemplateName = "listfiles"
 	UploadPage    TemplateName = "upload"
+	ManageUsersPage TemplateName = "users"
 	RenamePage    TemplateName = "rename"
 	DeletePage    TemplateName = "delete"
 )
@@ -43,6 +44,7 @@ type CommonPageArgs struct {
 type SessionArgs struct {
 	CanEdit      bool
 	Error        string
+	Notice       string
 	User         *config.User
 	CsrfField    template.HTML
 	RequestedUrl string
@@ -509,6 +511,77 @@ func canEmbed(mimeType string) bool {
 	return strings.HasPrefix(mimeType, "image/") ||
 		strings.HasPrefix(mimeType, "video/") ||
 		strings.HasPrefix(mimeType, "audio/")
+}
+
+type ManageUsersArgs struct {
+	CommonPageArgs
+	Users []string
+}
+
+type UserLister interface {
+	Users() []*config.User
+}
+
+func ManageUsersHandler(templateFs fs.FS, ul UserLister) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		users := ul.Users()
+		var usernames []string
+
+		for i := range users {
+			usernames = append(usernames, users[i].Name)
+		}
+
+		renderTemplate(templateFs, ManageUsersPage, http.StatusOK, writer, &ManageUsersArgs{
+			CommonPageArgs: CommonPageArgs{
+				Session:   getSessionArgs(writer, request),
+				PageTitle: "Manage users",
+			},
+			Users: usernames,
+		})
+	}
+}
+
+type UserModifier interface {
+	AddUser(username, password, responsible string) error
+	SetPassword(username, password, responsible string) error
+	Delete(username, responsible string) error
+}
+
+func ModifyUserHandler(um UserModifier) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		responsible := "Anonymoose"
+		if user := getUserForRequest(request); user != nil {
+			responsible = user.Name
+		}
+
+		user := request.FormValue("user")
+		action := request.FormValue("action")
+		if action == "password" {
+			if err := um.SetPassword(user, request.FormValue("password"), responsible); err != nil {
+				putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Unable to set password: %v", err))
+			} else {
+				putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("Password updated for user %s", user))
+			}
+		} else if action == "delete" {
+			if err := um.Delete(user, responsible); err != nil {
+				putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Unable to delete user: %v", err))
+			} else {
+				putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("User %s has been terminated", user))
+			}
+		} else if action == "new" {
+			if err := um.AddUser(user, request.FormValue("password"), responsible); err != nil {
+				putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Unable to create new user: %v", err))
+			} else {
+				putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("User %s has been created", user))
+			}
+		} else {
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		writer.Header().Add("location", "/wiki/users")
+		writer.WriteHeader(http.StatusSeeOther)
+	}
 }
 
 func renderTemplate(fs fs.FS, name TemplateName, statusCode int, wr http.ResponseWriter, data interface{}) {
