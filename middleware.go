@@ -212,7 +212,10 @@ func PageErrorHandler(templateFs fs.FS) func(http.Handler) http.Handler {
 				if strings.HasPrefix(r.RequestURI, "/view/") || strings.HasPrefix(r.RequestURI, "/history") {
 					isWiki = true
 				}
-
+				oldPageTitle := ""
+				if strings.HasPrefix(r.RequestURI, "/view/") {
+					oldPageTitle = strings.TrimPrefix(r.RequestURI, "/view/")
+				}
 				renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &ErrorPageArgs{
 					CommonPageArgs{
 						Session:      getSessionArgs(w, r),
@@ -221,6 +224,7 @@ func PageErrorHandler(templateFs fs.FS) func(http.Handler) http.Handler {
 						IsError: true,
 					},
 					false,
+					oldPageTitle,
 				})
 			}
 			if fakeWriter.status == http.StatusUnauthorized {
@@ -231,6 +235,7 @@ func PageErrorHandler(templateFs fs.FS) func(http.Handler) http.Handler {
 						IsError: true,
 					},
 					true,
+					"",
 				})
 			}
 			if fakeWriter.status == http.StatusForbidden {
@@ -241,6 +246,7 @@ func PageErrorHandler(templateFs fs.FS) func(http.Handler) http.Handler {
 						IsError: true,
 					},
 					false,
+					"",
 				})
 			}
 			if fakeWriter.status == http.StatusInternalServerError {
@@ -251,6 +257,7 @@ func PageErrorHandler(templateFs fs.FS) func(http.Handler) http.Handler {
 						IsError: true,
 					},
 					false,
+					"",
 				})
 			}
 		})

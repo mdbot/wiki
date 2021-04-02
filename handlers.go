@@ -67,6 +67,7 @@ type RenderPageArgs struct {
 type ErrorPageArgs struct {
 	CommonPageArgs
 	ShowLoginForm bool
+	OldPageTitle string
 }
 
 type RenamePageArgs struct {
