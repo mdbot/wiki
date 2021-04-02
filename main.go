@@ -102,7 +102,6 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
 	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
 	router.Use(SessionHandler(userManager, sessionStore))
