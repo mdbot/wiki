@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/mdbot/wiki/config"
 )
@@ -107,14 +109,45 @@ func getSessionArgs(w http.ResponseWriter, r *http.Request) SessionArgs {
 	}
 }
 
-func RequireAnyUser(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if user := getUserForRequest(request); user != nil {
-			next.ServeHTTP(writer, request)
-		} else {
-			writer.WriteHeader(http.StatusForbidden)
+func CheckAuthentication(authForReads bool, authForWrites bool) mux.MiddlewareFunc {
+	authRequirements := map[string]bool{
+		"/edit/":       authForWrites,
+		"/file/":       authForReads,
+		"/history/":    authForReads,
+		"/view/":       authForReads,
+		"/wiki/index":  authForReads,
+		"/wiki/login":  true,
+		"/wiki/logout": true,
+		"/wiki/upload": authForWrites,
+	}
+
+	findPrefix := func(target string) (bool, error) {
+		for i := range authRequirements {
+			if strings.HasPrefix(target, i) {
+				return authRequirements[i], nil
+			}
 		}
-	})
+		return false, fmt.Errorf("unknown route: %s", target)
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			needAuth, err := findPrefix(request.URL.Path)
+			if err != nil {
+				writer.WriteHeader(http.StatusNotFound)
+				return
+			}
+
+			if needAuth {
+				if getUserForRequest(request) == nil {
+					writer.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+			}
+
+			next.ServeHTTP(writer, request)
+		})
+	}
 }
 
 func NewLoggingHandler(dst io.Writer) func(http.Handler) http.Handler {

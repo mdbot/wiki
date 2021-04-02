@@ -35,6 +35,8 @@ var mainPage = flag.String("mainpage", "MainPage", "Title of the main page for t
 var codeStyle = flag.String("codestyle", "monokai", "Style to use for code highlighting. See https://github.com/alecthomas/chroma/tree/master/styles")
 var httpPort = flag.Int("httpport", 8080, "HTTP server port")
 var configKey = flag.String("key", "", "Key to use to encrypt config data (32 byes, hex encoded, e.g. from `openssl rand -hex 32`)")
+var requireAuthForWrites = flag.Bool("authenticated-writes", true, "Whether to require authentication to make changes to pages/files")
+var requireAuthForReads = flag.Bool("authenticated-reads", false, "Whether to require authentication to read pages/files")
 
 func main() {
 	err := envflag.Parse()
@@ -79,10 +81,11 @@ func main() {
 	wikiRouter := mux.NewRouter()
 	wikiRouter.Use(LowerCaseCanonical)
 	wikiRouter.Use(SessionHandler(userManager, sessionStore))
+	wikiRouter.Use(CheckAuthentication(*requireAuthForReads, *requireAuthForWrites))
 	wikiRouter.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
 
 	wikiRouter.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitBackend), templateFiles)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/edit/").Handler(RequireAnyUser(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles))).Methods(http.MethodPost)
+	wikiRouter.PathPrefix("/edit/").Handler(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles)).Methods(http.MethodPost)
 	wikiRouter.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
@@ -90,7 +93,7 @@ func main() {
 	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/upload").Handler(UploadFormHandler(templateFiles)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/upload").Handler(RequireAnyUser(UploadHandler(gitBackend))).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/upload").Handler(UploadHandler(gitBackend)).Methods(http.MethodPost)
 
 	router := mux.NewRouter()
 
