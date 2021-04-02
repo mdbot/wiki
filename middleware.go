@@ -179,20 +179,29 @@ func (w *notFoundInterceptWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func NotFoundHandler(h http.Handler, templateFs fs.FS) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fakeWriter := &notFoundInterceptWriter{realWriter: w}
+func NotFoundMiddleWare(templateFs fs.FS) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fakeWriter := &notFoundInterceptWriter{realWriter: w}
 
-		h.ServeHTTP(fakeWriter, r)
+			next.ServeHTTP(fakeWriter, r)
 
-		if fakeWriter.status == http.StatusNotFound {
-			renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
-				CommonPageArgs{
-					Session:   getSessionArgs(w, r),
-					PageTitle: "Page not found",
-				},
-			})
-		}
+			isWiki := false
+			if strings.HasPrefix(r.RequestURI, "/view/") || strings.HasPrefix(r.RequestURI, "/history") {
+				isWiki = true
+			}
+
+			if fakeWriter.status == http.StatusNotFound {
+				renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
+					CommonPageArgs{
+						Session:   getSessionArgs(w, r),
+						PageTitle: "Page not found",
+						IsWikiPage: isWiki,
+						IsError: true,
+					},
+				})
+			}
+		})
 	}
 }
 

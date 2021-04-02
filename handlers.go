@@ -31,6 +31,7 @@ type CommonPageArgs struct {
 	PageTitle    string
 	IsWikiPage   bool
 	LastModified *LastModifiedDetails
+	IsError      bool
 }
 
 type SessionArgs struct {
@@ -69,13 +70,7 @@ func RenderPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) htt
 
 		page, err := pp.GetPage(pageTitle)
 		if err != nil {
-			renderTemplate(templateFs, NotFound, http.StatusNotFound, writer, &NotFoundPageArgs{
-				CommonPageArgs: CommonPageArgs{
-					Session:    getSessionArgs(writer, request),
-					PageTitle:  pageTitle,
-					IsWikiPage: true,
-				},
-			})
+			http.NotFound(writer, request)
 			return
 		}
 
@@ -138,13 +133,7 @@ func PageHistoryHandler(templateFs fs.FS, pp HistoryProvider) http.HandlerFunc {
 
 		history, err := pp.PageHistory(pageTitle, start, number)
 		if err != nil {
-			renderTemplate(templateFs, NotFound, http.StatusNotFound, writer, &NotFoundPageArgs{
-				CommonPageArgs: CommonPageArgs{
-					Session:    getSessionArgs(writer, request),
-					PageTitle:  pageTitle,
-					IsWikiPage: true,
-				},
-			})
+			http.NotFound(writer, request)
 			return
 		}
 

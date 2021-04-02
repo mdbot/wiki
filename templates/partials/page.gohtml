@@ -16,7 +16,7 @@
                 {{if and .IsWikiPage .Session.CanEdit}}
                     <a href="/edit/{{.PageTitle}}">Edit</a>
                 {{end}}
-                {{if .IsWikiPage}}
+                {{if and .IsWikiPage (not .IsError)}}
                     <a href="/history/{{.PageTitle}}">History</a>
                 {{end}}
             </nav>

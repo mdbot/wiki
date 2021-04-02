@@ -5,6 +5,7 @@ import (
 	"embed"
 	"flag"
 	"fmt"
+	"github.com/gorilla/csrf"
 	"io/fs"
 	"log"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -80,12 +80,10 @@ func main() {
 
 	wikiRouter := mux.NewRouter()
 	wikiRouter.Use(LowerCaseCanonical)
-	wikiRouter.Use(SessionHandler(userManager, sessionStore))
 	wikiRouter.Use(CheckAuthentication(*requireAuthForReads, *requireAuthForWrites))
-	wikiRouter.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
 
-	wikiRouter.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitBackend), templateFiles)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/edit/").Handler(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles)).Methods(http.MethodPost)
+	wikiRouter.PathPrefix("/edit/").Handler(EditPageHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/edit/").Handler(SubmitPageHandler(gitBackend)).Methods(http.MethodPost)
 	wikiRouter.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
@@ -99,11 +97,14 @@ func main() {
 
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
+	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
+	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(NewLoggingHandler(os.Stdout))
+	router.Use(NotFoundMiddleWare(templateFs))
 
 	router.Path("/").Handler(RedirectMainPageHandler())
 	router.Path("/view/").Handler(RedirectMainPageHandler())
-	router.PathPrefix("/static/").Handler(NotFoundHandler(http.StripPrefix("/static", http.FileServer(http.FS(staticFiles))), templateFiles))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.FS(staticFiles))))
 	router.NewRoute().Handler(wikiRouter)
 
 	log.Print("Starting server.")
