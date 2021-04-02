@@ -13,7 +13,7 @@
                 {{.PageTitle}}
             </h1>
             <nav>
-                {{if and .IsWikiPage .Session.CanEdit}}
+                {{if and (and .IsWikiPage .Session.CanEdit) (not .IsError)}}
                     <a href="/edit/{{.PageTitle}}">Edit</a>
                 {{end}}
                 {{if and .IsWikiPage (not .IsError)}}
