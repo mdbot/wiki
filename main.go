@@ -101,7 +101,7 @@ func main() {
 	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
 	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(NewLoggingHandler(os.Stdout))
-	router.Use(NotFoundMiddleWare(templateFs))
+	router.Use(PageErrorHandler(templateFs))
 
 	router.Path("/").Handler(RedirectMainPageHandler())
 	router.Path("/view/").Handler(RedirectMainPageHandler())

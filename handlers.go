@@ -19,6 +19,9 @@ type TemplateName string
 
 const (
 	NotFound      TemplateName = "404"
+	Unauthorized  TemplateName = "error"
+	Forbidden     TemplateName = "error"
+	ServerError   TemplateName = "error"
 	EditPage      TemplateName = "edit"
 	HistoryPage   TemplateName = "history"
 	ViewPage      TemplateName = "index"
@@ -57,8 +60,9 @@ type RenderPageArgs struct {
 	PageContent template.HTML
 }
 
-type NotFoundPageArgs struct {
+type ErrorPageArgs struct {
 	CommonPageArgs
+	ShowLoginForm bool
 }
 
 type ContentRenderer interface {

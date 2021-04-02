@@ -180,7 +180,7 @@ func (w *notFoundInterceptWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func NotFoundMiddleWare(templateFs fs.FS) func(http.Handler) http.Handler {
+func PageErrorHandler(templateFs fs.FS) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			fakeWriter := &notFoundInterceptWriter{realWriter: w}
@@ -192,14 +192,45 @@ func NotFoundMiddleWare(templateFs fs.FS) func(http.Handler) http.Handler {
 				if strings.HasPrefix(r.RequestURI, "/view/") || strings.HasPrefix(r.RequestURI, "/history") {
 					isWiki = true
 				}
-				
-				renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
+
+				renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &ErrorPageArgs{
 					CommonPageArgs{
-						Session:   getSessionArgs(w, r),
-						PageTitle: "Page not found",
-						IsWikiPage: isWiki,
+						Session:      getSessionArgs(w, r),
+						PageTitle:    "Page not found",
+						IsWikiPage:   isWiki,
 						IsError: true,
 					},
+					false,
+				})
+			}
+			if fakeWriter.status == http.StatusUnauthorized {
+				renderTemplate(templateFs, Unauthorized, http.StatusUnauthorized, w, &ErrorPageArgs{
+					CommonPageArgs{
+						Session:   getSessionArgs(w, r),
+						PageTitle: "Unauthorized",
+						IsError: true,
+					},
+					true,
+				})
+			}
+			if fakeWriter.status == http.StatusForbidden {
+				renderTemplate(templateFs, Forbidden, http.StatusForbidden, w, &ErrorPageArgs{
+					CommonPageArgs{
+						Session:   getSessionArgs(w, r),
+						PageTitle: "Forbidden",
+						IsError: true,
+					},
+					false,
+				})
+			}
+			if fakeWriter.status == http.StatusInternalServerError {
+				renderTemplate(templateFs, ServerError, http.StatusInternalServerError, w, &ErrorPageArgs{
+					CommonPageArgs{
+						Session:   getSessionArgs(w, r),
+						PageTitle: "Server Error",
+						IsError: true,
+					},
+					false,
 				})
 			}
 		})
