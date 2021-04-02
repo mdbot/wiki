@@ -28,6 +28,8 @@ const (
 	ListPage      TemplateName = "list"
 	ListFilesPage TemplateName = "listfiles"
 	UploadPage    TemplateName = "upload"
+	RenamePage    TemplateName = "rename"
+	DeletePage    TemplateName = "delete"
 )
 
 type CommonPageArgs struct {
@@ -63,6 +65,16 @@ type RenderPageArgs struct {
 type ErrorPageArgs struct {
 	CommonPageArgs
 	ShowLoginForm bool
+}
+
+type RenamePageArgs struct {
+	CommonPageArgs
+	OldName string
+}
+
+type DeletePageArgs struct {
+	CommonPageArgs
+	PageName string
 }
 
 type ContentRenderer interface {
@@ -412,6 +424,84 @@ func FileHandler(provider FileProvider) http.HandlerFunc {
 			writer.Header().Add("Content-Disposition", "attachment")
 		}
 		_, _ = io.Copy(writer, reader)
+	}
+}
+
+type DeletePageProvider interface {
+	DeletePage(name string, message string, user string) error
+}
+
+func DeletePageConfirmHandler(templateFs fs.FS) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		name := strings.TrimPrefix(request.URL.Path, "/delete/")
+		renderTemplate(templateFs, DeletePage, http.StatusOK, writer, &DeletePageArgs{
+			CommonPageArgs: CommonPageArgs{
+				Session:   getSessionArgs(writer, request),
+				PageTitle: "Delete Page",
+			},
+			PageName: name,
+		})
+	}
+}
+
+func DeletePageHandler(provider DeletePageProvider) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		name := strings.TrimPrefix(request.URL.Path, "/delete/")
+		confirm := request.FormValue("confirm")
+		if confirm == "" {
+			http.Redirect(writer, request, "/delete/"+name, http.StatusTemporaryRedirect)
+			return
+		}
+		message := request.FormValue("message")
+		username := "Anonymoose"
+		if user := getUserForRequest(request); user != nil {
+			username = user.Name
+		}
+		err := provider.DeletePage(name, message, username)
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(writer, request, "/", http.StatusOK)
+	}
+}
+
+type RenamePageProvider interface {
+	RenamePage(name string, newName string, message string, user string) error
+}
+
+func RenamePageConfirmHandler(templateFs fs.FS) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		name := strings.TrimPrefix(request.URL.Path, "/rename/")
+		renderTemplate(templateFs, RenamePage, http.StatusOK, writer, &RenamePageArgs{
+			CommonPageArgs: CommonPageArgs{
+				Session:   getSessionArgs(writer, request),
+				PageTitle: "Rename Page",
+			},
+			OldName: name,
+		})
+	}
+}
+
+func RenamePageHandler(provider RenamePageProvider) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		name := strings.TrimPrefix(request.URL.Path, "/rename/")
+		newName := request.FormValue("newName")
+		if newName == "" {
+			http.Redirect(writer, request, "/rename/"+name, http.StatusTemporaryRedirect)
+			return
+		}
+		message := request.FormValue("message")
+		username := "Anonymoose"
+		if user := getUserForRequest(request); user != nil {
+			username = user.Name
+		}
+		err := provider.RenamePage(name, newName, message, username)
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(writer, request, "/"+newName, http.StatusOK)
 	}
 }
 

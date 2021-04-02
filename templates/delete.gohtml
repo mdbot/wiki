@@ -1,0 +1,12 @@
+{{- /*gotype: github.com/mdbot/wiki.EditPageArgs*/ -}}
+{{template "header" .CommonPageArgs}}
+<form action="/delete/{{.PageName}}" method="post" class="editor">
+    {{.Session.CsrfField}}
+    <input type="hidden" id="confirm" name="confirm" value="confirm" />
+    <div class="form-group">
+        <label for="message">Message:</label>
+        <input id="message" type="text" name="message">
+    </div>
+    <button type="submit" class="btn btn-primary" value="Edit">Confirm</button>
+</form>
+{{template "footer" .CommonPageArgs}}

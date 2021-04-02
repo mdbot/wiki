@@ -322,6 +322,60 @@ func (g *GitBackend) writeFile(filePath, gitPath string, content io.Reader, user
 	return err
 }
 
+func (g *GitBackend) RenamePage(name string, newName string, message string, user string) error {
+	_, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", name))
+	if err != nil {
+		log.Printf("Unable to resolve old path: %s -> %s: %s", name, newName, err.Error())
+		return err
+	}
+	_, newGitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", newName))
+	if err != nil {
+		log.Printf("Unable to resolve new path: %s -> %s: %s", name, newName, err.Error())
+		return err
+	}
+	worktree, err := g.repo.Worktree()
+	if err != nil {
+		log.Printf("Unable to get worktree: %s", err.Error())
+		return err
+	}
+	_, err = worktree.Move(gitPath, newGitPath)
+	if err != nil {
+		log.Printf("Unable to rename git: %s -> %s: %s", name, newName, err.Error())
+		return err
+	}
+	_, err = worktree.Commit(message, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  user,
+			Email: user + "@wiki",
+			When:  time.Now(),
+		},
+	})
+	return nil
+}
+
+func (g *GitBackend) DeletePage(name string, message string, user string) error {
+	_, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", name))
+	if err != nil {
+		return err
+	}
+	worktree, err := g.repo.Worktree()
+	if err != nil {
+		return err
+	}
+	_, err = worktree.Remove(gitPath)
+	if err != nil {
+		return err
+	}
+	_, err = worktree.Commit(message, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  user,
+			Email: user + "@wiki",
+			When:  time.Now(),
+		},
+	})
+	return nil
+}
+
 func resolvePath(base, name string) (string, string, error) {
 	p := filepath.Clean(filepath.Join(base, name))
 	p = strings.ToLower(p)

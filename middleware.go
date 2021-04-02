@@ -115,6 +115,8 @@ func CheckAuthentication(authForReads bool, authForWrites bool) mux.MiddlewareFu
 		"/file/":       authForReads,
 		"/history/":    authForReads,
 		"/view/":       authForReads,
+		"/rename/":		authForWrites,
+		"/delete/":		authForWrites,
 		"/wiki/index":  authForReads,
 		"/wiki/files":  authForReads,
 		"/wiki/login":  false,

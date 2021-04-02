@@ -15,6 +15,8 @@
             <nav>
                 {{if and (and .IsWikiPage .Session.CanEdit) (not .IsError)}}
                     <a href="/edit/{{.PageTitle}}">Edit</a>
+                    <a href="/rename/{{.PageTitle}}">Rename</a>
+                    <a href="/delete/{{.PageTitle}}">Delete</a>
                 {{end}}
                 {{if and .IsWikiPage (not .IsError)}}
                     <a href="/history/{{.PageTitle}}">History</a>
