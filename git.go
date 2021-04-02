@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -17,8 +18,11 @@ import (
 )
 
 type GitBackend struct {
-	GitDirectory string
-	GitRepo      *git.Repository
+	// mutex guards access to git commands. A read or write lock should be acquired in all exported methods,
+	// and released at the end (via a deferral).
+	mutex sync.RWMutex
+	dir   string
+	repo  *git.Repository
 }
 
 func NewGitBackend(dataDirectory string) (*GitBackend, error) {
@@ -28,8 +32,8 @@ func NewGitBackend(dataDirectory string) (*GitBackend, error) {
 	}
 
 	return &GitBackend{
-		GitDirectory: dataDirectory,
-		GitRepo:      gitRepo,
+		dir:  dataDirectory,
+		repo: gitRepo,
 	}, nil
 }
 
@@ -55,7 +59,10 @@ func (g *GitBackend) CreateDefaultMainPage() error {
 }
 
 func (g *GitBackend) PageExists(title string) bool {
-	filePath, _, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
+	g.mutex.RLock()
+	defer g.mutex.RUnlock()
+
+	filePath, _, err := resolvePath(g.dir, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return false
 	}
@@ -65,8 +72,11 @@ func (g *GitBackend) PageExists(title string) bool {
 }
 
 func (g *GitBackend) PageHistory(title string, start string, end int) (*History, error) {
+	g.mutex.RLock()
+	defer g.mutex.RUnlock()
+
 	var history []*LogEntry
-	_, gitPath, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
+	_, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return nil, err
 	}
@@ -75,11 +85,11 @@ func (g *GitBackend) PageHistory(title string, start string, end int) (*History,
 	if start == "" {
 		start = "HEAD"
 	}
-	revision, err = g.GitRepo.ResolveRevision(plumbing.Revision(start))
+	revision, err = g.repo.ResolveRevision(plumbing.Revision(start))
 	if err != nil {
 		return nil, err
 	}
-	commitIter, err = g.GitRepo.Log(&git.LogOptions{
+	commitIter, err = g.repo.Log(&git.LogOptions{
 		From: *revision,
 		PathFilter: func(s string) bool {
 			return s == gitPath
@@ -107,12 +117,15 @@ func (g *GitBackend) PageHistory(title string, start string, end int) (*History,
 }
 
 func (g *GitBackend) GetPage(title string) (*Page, error) {
-	filePath, gitPath, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
+	g.mutex.RLock()
+	defer g.mutex.RUnlock()
+
+	filePath, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return nil, err
 	}
 
-	commitIter, err := g.GitRepo.Log(&git.LogOptions{
+	commitIter, err := g.repo.Log(&git.LogOptions{
 		PathFilter: func(s string) bool {
 			return s == gitPath
 		},
@@ -140,7 +153,7 @@ func (g *GitBackend) GetPage(title string) (*Page, error) {
 }
 
 func (g *GitBackend) GetFile(name string) (io.ReadCloser, error) {
-	filePath, _, err := resolvePath(g.GitDirectory, name)
+	filePath, _, err := resolvePath(g.dir, name)
 	if err != nil {
 		return nil, err
 	}
@@ -149,12 +162,12 @@ func (g *GitBackend) GetFile(name string) (io.ReadCloser, error) {
 }
 
 func (g *GitBackend) GetConfig(name string) ([]byte, error) {
-	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.json.enc", name))
+	filePath := filepath.Join(g.dir, ".wiki", fmt.Sprintf("%s.json.enc", name))
 	return os.ReadFile(filePath)
 }
 
 func (g *GitBackend) ListPages() ([]string, error) {
-	pages, err := g.listPages(g.GitDirectory, "")
+	pages, err := g.listPages(g.dir, "")
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +203,7 @@ func (g *GitBackend) listPages(dir string, prefix string) ([]string, error) {
 }
 
 func (g *GitBackend) ListFiles() ([]File, error) {
-	files, err := g.listFiles(g.GitDirectory, "")
+	files, err := g.listFiles(g.dir, "")
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +250,10 @@ func (g *GitBackend) listFiles(dir string, prefix string) ([]File, error) {
 }
 
 func (g *GitBackend) PutPage(title string, content []byte, user string, message string) error {
-	filePath, gitPath, err := resolvePath(g.GitDirectory, fmt.Sprintf("%s.md", title))
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	filePath, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return err
 	}
@@ -246,9 +262,11 @@ func (g *GitBackend) PutPage(title string, content []byte, user string, message 
 }
 
 func (g *GitBackend) PutFile(name string, content io.ReadCloser, user string, message string) error {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
 	defer content.Close()
 
-	filePath, gitPath, err := resolvePath(g.GitDirectory, name)
+	filePath, gitPath, err := resolvePath(g.dir, name)
 	if err != nil {
 		return err
 	}
@@ -257,7 +275,10 @@ func (g *GitBackend) PutFile(name string, content io.ReadCloser, user string, me
 }
 
 func (g *GitBackend) PutConfig(name string, content []byte, user string, message string) error {
-	filePath := filepath.Join(g.GitDirectory, ".wiki", fmt.Sprintf("%s.json.enc", name))
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	filePath := filepath.Join(g.dir, ".wiki", fmt.Sprintf("%s.json.enc", name))
 	gitPath := filepath.Join(".wiki", fmt.Sprintf("%s.json.enc", name))
 
 	return g.writeFile(filePath, gitPath, bytes.NewReader(content), user, message)
@@ -282,7 +303,7 @@ func (g *GitBackend) writeFile(filePath, gitPath string, content io.Reader, user
 		return err
 	}
 
-	worktree, err := g.GitRepo.Worktree()
+	worktree, err := g.repo.Worktree()
 	if err != nil {
 		return err
 	}
