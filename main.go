@@ -75,26 +75,33 @@ func main() {
 	sessionStore := sessions.NewCookieStore(secrets.SessionKey)
 
 	renderer := markdown.NewRenderer(gitBackend, *codeStyle)
+
+	wikiRouter := mux.NewRouter()
+	wikiRouter.Use(LowerCaseCanonical)
+	wikiRouter.Use(SessionHandler(userManager, sessionStore))
+	wikiRouter.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
+
+	wikiRouter.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitBackend), templateFiles)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/edit/").Handler(RequireAnyUser(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles))).Methods(http.MethodPost)
+	wikiRouter.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/upload").Handler(UploadFormHandler(templateFiles)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/upload").Handler(RequireAnyUser(UploadHandler(gitBackend))).Methods(http.MethodPost)
+
 	router := mux.NewRouter()
+
 	router.Use(handlers.ProxyHeaders)
 	router.Use(handlers.CompressHandler)
-	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(NewLoggingHandler(os.Stdout))
-	router.Use(LowerCaseCanonical)
-	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
-	router.Path("/view/").Handler(RedirectMainPageHandler())
+
 	router.Path("/").Handler(RedirectMainPageHandler())
-	router.PathPrefix("/edit/").Handler(NotFoundHandler(EditPageHandler(templateFiles, gitBackend), templateFiles)).Methods(http.MethodGet)
-	router.PathPrefix("/edit/").Handler(RequireAnyUser(NotFoundHandler(SubmitPageHandler(gitBackend), templateFiles))).Methods(http.MethodPost)
-	router.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
-	router.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
-	router.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
-	router.Path("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
-	router.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
-	router.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
-	router.Path("/wiki/upload").Handler(UploadFormHandler(templateFiles)).Methods(http.MethodGet)
-	router.Path("/wiki/upload").Handler(RequireAnyUser(UploadHandler(gitBackend))).Methods(http.MethodPost)
-	router.PathPrefix("/").Handler(NotFoundHandler(http.FileServer(http.FS(staticFiles)), templateFiles))
+	router.Path("/view/").Handler(RedirectMainPageHandler())
+	router.PathPrefix("/static/").Handler(NotFoundHandler(http.StripPrefix("/static", http.FileServer(http.FS(staticFiles))), templateFiles))
+	router.NewRoute().Handler(wikiRouter)
 
 	log.Print("Starting server.")
 	server := http.Server{
