@@ -187,12 +187,12 @@ func NotFoundMiddleWare(templateFs fs.FS) func(http.Handler) http.Handler {
 
 			next.ServeHTTP(fakeWriter, r)
 
-			isWiki := false
-			if strings.HasPrefix(r.RequestURI, "/view/") || strings.HasPrefix(r.RequestURI, "/history") {
-				isWiki = true
-			}
-
 			if fakeWriter.status == http.StatusNotFound {
+				isWiki := false
+				if strings.HasPrefix(r.RequestURI, "/view/") || strings.HasPrefix(r.RequestURI, "/history") {
+					isWiki = true
+				}
+				
 				renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &NotFoundPageArgs{
 					CommonPageArgs{
 						Session:   getSessionArgs(w, r),
