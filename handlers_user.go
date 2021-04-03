@@ -11,18 +11,19 @@ import (
 
 func CheckAuthentication(authForReads bool, authForWrites bool) func(http.Handler) http.Handler {
 	authRequirements := map[string]bool{
-		"/edit/":       authForWrites,
-		"/file/":       authForReads,
-		"/history/":    authForReads,
-		"/view/":       authForReads,
-		"/rename/":		authForWrites,
-		"/delete/":		authForWrites,
-		"/wiki/index":  authForReads,
-		"/wiki/files":  authForReads,
-		"/wiki/login":  false,
-		"/wiki/logout": false,
-		"/wiki/upload": authForWrites,
-		"/wiki/users":  authForWrites,
+		"/edit/":        authForWrites,
+		"/file/":        authForReads,
+		"/history/":     authForReads,
+		"/view/":        authForReads,
+		"/rename/":      authForWrites,
+		"/delete/":      authForWrites,
+		"/wiki/account": true,
+		"/wiki/index":   authForReads,
+		"/wiki/files":   authForReads,
+		"/wiki/login":   false,
+		"/wiki/logout":  false,
+		"/wiki/upload":  authForWrites,
+		"/wiki/users":   authForWrites,
 	}
 
 	findPrefix := func(target string) (bool, error) {
@@ -152,6 +153,51 @@ func ModifyUserHandler(um UserModifier) http.HandlerFunc {
 		}
 
 		writer.Header().Add("location", "/wiki/users")
+		writer.WriteHeader(http.StatusSeeOther)
+	}
+}
+
+func AccountHandler(t *Templates) http.HandlerFunc {
+	return t.RenderAccount
+}
+
+type PasswordUpdater interface {
+	SetPassword(username, password, responsible string) error
+	Authenticate(username, password string) (*config.User, error)
+}
+
+func ModifyAccountHandler(pu PasswordUpdater) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		user := getUserForRequest(request)
+		if user == nil {
+			writer.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		action := request.FormValue("action")
+		if action == "password" {
+			if _, err := pu.Authenticate(user.Name, request.FormValue("password")); err != nil {
+				putSessionKey(writer, request, sessionErrorKey, "Your password wa incorrect")
+				writer.Header().Add("location", "/wiki/account")
+				writer.WriteHeader(http.StatusSeeOther)
+				return
+			}
+
+			password1 := request.FormValue("password1")
+			password2 := request.FormValue("password2")
+			if password1 != password2 {
+				putSessionKey(writer, request, sessionErrorKey, "New passwords didn't match")
+			} else if err := pu.SetPassword(user.Name, password1, user.Name); err != nil {
+				putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Unable to set password: %v", err))
+			} else {
+				putSessionKey(writer, request, sessionNoticeKey, "Your password has been updated")
+			}
+		} else {
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		writer.Header().Add("location", "/wiki/account")
 		writer.WriteHeader(http.StatusSeeOther)
 	}
 }

@@ -172,6 +172,18 @@ func (t *Templates) RenderManageUsers(w http.ResponseWriter, r *http.Request, us
 	})
 }
 
+type AccountArgs struct {
+	Common CommonArgs
+}
+
+func (t *Templates) RenderAccount(w http.ResponseWriter, r *http.Request) {
+	t.render("account.gohtml", http.StatusOK, w, &AccountArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "My account",
+		}),
+	})
+}
+
 type ErrorPageArgs struct {
 	Common        CommonArgs
 	ShowLoginForm bool

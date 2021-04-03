@@ -111,6 +111,8 @@ func main() {
 	wikiRouter.PathPrefix("/delete/").Handler(DeletePageHandler(gitBackend)).Methods(http.MethodPost)
 	wikiRouter.PathPrefix("/rename/").Handler(RenamePageConfirmHandler(templates)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/rename/").Handler(RenamePageHandler(gitBackend)).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/account").Handler(AccountHandler(templates)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/account").Handler(ModifyAccountHandler(userManager)).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/index").Handler(ListPagesHandler(templates, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/files").Handler(ListFilesHandler(templates, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)

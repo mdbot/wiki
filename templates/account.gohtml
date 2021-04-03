@@ -1,0 +1,19 @@
+{{- /*gotype: github.com/mdbot/wiki.ManageUsersArgs*/ -}}
+{{template "header" .Common}}
+<h2>My account</h2>
+<h3>Change password</h3>
+<form action="/wiki/account" method="post">
+    {{$.Common.CsrfField}}
+    <input type="hidden" name="action" value="password">
+    <div class="form-group">
+        <input type="password" name="password" placeholder="Current password">
+    </div>
+    <div class="form-group">
+        <input type="password" name="password1" placeholder="New password">
+    </div>
+    <div class="form-group">
+        <input type="password" name="password2" placeholder="Confirm password">
+    </div>
+    <input type="submit" value="Change password">
+</form>
+{{template "footer" .Common}}

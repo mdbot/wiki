@@ -8,4 +8,5 @@
 * [List all pages](/wiki/index)
 * [List all files](/wiki/files)
 * [Upload a file](/wiki/upload)
+* [Change password](/wiki/account)
 * [Manage users](/wiki/users)
