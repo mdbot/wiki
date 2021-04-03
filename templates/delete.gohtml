@@ -1,7 +1,7 @@
 {{- /*gotype: github.com/mdbot/wiki.DeletePageArgs*/ -}}
-{{template "header" .CommonPageArgs}}
+{{template "header" .Common}}
 <form action="/delete/{{.PageName}}" method="post" class="editor">
-    {{.Session.CsrfField}}
+    {{.Common.CsrfField}}
     <input type="hidden" id="confirm" name="confirm" value="confirm" />
     <div class="form-group">
         <label for="message">Message:</label>
@@ -9,4 +9,4 @@
     </div>
     <button type="submit" class="btn btn-primary" value="Edit">Confirm</button>
 </form>
-{{template "footer" .CommonPageArgs}}
+{{template "footer" .Common}}

@@ -1,5 +1,5 @@
 {{- /*gotype: github.com/mdbot/wiki.HistoryPageArgs*/ -}}
-{{template "header" .CommonPageArgs}}
+{{template "header" .Common}}
 <h1>Page history</h1>
 <ul>
     {{range .History}}
@@ -17,4 +17,4 @@
 {{if .Next}}
     <p><a href="?after={{.Next}}">Next &raquo;</a></p>
 {{end}}
-{{template "footer" .CommonPageArgs}}
+{{template "footer" .Common}}

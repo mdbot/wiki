@@ -1,9 +1,9 @@
 {{- /*gotype: github.com/mdbot/wiki.ListPagesArgs*/ -}}
-{{template "header" .CommonPageArgs}}
+{{template "header" .Common}}
 All wiki content:
 <ul>
     {{range .Pages}}
         <li><a href="/view/{{.}}">{{.}}</a></li>
     {{end}}
 </ul>
-{{template "footer" .CommonPageArgs}}
+{{template "footer" .Common}}

@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
 	"github.com/mdbot/wiki/config"
 )
@@ -94,28 +93,5 @@ func clearSessionKey(w http.ResponseWriter, r *http.Request, key string) {
 	if s != nil {
 		delete(s.Values, key)
 		_ = s.Save(r, w)
-	}
-}
-
-func getSessionArgs(w http.ResponseWriter, r *http.Request) SessionArgs {
-	user := getUserForRequest(r)
-
-	e := getErrorForRequest(r)
-	if e != "" {
-		clearSessionKey(w, r, sessionErrorKey)
-	}
-
-	notice := getNoticeForRequest(r)
-	if notice != "" {
-		clearSessionKey(w, r, sessionNoticeKey)
-	}
-
-	return SessionArgs{
-		CanEdit:      user != nil,
-		Error:        e,
-		Notice: notice,
-		User:         user,
-		CsrfField:    csrf.TemplateField(r),
-		RequestedUrl: r.URL.String(),
 	}
 }

@@ -1,4 +1,4 @@
-{{- /*gotype: github.com/mdbot/wiki.CommonPageArgs*/ -}}
+{{- /*gotype: github.com/mdbot/wiki.Common*/ -}}
 {{define "header"}}
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +14,7 @@
                 {{.PageTitle}}
             </h1>
             <nav>
-                {{if and (and .IsWikiPage .Session.CanEdit) (not .IsError)}}
+                {{if and (and .IsWikiPage .CanEdit) (not .IsError)}}
                     <a href="/edit/{{.PageTitle}}">Edit</a>
                     <a href="/rename/{{.PageTitle}}">Rename</a>
                     <a href="/delete/{{.PageTitle}}">Delete</a>
@@ -24,18 +24,18 @@
                 {{end}}
             </nav>
             <div class="login">
-                {{if .Session.User}}
+                {{if .User}}
                     <form action="/wiki/logout" method="post">
-                        Logged in as {{.Session.User.Name}}
+                        Logged in as {{.User.Name}}
 
-                        {{.Session.CsrfField}}
-                        <input type="hidden" name="redirect" value="{{.Session.RequestedUrl}}">
+                        {{.CsrfField}}
+                        <input type="hidden" name="redirect" value="{{.RequestedUrl}}">
                         <input type="submit" value="Logout">
                     </form>
                 {{else}}
                     <form action="/wiki/login" method="post">
-                        {{.Session.CsrfField}}
-                        <input type="hidden" name="redirect" value="{{.Session.RequestedUrl}}">
+                        {{.CsrfField}}
+                        <input type="hidden" name="redirect" value="{{.RequestedUrl}}">
                         <input type="text" name="username" placeholder="Username">
                         <input type="password" name="password" placeholder="Password">
                         <input type="submit" value="Login">
@@ -44,12 +44,12 @@
             </div>
         </header>
 
-        {{if .Session.Error}}
-            <aside class="error">{{.Session.Error}}</aside>
+        {{if .Error}}
+            <aside class="error">{{.Error}}</aside>
         {{end}}
 
-        {{if .Session.Notice}}
-            <aside class="notice">{{.Session.Notice}}</aside>
+        {{if .Notice}}
+            <aside class="notice">{{.Notice}}</aside>
         {{end}}
 
         <main class="container content">

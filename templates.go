@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/mdbot/wiki/config"
 )
 
@@ -15,21 +16,17 @@ type Templates struct {
 	fs fs.FS
 }
 
-type CommonPageArgs struct {
-	Session      SessionArgs
+type CommonArgs struct {
+	RequestedUrl string
 	PageTitle    string
 	IsWikiPage   bool
-	LastModified *LastModifiedDetails
 	IsError      bool
-}
-
-type SessionArgs struct {
 	CanEdit      bool
 	Error        string
 	Notice       string
 	User         *config.User
+	LastModified *LastModifiedDetails
 	CsrfField    template.HTML
-	RequestedUrl string
 }
 
 type LastModifiedDetails struct {
@@ -38,112 +35,105 @@ type LastModifiedDetails struct {
 }
 
 type ViewPageArgs struct {
-	CommonPageArgs
+	Common      CommonArgs
 	PageContent template.HTML
 }
 
 func (t *Templates) RenderPage(w http.ResponseWriter, r *http.Request, title, content string, log *LastModifiedDetails) {
 	t.render("index.gohtml", http.StatusOK, w, &ViewPageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:      getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle:    title,
 			IsWikiPage:   true,
 			LastModified: log,
-		},
+		}),
 		PageContent: template.HTML(content),
 	})
 }
 
 type EditPageArgs struct {
-	CommonPageArgs
+	Common      CommonArgs
 	PageContent string
 }
 
 func (t *Templates) RenderEditPage(w http.ResponseWriter, r *http.Request, title, content string) {
 	t.render("edit.gohtml", http.StatusOK, w, &EditPageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:   getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: title,
-		},
+		}),
 		PageContent: content,
 	})
 }
 
 type DeletePageArgs struct {
-	CommonPageArgs
+	Common   CommonArgs
 	PageName string
 }
 
 func (t *Templates) RenderDeletePage(w http.ResponseWriter, r *http.Request, pageName string) {
 	t.render("delete.gohtml", http.StatusOK, w, &DeletePageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:   getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Delete page",
-		},
+		}),
 		PageName: pageName,
 	})
 }
 
 type RenamePageArgs struct {
-	CommonPageArgs
+	Common  CommonArgs
 	OldName string
 }
 
 func (t *Templates) RenderRenamePage(w http.ResponseWriter, r *http.Request, oldName string) {
 	t.render("rename.gohtml", http.StatusOK, w, &RenamePageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:   getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Rename page",
-		},
+		}),
 		OldName: oldName,
 	})
 }
 
 type ListPagesArgs struct {
-	CommonPageArgs
-	Pages []string
+	Common CommonArgs
+	Pages  []string
 }
 
 func (t *Templates) RenderPageList(w http.ResponseWriter, r *http.Request, pages []string) {
 	t.render("list.gohtml", http.StatusOK, w, &ListPagesArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:   getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Pages",
-		},
+		}),
 		Pages: pages,
 	})
 }
 
 type ListFilesArgs struct {
-	CommonPageArgs
-	Files []File
+	Common CommonArgs
+	Files  []File
 }
 
 func (t *Templates) RenderFileList(w http.ResponseWriter, r *http.Request, files []File) {
 	t.render("listfiles.gohtml", http.StatusOK, w, &ListFilesArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:   getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Files",
-		},
+		}),
 		Files: files,
 	})
 }
 
 type UploadFileArgs struct {
-	CommonPageArgs
+	Common CommonArgs
 }
 
 func (t *Templates) RenderUploadForm(w http.ResponseWriter, r *http.Request) {
 	t.render("upload.gohtml", http.StatusOK, w, &UploadFileArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:   getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Upload file",
-		},
+		}),
 	})
 }
 
 type HistoryPageArgs struct {
-	CommonPageArgs
+	Common  CommonArgs
 	History []*HistoryEntry
 	Next    string
 }
@@ -157,80 +147,73 @@ type HistoryEntry struct {
 
 func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title string, entries []*HistoryEntry, next string) {
 	t.render("history.gohtml", http.StatusOK, w, &HistoryPageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:    getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle:  title,
 			IsWikiPage: true,
-		},
+		}),
 		History: entries,
 		Next:    next,
 	})
 }
 
 type ManageUsersArgs struct {
-	CommonPageArgs
-	Users []string
+	Common CommonArgs
+	Users  []string
 }
 
 func (t *Templates) RenderManageUsers(w http.ResponseWriter, r *http.Request, users []string) {
 	t.render("users.gohtml", http.StatusOK, w, &ManageUsersArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:   getSessionArgs(w, r),
+		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Manage users",
-		},
+		}),
 		Users: users,
 	})
 }
 
 type ErrorPageArgs struct {
-	CommonPageArgs
+	Common        CommonArgs
 	ShowLoginForm bool
 	OldPageTitle  string
 }
 
 func (t *Templates) RenderNotFound(w http.ResponseWriter, r *http.Request, isWiki bool, pageName string) {
 	t.render("404.gohtml", http.StatusNotFound, w, &ErrorPageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:      getSessionArgs(w, r),
-			PageTitle:    "Page not found",
-			IsWikiPage:   isWiki,
-			IsError: true,
-		},
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle:  "Page not found",
+			IsWikiPage: isWiki,
+			IsError:    true,
+		}),
 		OldPageTitle: pageName,
 	})
 }
 
 func (t *Templates) RenderUnauthorised(w http.ResponseWriter, r *http.Request) {
 	t.render("error.gohtml", http.StatusUnauthorized, w, &ErrorPageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:      getSessionArgs(w, r),
-			PageTitle:    "Unauthorized",
-			IsError: true,
-		},
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Unauthorized",
+			IsError:   true,
+		}),
 		ShowLoginForm: true,
 	})
 }
 
 func (t *Templates) RenderForbidden(w http.ResponseWriter, r *http.Request) {
 	t.render("error.gohtml", http.StatusForbidden, w, &ErrorPageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:      getSessionArgs(w, r),
-			PageTitle:    "Forbidden",
-			IsError: true,
-		},
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Forbidden",
+			IsError:   true,
+		}),
 	})
 }
 
 func (t *Templates) RenderInternalError(w http.ResponseWriter, r *http.Request) {
 	t.render("error.gohtml", http.StatusInternalServerError, w, &ErrorPageArgs{
-		CommonPageArgs: CommonPageArgs{
-			Session:      getSessionArgs(w, r),
-			PageTitle:    "Server Error",
-			IsError: true,
-		},
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Server Error",
+			IsError:   true,
+		}),
 	})
 }
-
 
 func (t *Templates) render(name string, statusCode int, w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -260,4 +243,22 @@ func (t *Templates) formatBytes(size int64) string {
 	}
 
 	return fmt.Sprintf("%.1f %ciB", float64(size)/float64(denominator), "KMGTPE"[power])
+}
+
+func (t *Templates) populateArgs(w http.ResponseWriter, r *http.Request, args CommonArgs) CommonArgs {
+	user := getUserForRequest(r)
+	args.User = user
+	args.CanEdit = user != nil
+
+	if args.Error = getErrorForRequest(r); args.Error != "" {
+		clearSessionKey(w, r, sessionErrorKey)
+	}
+
+	if args.Notice = getNoticeForRequest(r); args.Notice != "" {
+		clearSessionKey(w, r, sessionNoticeKey)
+	}
+
+	args.CsrfField = csrf.TemplateField(r)
+	args.RequestedUrl = r.URL.String()
+	return args
 }

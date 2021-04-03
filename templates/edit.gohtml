@@ -1,7 +1,7 @@
 {{- /*gotype: github.com/mdbot/wiki.EditPageArgs*/ -}}
-{{template "header" .CommonPageArgs}}
-<form action="/edit/{{.PageTitle}}" method="post" class="editor">
-    {{.Session.CsrfField}}
+{{template "header" .Common}}
+<form action="/edit/{{.Common.PageTitle}}" method="post" class="editor">
+    {{.Common.CsrfField}}
 
     <div class="form-group">
         <label for="content">Page content:</label>
@@ -15,4 +15,4 @@
 
     <button type="submit" class="btn btn-primary" value="Edit">Submit</button>
 </form>
-{{template "footer" .CommonPageArgs}}
+{{template "footer" .Common}}

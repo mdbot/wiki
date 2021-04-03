@@ -1,7 +1,7 @@
 {{- /*gotype: github.com/mdbot/wiki.RenamePageArgs*/ -}}
-{{template "header" .CommonPageArgs}}
+{{template "header" .Common}}
 <form action="/rename/{{.OldName}}" method="post" class="editor">
-    {{.Session.CsrfField}}
+    {{.Common.CsrfField}}
 
     <div class="form-group">
         <label for="newName">New Name:</label>
@@ -14,4 +14,4 @@
 
     <button type="submit" class="btn btn-primary" value="Edit">Submit</button>
 </form>
-{{template "footer" .CommonPageArgs}}
+{{template "footer" .Common}}
