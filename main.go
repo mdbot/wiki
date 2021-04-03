@@ -88,7 +88,7 @@ func main() {
 
 	wikiRouter.PathPrefix("/edit/").Handler(EditPageHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/edit/").Handler(SubmitPageHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/view/").Handler(RenderPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/view/").Handler(ViewPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/delete/").Handler(DeletePageConfirmHandler(templateFs)).Methods(http.MethodGet)
@@ -108,7 +108,7 @@ func main() {
 
 	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
 	router.Use(SessionHandler(userManager, sessionStore))
-	router.Use(NewLoggingHandler(os.Stdout))
+	router.Use(LoggingHandler(os.Stdout))
 	router.Use(PageErrorHandler(templateFs))
 
 	router.Path("/").Handler(RedirectMainPageHandler())
