@@ -10,6 +10,9 @@ RUN mkdir /data
 RUN go get github.com/google/go-licenses && go-licenses save ./... --save_path=/notices
 
 FROM gcr.io/distroless/static:nonroot
+
+LABEL org.opencontainers.image.source="https://github.com/mdbot/wiki"
+
 COPY --from=build /go/bin/app /wiki
 COPY --from=build /notices /notices
 COPY --from=build --chown=nonroot /data /data
