@@ -35,7 +35,7 @@ jobs:
           docker push $IMAGE_NAME:$VERSION
           
       - name: Log into registry (mirror)
-        run: echo "${{ secrets.REG_HUB_TOKEN }}" | docker login -u "${{ secrets.REG_HUB_USER }}" --password-stdin
+        run: echo "${{ secrets.REG_HUB_TOKEN }}" | docker login repo.treescale.com -u "${{ secrets.REG_HUB_USER }}" --password-stdin
 
       - name: Push image (mirror)
         run: |     
