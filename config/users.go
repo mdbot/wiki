@@ -123,6 +123,10 @@ func (a *UserManager) Authenticate(username, password string) (*User, error) {
 		return nil, fmt.Errorf("invalid username/password")
 	}
 
+	if !user.Has(PermissionAuth) {
+		return nil, fmt.Errorf("account disabled")
+	}
+
 	return user, nil
 }
 
