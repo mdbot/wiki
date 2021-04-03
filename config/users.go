@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -11,15 +12,29 @@ import (
 
 const userSettingsName = "users"
 
+type Permission uint8
+
+const (
+	PermissionNone  = 0b00000000
+	PermissionRead  = 0b00000001
+	PermissionWrite = 0b00000011
+	PermissionAdmin = 0b11111111
+)
+
 type User struct {
-	Name     string
-	Salt     []byte
-	Password []byte
+	Name        string
+	Salt        []byte
+	Password    []byte
+	Permissions Permission
+}
+
+func (u *User) Has(permission Permission) bool {
+	return u.Permissions&permission == permission
 }
 
 type UserManager struct {
-	users      map[string]*User
-	store      Store
+	users map[string]*User
+	store Store
 }
 
 type UserSettings struct {
@@ -49,9 +64,21 @@ func (a *UserManager) load() error {
 		return err
 	}
 
+	hasAdmin := false
 	for i := range settings.Users {
 		u := settings.Users[i]
 		a.users[strings.ToLower(u.Name)] = u
+		if u.Has(PermissionAdmin) {
+			hasAdmin = true
+		}
+	}
+
+	if len(a.users) > 0 && !hasAdmin {
+		log.Printf("No account has admin access, granting access to all...")
+		for n := range a.users {
+			a.users[n].Permissions |= PermissionAdmin
+		}
+		_ = a.save("System", "Migration: adding admin permissions")
 	}
 
 	return nil
@@ -128,7 +155,7 @@ func (a *UserManager) AddUser(user, password, responsible string) error {
 	}
 
 	u := &User{
-		Name:     user,
+		Name: user,
 	}
 
 	if err := a.setPassword(u, password); err != nil {
