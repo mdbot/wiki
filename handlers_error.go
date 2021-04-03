@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/fs"
 	"net/http"
 	"strings"
 )
@@ -29,21 +28,15 @@ func (w *notFoundInterceptWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-
-type ErrorPageArgs struct {
-	CommonPageArgs
-	ShowLoginForm bool
-	OldPageTitle  string
-}
-
-func PageErrorHandler(templateFs fs.FS) func(http.Handler) http.Handler {
+func PageErrorHandler(t *Templates) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			fakeWriter := &notFoundInterceptWriter{realWriter: w}
 
 			next.ServeHTTP(fakeWriter, r)
 
-			if fakeWriter.status == http.StatusNotFound {
+			switch fakeWriter.status {
+			case http.StatusNotFound:
 				isWiki := false
 				if strings.HasPrefix(r.RequestURI, "/view/") || strings.HasPrefix(r.RequestURI, "/history") {
 					isWiki = true
@@ -52,49 +45,13 @@ func PageErrorHandler(templateFs fs.FS) func(http.Handler) http.Handler {
 				if strings.HasPrefix(r.RequestURI, "/view/") {
 					oldPageTitle = strings.TrimPrefix(r.RequestURI, "/view/")
 				}
-				renderTemplate(templateFs, NotFound, http.StatusNotFound, w, &ErrorPageArgs{
-					CommonPageArgs{
-						Session:      getSessionArgs(w, r),
-						PageTitle:    "Page not found",
-						IsWikiPage:   isWiki,
-						IsError: true,
-					},
-					false,
-					oldPageTitle,
-				})
-			}
-			if fakeWriter.status == http.StatusUnauthorized {
-				renderTemplate(templateFs, Unauthorized, http.StatusUnauthorized, w, &ErrorPageArgs{
-					CommonPageArgs{
-						Session:   getSessionArgs(w, r),
-						PageTitle: "Unauthorized",
-						IsError: true,
-					},
-					true,
-					"",
-				})
-			}
-			if fakeWriter.status == http.StatusForbidden {
-				renderTemplate(templateFs, Forbidden, http.StatusForbidden, w, &ErrorPageArgs{
-					CommonPageArgs{
-						Session:   getSessionArgs(w, r),
-						PageTitle: "Forbidden",
-						IsError: true,
-					},
-					false,
-					"",
-				})
-			}
-			if fakeWriter.status == http.StatusInternalServerError {
-				renderTemplate(templateFs, ServerError, http.StatusInternalServerError, w, &ErrorPageArgs{
-					CommonPageArgs{
-						Session:   getSessionArgs(w, r),
-						PageTitle: "Server Error",
-						IsError: true,
-					},
-					false,
-					"",
-				})
+				t.RenderNotFound(w, r, isWiki, oldPageTitle)
+			case http.StatusUnauthorized:
+				t.RenderUnauthorised(w, r)
+			case http.StatusForbidden:
+				t.RenderForbidden(w, r)
+			case http.StatusInternalServerError:
+				t.RenderInternalError(w, r)
 			}
 		})
 	}

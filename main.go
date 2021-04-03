@@ -5,7 +5,6 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"github.com/gorilla/csrf"
 	"io/fs"
 	"log"
 	"net/http"
@@ -13,12 +12,14 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/csrf"
+	"github.com/yalue/merged_fs"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/kouhin/envflag"
 	"github.com/mdbot/wiki/config"
 	"github.com/mdbot/wiki/markdown"
-	"github.com/yalue/merged_fs"
 )
 
 //go:embed static templates
@@ -48,11 +49,7 @@ func main() {
 		log.Fatal("Refusing to start with dangerous HTML and anonymous writes enabled")
 	}
 
-	staticFs, _ := fs.Sub(embeddedFiles, "static")
-	staticFiles = merged_fs.NewMergedFS(os.DirFS("static"), staticFs)
-
-	templateFs, _ := fs.Sub(embeddedFiles, "templates")
-	templateFiles = merged_fs.NewMergedFS(os.DirFS("templates"), templateFs)
+	initFileSystem()
 
 	gitBackend, err := NewGitBackend(*workDir)
 	if err != nil {
@@ -79,29 +76,29 @@ func main() {
 	}
 
 	sessionStore := sessions.NewCookieStore(secrets.SessionKey)
-
 	renderer := markdown.NewRenderer(gitBackend, *dangerousHtml, *codeStyle)
+	templates := &Templates{templateFiles}
 
 	wikiRouter := mux.NewRouter()
 	wikiRouter.Use(LowerCaseCanonical)
 	wikiRouter.Use(CheckAuthentication(*requireAuthForReads, *requireAuthForWrites))
 
-	wikiRouter.PathPrefix("/edit/").Handler(EditPageHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/edit/").Handler(EditPageHandler(templates, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/edit/").Handler(SubmitPageHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/view/").Handler(ViewPageHandler(templateFiles, renderer, gitBackend)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/history/").Handler(PageHistoryHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/view/").Handler(ViewPageHandler(templates, renderer, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/history/").Handler(PageHistoryHandler(templates, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/delete/").Handler(DeletePageConfirmHandler(templateFs)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/delete/").Handler(DeletePageConfirmHandler(templates)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/delete/").Handler(DeletePageHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/rename/").Handler(RenamePageConfirmHandler(templateFs)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/rename/").Handler(RenamePageConfirmHandler(templates)).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/rename/").Handler(RenamePageHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/index").Handler(ListPagesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/files").Handler(ListFilesHandler(templateFiles, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/index").Handler(ListPagesHandler(templates, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/files").Handler(ListFilesHandler(templates, gitBackend)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/upload").Handler(UploadFormHandler(templateFiles)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/upload").Handler(UploadFormHandler(templates)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/upload").Handler(UploadHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/users").Handler(ManageUsersHandler(templateFiles, userManager)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/users").Handler(ManageUsersHandler(templates, userManager)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/users").Handler(ModifyUserHandler(userManager)).Methods(http.MethodPost)
 
 	router := mux.NewRouter()
@@ -109,7 +106,7 @@ func main() {
 	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
 	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(LoggingHandler(os.Stdout))
-	router.Use(PageErrorHandler(templateFs))
+	router.Use(PageErrorHandler(templates))
 
 	router.Path("/").Handler(RedirectMainPageHandler())
 	router.Path("/view/").Handler(RedirectMainPageHandler())
@@ -133,4 +130,12 @@ func main() {
 		log.Fatalf("Unable to shutdown: %s", err.Error())
 	}
 	log.Print("Finishing server.")
+}
+
+func initFileSystem() {
+	staticFs, _ := fs.Sub(embeddedFiles, "static")
+	staticFiles = merged_fs.NewMergedFS(os.DirFS("static"), staticFs)
+
+	templateFs, _ := fs.Sub(embeddedFiles, "templates")
+	templateFiles = merged_fs.NewMergedFS(os.DirFS("templates"), templateFs)
 }

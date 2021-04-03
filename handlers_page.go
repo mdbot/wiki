@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"html/template"
-	"io/fs"
 	"log"
 	"net/http"
 	"strings"
@@ -13,69 +11,44 @@ type PageProvider interface {
 	GetPage(title string) (*Page, error)
 }
 
-type RenderPageArgs struct {
-	CommonPageArgs
-	PageContent template.HTML
-}
-
 type ContentRenderer interface {
 	Render([]byte) (string, error)
 }
 
-func ViewPageHandler(templateFs fs.FS, r ContentRenderer, pp PageProvider) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		pageTitle := strings.TrimPrefix(request.URL.Path, "/view/")
+func ViewPageHandler(t *Templates, renderer ContentRenderer, pp PageProvider) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		pageTitle := strings.TrimPrefix(r.URL.Path, "/view/")
 
 		page, err := pp.GetPage(pageTitle)
 		if err != nil {
-			http.NotFound(writer, request)
+			http.NotFound(w, r)
 			return
 		}
 
-		content, err := r.Render(page.Content)
+		content, err := renderer.Render(page.Content)
 		if err != nil {
 			log.Printf("Failed to render markdown: %v\n", err)
-			writer.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		renderTemplate(templateFs, ViewPage, http.StatusOK, writer, &RenderPageArgs{
-			CommonPageArgs: CommonPageArgs{
-				Session:    getSessionArgs(writer, request),
-				PageTitle:  pageTitle,
-				IsWikiPage: true,
-				LastModified: &LastModifiedDetails{
-					User: page.LastModified.User,
-					Time: page.LastModified.Time,
-				},
-			},
-
-			PageContent: template.HTML(content),
+		t.RenderPage(w, r, pageTitle, content, &LastModifiedDetails{
+			User: page.LastModified.User,
+			Time: page.LastModified.Time,
 		})
 	}
 }
 
-type EditPageArgs struct {
-	CommonPageArgs
-	PageContent string
-}
-
-func EditPageHandler(templateFs fs.FS, pp PageProvider) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		pageTitle := strings.TrimPrefix(request.URL.Path, "/edit/")
+func EditPageHandler(t *Templates, pp PageProvider) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		pageTitle := strings.TrimPrefix(r.URL.Path, "/edit/")
 
 		var content string
 		if page, err := pp.GetPage(pageTitle); err == nil {
 			content = string(page.Content)
 		}
 
-		renderTemplate(templateFs, EditPage, http.StatusOK, writer, &EditPageArgs{
-			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(writer, request),
-				PageTitle: pageTitle,
-			},
-			PageContent: content,
-		})
+		t.RenderEditPage(w, r, pageTitle, content)
 	}
 }
 
@@ -109,21 +82,10 @@ type DeletePageProvider interface {
 	DeletePage(name string, message string, user string) error
 }
 
-type DeletePageArgs struct {
-	CommonPageArgs
-	PageName string
-}
-
-func DeletePageConfirmHandler(templateFs fs.FS) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		name := strings.TrimPrefix(request.URL.Path, "/delete/")
-		renderTemplate(templateFs, DeletePage, http.StatusOK, writer, &DeletePageArgs{
-			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(writer, request),
-				PageTitle: "Delete Page",
-			},
-			PageName: name,
-		})
+func DeletePageConfirmHandler(t *Templates) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := strings.TrimPrefix(r.URL.Path, "/delete/")
+		t.RenderDeletePage(w, r, name)
 	}
 }
 
@@ -153,21 +115,10 @@ type RenamePageProvider interface {
 	RenamePage(name string, newName string, message string, user string) error
 }
 
-type RenamePageArgs struct {
-	CommonPageArgs
-	OldName string
-}
-
-func RenamePageConfirmHandler(templateFs fs.FS) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		name := strings.TrimPrefix(request.URL.Path, "/rename/")
-		renderTemplate(templateFs, RenamePage, http.StatusOK, writer, &RenamePageArgs{
-			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(writer, request),
-				PageTitle: "Rename Page",
-			},
-			OldName: name,
-		})
+func RenamePageConfirmHandler(t  *Templates) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := strings.TrimPrefix(r.URL.Path, "/rename/")
+		t.RenderRenamePage(w, r, name)
 	}
 }
 
@@ -197,26 +148,15 @@ type PageLister interface {
 	ListPages() ([]string, error)
 }
 
-type ListPagesArgs struct {
-	CommonPageArgs
-	Pages []string
-}
-
-func ListPagesHandler(templateFs fs.FS, pl PageLister) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
+func ListPagesHandler(t *Templates, pl PageLister) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		pages, err := pl.ListPages()
 		if err != nil {
 			log.Printf("Failed to list pages: %v\n", err)
-			writer.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		renderTemplate(templateFs, ListPage, http.StatusOK, writer, &ListPagesArgs{
-			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(writer, request),
-				PageTitle: "Index",
-			},
-			Pages: pages,
-		})
+		t.RenderPageList(w, r, pages)
 	}
 }

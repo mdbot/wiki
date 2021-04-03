@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"io/fs"
 	"log"
 	"mime"
 	"net/http"
@@ -14,27 +13,16 @@ type FileLister interface {
 	ListFiles() ([]File, error)
 }
 
-type ListFilesArgs struct {
-	CommonPageArgs
-	Files []File
-}
-
-func ListFilesHandler(templateFs fs.FS, fl FileLister) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
+func ListFilesHandler(t *Templates, fl FileLister) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		files, err := fl.ListFiles()
 		if err != nil {
 			log.Printf("Failed to list files: %v\n", err)
-			writer.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		renderTemplate(templateFs, ListFilesPage, http.StatusOK, writer, &ListFilesArgs{
-			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(writer, request),
-				PageTitle: "Files",
-			},
-			Files: files,
-		})
+		t.RenderFileList(w, r, files)
 	}
 }
 
@@ -80,19 +68,8 @@ func UploadHandler(store FileStore) http.HandlerFunc {
 	}
 }
 
-type UploadPageArgs struct {
-	CommonPageArgs
-}
-
-func UploadFormHandler(templateFs fs.FS) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		renderTemplate(templateFs, UploadPage, http.StatusOK, writer, &UploadPageArgs{
-			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(writer, request),
-				PageTitle: "Upload file",
-			},
-		})
-	}
+func UploadFormHandler(t *Templates) http.HandlerFunc {
+	return t.RenderUploadForm
 }
 
 type FileProvider interface {

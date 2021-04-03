@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io/fs"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/mdbot/wiki/config"
@@ -95,17 +95,12 @@ func LogoutHandler() http.HandlerFunc {
 	}
 }
 
-type ManageUsersArgs struct {
-	CommonPageArgs
-	Users []string
-}
-
 type UserLister interface {
 	Users() []*config.User
 }
 
-func ManageUsersHandler(templateFs fs.FS, ul UserLister) http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
+func ManageUsersHandler(t *Templates, ul UserLister) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		users := ul.Users()
 		var usernames []string
 
@@ -113,13 +108,8 @@ func ManageUsersHandler(templateFs fs.FS, ul UserLister) http.HandlerFunc {
 			usernames = append(usernames, users[i].Name)
 		}
 
-		renderTemplate(templateFs, ManageUsersPage, http.StatusOK, writer, &ManageUsersArgs{
-			CommonPageArgs: CommonPageArgs{
-				Session:   getSessionArgs(writer, request),
-				PageTitle: "Manage users",
-			},
-			Users: usernames,
-		})
+		sort.Strings(usernames)
+		t.RenderManageUsers(w, r, usernames)
 	}
 }
 
