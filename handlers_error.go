@@ -5,33 +5,40 @@ import (
 	"strings"
 )
 
-type notFoundInterceptWriter struct {
+type errorInterceptingWriter struct {
 	realWriter http.ResponseWriter
 	status     int
 }
 
-func (w *notFoundInterceptWriter) Header() http.Header {
+func (w *errorInterceptingWriter) Header() http.Header {
 	return w.realWriter.Header()
 }
 
-func (w *notFoundInterceptWriter) WriteHeader(status int) {
+func (w *errorInterceptingWriter) WriteHeader(status int) {
 	w.status = status
-	if status != http.StatusNotFound {
+	if w.shouldProxy() {
 		w.realWriter.WriteHeader(status)
 	}
 }
 
-func (w *notFoundInterceptWriter) Write(p []byte) (int, error) {
-	if w.status != http.StatusNotFound {
+func (w *errorInterceptingWriter) Write(p []byte) (int, error) {
+	if w.shouldProxy() {
 		return w.realWriter.Write(p)
 	}
 	return len(p), nil
 }
 
+func (w *errorInterceptingWriter) shouldProxy() bool {
+	return w.status != http.StatusNotFound &&
+		w.status != http.StatusUnauthorized &&
+		w.status != http.StatusForbidden &&
+		w.status != http.StatusInternalServerError
+}
+
 func PageErrorHandler(t *Templates) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fakeWriter := &notFoundInterceptWriter{realWriter: w}
+			fakeWriter := &errorInterceptingWriter{realWriter: w}
 
 			next.ServeHTTP(fakeWriter, r)
 
