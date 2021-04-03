@@ -36,11 +36,16 @@ var httpPort = flag.Int("httpport", 8080, "HTTP server port")
 var configKey = flag.String("key", "", "Key to use to encrypt config data (32 byes, hex encoded, e.g. from `openssl rand -hex 32`)")
 var requireAuthForWrites = flag.Bool("authenticated-writes", true, "Whether to require authentication to make changes to pages/files")
 var requireAuthForReads = flag.Bool("authenticated-reads", false, "Whether to require authentication to read pages/files")
+var dangerousHtml = flag.Bool("allow-dangerous-html", false, "Whether to allow dangerous HTML such as script tags")
 
 func main() {
 	err := envflag.Parse()
 	if err != nil {
 		log.Fatalf("Unable to parse flags: %s", err.Error())
+	}
+
+	if *dangerousHtml && !*requireAuthForWrites {
+		log.Fatal("Refusing to start with dangerous HTML and anonymous writes enabled")
 	}
 
 	staticFs, _ := fs.Sub(embeddedFiles, "static")
@@ -75,7 +80,7 @@ func main() {
 
 	sessionStore := sessions.NewCookieStore(secrets.SessionKey)
 
-	renderer := markdown.NewRenderer(gitBackend, *codeStyle)
+	renderer := markdown.NewRenderer(gitBackend, *dangerousHtml, *codeStyle)
 
 	wikiRouter := mux.NewRouter()
 	wikiRouter.Use(LowerCaseCanonical)
