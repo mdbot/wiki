@@ -16,10 +16,28 @@ type Permission uint8
 
 const (
 	PermissionNone  = 0b00000000
-	PermissionRead  = 0b00000001
-	PermissionWrite = 0b00000011
+	PermissionAuth  = 0b00000001
+	PermissionRead  = 0b00000011
+	PermissionWrite = 0b00000111
 	PermissionAdmin = 0b11111111
 )
+
+func (p Permission) String() string {
+	switch p {
+	case PermissionAdmin:
+		return "admin"
+	case PermissionWrite:
+		return "write"
+	case PermissionRead:
+		return "read"
+	case PermissionAuth:
+		return "auth"
+	case PermissionNone:
+		return "none"
+	default:
+		return fmt.Sprintf("unknown(%b)", p)
+	}
+}
 
 type User struct {
 	Name        string

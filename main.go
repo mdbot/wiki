@@ -98,29 +98,44 @@ func main() {
 		},
 	}
 
+	admin := CheckPermission(config.PermissionAdmin)
+	auth := CheckPermission(config.PermissionAuth)
+	var read, write func(header http.Handler) http.Handler
+
+	if *requireAuthForWrites {
+		write = CheckPermission(config.PermissionWrite)
+	} else {
+		write = CheckPermission(config.PermissionNone)
+	}
+
+	if *requireAuthForReads {
+		read = CheckPermission(config.PermissionRead)
+	} else {
+		read = CheckPermission(config.PermissionNone)
+	}
+
 	wikiRouter := mux.NewRouter()
 	wikiRouter.Use(LowerCaseCanonical)
-	wikiRouter.Use(CheckAuthentication(*requireAuthForReads, *requireAuthForWrites))
 
-	wikiRouter.PathPrefix("/edit/").Handler(EditPageHandler(templates, gitBackend)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/edit/").Handler(SubmitPageHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/view/").Handler(ViewPageHandler(templates, renderer, gitBackend)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/history/").Handler(PageHistoryHandler(templates, gitBackend)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/file/").Handler(FileHandler(gitBackend)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/delete/").Handler(DeletePageConfirmHandler(templates)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/delete/").Handler(DeletePageHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/rename/").Handler(RenamePageConfirmHandler(templates)).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/rename/").Handler(RenamePageHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/account").Handler(AccountHandler(templates)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/account").Handler(ModifyAccountHandler(userManager)).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/index").Handler(ListPagesHandler(templates, gitBackend)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/files").Handler(ListFilesHandler(templates, gitBackend)).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/edit/").Handler(write(EditPageHandler(templates, gitBackend))).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/edit/").Handler(write(SubmitPageHandler(gitBackend))).Methods(http.MethodPost)
+	wikiRouter.PathPrefix("/view/").Handler(read(ViewPageHandler(templates, renderer, gitBackend))).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/history/").Handler(read(PageHistoryHandler(templates, gitBackend))).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/file/").Handler(read(FileHandler(gitBackend))).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/delete/").Handler(write(DeletePageConfirmHandler(templates))).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/delete/").Handler(write(DeletePageHandler(gitBackend))).Methods(http.MethodPost)
+	wikiRouter.PathPrefix("/rename/").Handler(write(RenamePageConfirmHandler(templates))).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/rename/").Handler(write(RenamePageHandler(gitBackend))).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/account").Handler(auth(AccountHandler(templates))).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/account").Handler(auth(ModifyAccountHandler(userManager))).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/index").Handler(read(ListPagesHandler(templates, gitBackend))).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/files").Handler(read(ListFilesHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/upload").Handler(UploadFormHandler(templates)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/upload").Handler(UploadHandler(gitBackend)).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/users").Handler(ManageUsersHandler(templates, userManager)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/users").Handler(ModifyUserHandler(userManager)).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/upload").Handler(write(UploadFormHandler(templates))).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/upload").Handler(write(UploadHandler(gitBackend))).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/users").Handler(admin(ManageUsersHandler(templates, userManager))).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/users").Handler(admin(ModifyUserHandler(userManager))).Methods(http.MethodPost)
 
 	router := mux.NewRouter()
 

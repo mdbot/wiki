@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -9,45 +10,26 @@ import (
 	"github.com/mdbot/wiki/config"
 )
 
-func CheckAuthentication(authForReads bool, authForWrites bool) func(http.Handler) http.Handler {
-	authRequirements := map[string]bool{
-		"/edit/":        authForWrites,
-		"/file/":        authForReads,
-		"/history/":     authForReads,
-		"/view/":        authForReads,
-		"/rename/":      authForWrites,
-		"/delete/":      authForWrites,
-		"/wiki/account": true,
-		"/wiki/index":   authForReads,
-		"/wiki/files":   authForReads,
-		"/wiki/login":   false,
-		"/wiki/logout":  false,
-		"/wiki/upload":  authForWrites,
-		"/wiki/users":   authForWrites,
-	}
-
-	findPrefix := func(target string) (bool, error) {
-		for i := range authRequirements {
-			if strings.HasPrefix(target, i) {
-				return authRequirements[i], nil
-			}
-		}
-		return false, fmt.Errorf("unknown route: %s", target)
-	}
-
+func CheckPermission(permission config.Permission) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			needAuth, err := findPrefix(request.URL.Path)
-			if err != nil {
-				writer.WriteHeader(http.StatusNotFound)
-				return
+			user := getUserForRequest(request)
+
+			if user == nil {
+				// Just create a new user with no permissions for the check
+				user = &config.User{Name: "<Unauthenticated>"}
 			}
 
-			if needAuth {
-				if getUserForRequest(request) == nil {
-					writer.WriteHeader(http.StatusUnauthorized)
-					return
-				}
+			if !user.Has(permission) {
+				log.Printf(
+					"User %s (permissions: %s) tried to access %s (requires: %s)",
+					user.Name,
+					user.Permissions,
+					request.URL,
+					permission,
+				)
+				writer.WriteHeader(http.StatusUnauthorized)
+				return
 			}
 
 			next.ServeHTTP(writer, request)
