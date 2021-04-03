@@ -138,16 +138,17 @@ func (a *UserManager) Users() []*User {
 	return res
 }
 
-func (a *UserManager) Delete(user, responsible string) error {
-	if _, ok := a.users[strings.ToLower(user)]; !ok {
+func (a *UserManager) Delete(username, responsible string) error {
+	user := a.users[strings.ToLower(username)]
+	if user == nil {
 		return errors.New("user does not exist")
 	}
 
-	if len(a.users) == 1 {
-		return errors.New("can't delete last remaining user")
+	if user.Has(PermissionAdmin) && !a.canRemoveAdmin(user) {
+		return errors.New("can't delete the only admin user")
 	}
 
-	delete(a.users, strings.ToLower(user))
+	delete(a.users, strings.ToLower(username))
 	return a.save(responsible, fmt.Sprintf("Deleting user: %s", user))
 }
 
@@ -182,6 +183,29 @@ func (a *UserManager) AddUser(user, password, responsible string) error {
 
 	a.users[strings.ToLower(user)] = u
 	return a.save(responsible, fmt.Sprintf("Adding new user: %s", user))
+}
+
+func (a *UserManager) SetPermission(username string, permissions Permission, responsible string) error {
+	user := a.users[strings.ToLower(username)]
+	if user == nil {
+		return errors.New("user does not exist")
+	}
+
+	if user.Has(PermissionAdmin) && !a.canRemoveAdmin(user) {
+		return errors.New("can't modify permissions of the only admin user")
+	}
+
+	user.Permissions = permissions
+	return a.save(responsible, fmt.Sprintf("Changing permissions for user: %s", username))
+}
+
+func (a *UserManager) canRemoveAdmin(user *User) bool {
+	for n := range a.users {
+		if n != user.Name && a.users[n].Has(PermissionAdmin) {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *UserManager) generateSalt() ([]byte, error) {

@@ -160,10 +160,15 @@ func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title 
 
 type ManageUsersArgs struct {
 	Common CommonArgs
-	Users  []string
+	Users  []UserInfo
 }
 
-func (t *Templates) RenderManageUsers(w http.ResponseWriter, r *http.Request, users []string) {
+type UserInfo struct {
+	Name        string
+	Permissions string
+}
+
+func (t *Templates) RenderManageUsers(w http.ResponseWriter, r *http.Request, users []UserInfo) {
 	t.render("users.gohtml", http.StatusOK, w, &ManageUsersArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Manage users",

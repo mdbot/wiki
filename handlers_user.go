@@ -85,24 +85,38 @@ type UserLister interface {
 func ManageUsersHandler(t *Templates, ul UserLister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		users := ul.Users()
-		var usernames []string
+		var infos []UserInfo
 
 		for i := range users {
-			usernames = append(usernames, users[i].Name)
+			infos = append(infos, UserInfo{
+				Name:        users[i].Name,
+				Permissions: users[i].Permissions.String(),
+			})
 		}
 
-		sort.Strings(usernames)
-		t.RenderManageUsers(w, r, usernames)
+		sort.Slice(infos, func(i, j int) bool {
+			return infos[i].Name < infos[j].Name
+		})
+		t.RenderManageUsers(w, r, infos)
 	}
 }
 
 type UserModifier interface {
 	AddUser(username, password, responsible string) error
 	SetPassword(username, password, responsible string) error
+	SetPermission(username string, permissions config.Permission, responsible string) error
 	Delete(username, responsible string) error
 }
 
 func ModifyUserHandler(um UserModifier) http.HandlerFunc {
+	permissionNames := map[string]config.Permission{
+		"none":  config.PermissionNone,
+		"auth":  config.PermissionAuth,
+		"read":  config.PermissionRead,
+		"write": config.PermissionWrite,
+		"admin": config.PermissionAdmin,
+	}
+
 	return func(writer http.ResponseWriter, request *http.Request) {
 		responsible := "Anonymoose"
 		if user := getUserForRequest(request); user != nil {
@@ -128,6 +142,18 @@ func ModifyUserHandler(um UserModifier) http.HandlerFunc {
 				putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Unable to create new user: %v", err))
 			} else {
 				putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("User %s has been created", user))
+			}
+		} else if action == "permissions" {
+			perm, ok := permissionNames[request.FormValue("permissions")]
+			if !ok {
+				writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			if err := um.SetPermission(user, perm, responsible); err != nil {
+				putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Unable to set permissions: %v", err))
+			} else {
+				putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("User %s has been modified", user))
 			}
 		} else {
 			writer.WriteHeader(http.StatusBadRequest)

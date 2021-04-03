@@ -2,24 +2,36 @@
 {{template "header" .Common}}
 <h2>Existing users</h2>
 {{range .Users}}
-    <h3>{{.}}</h3>
+    <h3>{{.Name}}</h3>
 
-    <form action="/wiki/users" method="post">
+    <form action="/wiki/users" method="post" class="form-group">
         {{$.Common.CsrfField}}
-        <input type="hidden" name="user" value="{{.}}">
+        <input type="hidden" name="user" value="{{.Name}}">
         <input type="hidden" name="action" value="password">
         <input type="password" name="password" placeholder="New password">
         <input type="submit" value="Change password">
     </form>
 
-    {{if (gt (len $.Users) 1)}}
-        <form action="/wiki/users" method="post">
-            {{$.Common.CsrfField}}
-            <input type="hidden" name="user" value="{{.}}">
-            <input type="hidden" name="action" value="delete">
-            <input type="submit" value="Delete user">
-        </form>
-    {{end}}
+    <form action="/wiki/users" method="post" class="form-group">
+        {{$.Common.CsrfField}}
+        <input type="hidden" name="user" value="{{.Name}}">
+        <input type="hidden" name="action" value="permissions">
+        <select name="permissions">
+            <option value="none" {{if eq .Permissions "none"}}selected{{end}}>None (disabled)</option>
+            <option value="auth" {{if eq .Permissions "auth"}}selected{{end}}>Authenticate only</option>
+            <option value="read" {{if eq .Permissions "read"}}selected{{end}}>Read</option>
+            <option value="write" {{if eq .Permissions "write"}}selected{{end}}>Write</option>
+            <option value="admin" {{if eq .Permissions "admin"}}selected{{end}}>Administrator</option>
+        </select>
+        <input type="submit" value="Set permissions">
+    </form>
+
+    <form action="/wiki/users" method="post" class="form-group">
+        {{$.Common.CsrfField}}
+        <input type="hidden" name="user" value="{{.Name}}">
+        <input type="hidden" name="action" value="delete">
+        <input type="submit" value="Delete user">
+    </form>
 {{end}}
 
 <h2>Add new user</h2>
