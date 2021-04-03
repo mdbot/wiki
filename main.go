@@ -107,6 +107,7 @@ func main() {
 	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(LoggingHandler(os.Stdout))
 	router.Use(PageErrorHandler(templates))
+	router.Use(StripSlashes)
 
 	router.Path("/").Handler(RedirectMainPageHandler())
 	router.Path("/view/").Handler(RedirectMainPageHandler())

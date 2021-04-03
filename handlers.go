@@ -31,3 +31,13 @@ func LowerCaseCanonical(next http.Handler) http.Handler {
 		}
 	})
 }
+
+func StripSlashes(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/" && strings.HasSuffix(request.URL.Path, "/") {
+			http.Redirect(writer, request, strings.TrimSuffix(request.URL.Path, "/"), http.StatusPermanentRedirect)
+			return
+		}
+		next.ServeHTTP(writer, request)
+	})
+}
