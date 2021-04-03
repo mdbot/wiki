@@ -13,7 +13,8 @@ import (
 )
 
 type Templates struct {
-	fs fs.FS
+	fs              fs.FS
+	sidebarProvider func() string
 }
 
 type CommonArgs struct {
@@ -24,6 +25,7 @@ type CommonArgs struct {
 	CanEdit      bool
 	Error        string
 	Notice       string
+	Sidebar      template.HTML
 	User         *config.User
 	LastModified *LastModifiedDetails
 	CsrfField    template.HTML
@@ -260,5 +262,6 @@ func (t *Templates) populateArgs(w http.ResponseWriter, r *http.Request, args Co
 
 	args.CsrfField = csrf.TemplateField(r)
 	args.RequestedUrl = r.URL.String()
+	args.Sidebar = template.HTML(t.sidebarProvider())
 	return args
 }

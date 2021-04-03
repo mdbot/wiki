@@ -21,7 +21,7 @@
         --linkColour: #6eb9ff;
         --linkColourNewPage: #ff6e6e;
         --footerColour: #6c757d;
-        --backgroundColour: #1c1c1c;
+        --backgroundColour: #161616;
         --mainBackgroundcolour: #1c1c1c;
         --foregroundColor: #d6d6d6;
         --input-background: #333333;
@@ -35,16 +35,35 @@
 }
 
 html {
-    position: relative;
-    min-height: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    padding-top: 1.5em;
-    padding-bottom: 1.5em;
+    margin: 0;
+    padding: 1.5em 2.5em 0.5em 2.5em;
     background-color: var(--backgroundColour);
+    min-height: 100vh;
     color: var(--foregroundColor);
     font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+
+    display: grid;
+    grid-template-columns: 10em 1fr;
+    grid-template-rows: 5em 1fr auto;
+    grid-column-gap: 2.5em;
+    grid-template-areas:
+        "title header"
+        "sidebar main"
+        "sidebar footer";
+}
+
+header.title {
+    grid-area: title;
+}
+
+body > nav.sidebar {
+    grid-area: sidebar;
 }
 
 input,textarea {
@@ -53,7 +72,11 @@ input,textarea {
     border: 1px solid var(--input-border);
 }
 
-header {
+body > header.pageheader {
+    grid-area: header;
+}
+
+body > header {
     margin: 1em 0 0.5em 0;
     display: flex;
     justify-content: space-between;
@@ -86,10 +109,8 @@ aside.notice {
     color: var(--notice-text-color);
 }
 
-footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
+body > footer {
+    grid-area: footer;
     width: 100%;
     margin-bottom: 0;
 }
@@ -98,18 +119,10 @@ h1 {
     margin: 0.5em 0;
 }
 
-.container {
-    width: 80vw;
-    margin-right: auto;
-    margin-left: auto;
-}
-
 footer .container {
-    margin-top: 2em;
-    border-top: 1px solid var(--divider);
     color: var(--footerColour);
     text-align: right;
-    padding: 0.5em 0;
+    padding: 1em 0;
 }
 
 a, a:hover, a:focus {
@@ -121,9 +134,9 @@ a.newpage, a.newpage:hover, a.newpage:focus {
 }
 
 main {
-    border: 1px solid darkgray;
-    background: var(--mainBackgroundcolour);
-    padding: 1em;
+    grid-area: main;
+    padding: 0.5em 1em;
+    background-color: var(--mainBackgroundcolour);
 }
 
 .editor #content {

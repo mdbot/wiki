@@ -49,15 +49,6 @@ func openOrInit(dataDirectory string) (*git.Repository, error) {
 	return nil, err
 }
 
-func (g *GitBackend) CreateDefaultMainPage() error {
-	_, err := g.GetPage("MainPage")
-	if err != nil {
-		log.Printf("Creating default main page")
-		return g.PutPage("MainPage", []byte("# Welcome\r\n\r\nWelcome to the wiki."), "system", "Create welcome page")
-	}
-	return nil
-}
-
 func (g *GitBackend) PageExists(title string) bool {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()

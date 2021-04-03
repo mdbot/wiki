@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/gorilla/csrf"
@@ -22,7 +24,7 @@ import (
 	"github.com/mdbot/wiki/markdown"
 )
 
-//go:embed static templates
+//go:embed static templates content/*
 var embeddedFiles embed.FS
 
 var staticFiles fs.FS
@@ -71,13 +73,30 @@ func main() {
 		log.Fatalf("Unable to initialise secrets: %v", err.Error())
 	}
 
-	if err := gitBackend.CreateDefaultMainPage(); err != nil {
-		log.Fatalf("Unable to create default main page: %s", err.Error())
+	if err := createDefaultPages(gitBackend); err != nil {
+		log.Fatalf("Unable to create default pages: %s", err.Error())
 	}
 
 	sessionStore := sessions.NewCookieStore(secrets.SessionKey)
 	renderer := markdown.NewRenderer(gitBackend, *dangerousHtml, *codeStyle)
-	templates := &Templates{templateFiles}
+	templates := &Templates{
+		fs: templateFiles,
+		sidebarProvider: func() string {
+			p, err := gitBackend.GetPage("_sidebar")
+			if err != nil {
+				log.Printf("Unable to load sidebar content: %v", err)
+				return "Error loading sidebar"
+			}
+
+			s, err := renderer.Render(p.Content)
+			if err != nil {
+				log.Printf("Unable to render sidebar content: %v", err)
+				return "Error rendering sidebar"
+			}
+
+			return s
+		},
+	}
 
 	wikiRouter := mux.NewRouter()
 	wikiRouter.Use(LowerCaseCanonical)
@@ -139,4 +158,34 @@ func initFileSystem() {
 
 	templateFs, _ := fs.Sub(embeddedFiles, "templates")
 	templateFiles = merged_fs.NewMergedFS(os.DirFS("templates"), templateFs)
+}
+
+func createDefaultPages(b *GitBackend) error {
+	files, err := embeddedFiles.ReadDir("content")
+	if err != nil {
+		return err
+	}
+
+	for i := range files {
+		if !files[i].IsDir() {
+			name := strings.TrimSuffix(files[i].Name(), ".md")
+			if name == "mainpage" {
+				name = *mainPage
+			}
+
+			_, err := b.GetPage(name)
+			if err != nil {
+				log.Printf("Adding default file: %s", name)
+
+				bs, err := embeddedFiles.ReadFile(path.Join("content", files[i].Name()))
+				if err != nil {
+					return err
+				}
+
+				return b.PutPage(name, bs, "system", "Creating default page")
+			}
+		}
+	}
+
+	return nil
 }

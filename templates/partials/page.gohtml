@@ -1,4 +1,4 @@
-{{- /*gotype: github.com/mdbot/wiki.Common*/ -}}
+{{- /*gotype: github.com/mdbot/wiki.CommonArgs*/ -}}
 {{define "header"}}
 <!DOCTYPE html>
 <html lang="en">
@@ -6,10 +6,21 @@
         <meta charset="utf-8">
         <title>{{.PageTitle}} &middot; Wiki</title>
         <link rel="stylesheet" href="/static/res/style.css" type="text/css"/>
-        <link rel="shortcut icon" href="#" />
+        <link rel="shortcut icon" href="#"/>
     </head>
     <body>
-        <header class="container">
+
+        <header class="container title">
+            <h1 class="title"><a href="/">Wiki</a></h1>
+        </header>
+
+        <nav class="sidebar">
+            {{if not .IsError}}
+                {{.Sidebar}}
+            {{end}}
+        </nav>
+
+        <header class="container pageheader">
             <h1>
                 {{.PageTitle}}
             </h1>
