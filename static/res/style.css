@@ -139,7 +139,7 @@ main {
     background-color: var(--mainBackgroundcolour);
 }
 
-.editor #content {
+.editor #content, .editor .CodeMirror {
     width: 100%;
     height: 50vh;
 }
