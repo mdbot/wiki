@@ -1,12 +1,12 @@
 {{- /*gotype: github.com/mdbot/wiki.DeletePageArgs*/ -}}
 {{template "header" .Common}}
-<form action="/delete/{{.PageName}}" method="post" class="editor">
+<form action="/delete/{{.Common.PageTitle}}" method="post" class="editor">
     {{.Common.CsrfField}}
     <input type="hidden" id="confirm" name="confirm" value="confirm" />
     <div class="form-group">
-        <label for="message">Message:</label>
+        <label for="message">Reason:</label>
         <input id="message" type="text" name="message">
     </div>
-    <button type="submit" class="btn btn-primary" value="Edit">Confirm</button>
+    <button type="submit" class="btn btn-primary" value="Edit">Confirm delete</button>
 </form>
 {{template "footer" .Common}}

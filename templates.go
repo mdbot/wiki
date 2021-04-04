@@ -68,29 +68,25 @@ func (t *Templates) RenderEditPage(w http.ResponseWriter, r *http.Request, title
 
 type DeletePageArgs struct {
 	Common   CommonArgs
-	PageName string
 }
 
 func (t *Templates) RenderDeletePage(w http.ResponseWriter, r *http.Request, pageName string) {
 	t.render("delete.gohtml", http.StatusOK, w, &DeletePageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
-			PageTitle: "Delete page",
+			PageTitle: pageName,
 		}),
-		PageName: pageName,
 	})
 }
 
 type RenamePageArgs struct {
 	Common  CommonArgs
-	OldName string
 }
 
 func (t *Templates) RenderRenamePage(w http.ResponseWriter, r *http.Request, oldName string) {
 	t.render("rename.gohtml", http.StatusOK, w, &RenamePageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
-			PageTitle: "Rename page",
+			PageTitle: oldName,
 		}),
-		OldName: oldName,
 	})
 }
 
