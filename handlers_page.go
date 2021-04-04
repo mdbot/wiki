@@ -140,7 +140,7 @@ func RenamePageHandler(provider RenamePageProvider) http.HandlerFunc {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(writer, request, "/"+newName, http.StatusOK)
+		http.Redirect(writer, request, "/view/"+newName, http.StatusTemporaryRedirect)
 	}
 }
 
