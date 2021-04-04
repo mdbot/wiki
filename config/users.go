@@ -43,6 +43,7 @@ type User struct {
 	Name        string
 	Salt        []byte
 	Password    []byte
+	SessionKey  []byte
 	Permissions Permission
 }
 
@@ -82,6 +83,7 @@ func (a *UserManager) load() error {
 		return err
 	}
 
+	dirty := false
 	hasAdmin := false
 	for i := range settings.Users {
 		u := settings.Users[i]
@@ -89,6 +91,18 @@ func (a *UserManager) load() error {
 		if u.Has(PermissionAdmin) {
 			hasAdmin = true
 		}
+		if u.SessionKey == nil {
+			key, err := a.randomBytes()
+			if err != nil {
+				return err
+			}
+			u.SessionKey = key
+			dirty = true
+		}
+	}
+
+	if dirty {
+		_ = a.save("System", "Migration: adding session keys")
 	}
 
 	if len(a.users) > 0 && !hasAdmin {
@@ -212,7 +226,7 @@ func (a *UserManager) canRemoveAdmin(user *User) bool {
 	return false
 }
 
-func (a *UserManager) generateSalt() ([]byte, error) {
+func (a *UserManager) randomBytes() ([]byte, error) {
 	res := make([]byte, 16)
 	n, err := rand.Read(res)
 
@@ -224,7 +238,7 @@ func (a *UserManager) generateSalt() ([]byte, error) {
 }
 
 func (a *UserManager) setPassword(u *User, password string) error {
-	salt, err := a.generateSalt()
+	salt, err := a.randomBytes()
 	if err != nil {
 		return err
 	}
@@ -235,7 +249,13 @@ func (a *UserManager) setPassword(u *User, password string) error {
 		return err
 	}
 
+	key, err := a.randomBytes()
+	if err != nil {
+		return err
+	}
+
 	u.Salt = salt
 	u.Password = hash
+	u.SessionKey = key
 	return nil
 }

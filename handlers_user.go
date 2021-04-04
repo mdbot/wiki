@@ -57,6 +57,7 @@ func LoginHandler(auth Authenticator) http.HandlerFunc {
 			putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Failed to login: %v", err))
 		} else {
 			putSessionKey(writer, request, sessionUserKey, user.Name)
+			putSessionKey(writer, request, sessionSessionKey, fmt.Sprintf(sessionKeyFormat, user.SessionKey))
 		}
 		writer.Header().Set("location", redirect)
 		writer.WriteHeader(http.StatusSeeOther)
@@ -199,6 +200,7 @@ func ModifyAccountHandler(pu PasswordUpdater) http.HandlerFunc {
 				putSessionKey(writer, request, sessionErrorKey, fmt.Sprintf("Unable to set password: %v", err))
 			} else {
 				putSessionKey(writer, request, sessionNoticeKey, "Your password has been updated")
+				putSessionKey(writer, request, sessionSessionKey, fmt.Sprintf(sessionKeyFormat, user.SessionKey))
 			}
 		} else {
 			writer.WriteHeader(http.StatusBadRequest)

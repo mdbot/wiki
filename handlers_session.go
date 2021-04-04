@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -10,15 +11,18 @@ import (
 )
 
 const (
-	sessionName      = "wiki"
-	sessionUserKey   = "user"
-	sessionNoticeKey = "notice"
-	sessionErrorKey  = "error"
+	sessionName       = "wiki"
+	sessionUserKey    = "user"
+	sessionSessionKey = "session"
+	sessionNoticeKey  = "notice"
+	sessionErrorKey   = "error"
 
 	contextUserKey    = "user"
 	contextErrorKey   = "error"
 	contextNoticeKey  = "notice"
 	contextSessionKey = "session"
+
+	sessionKeyFormat = "wiki:%x"
 )
 
 type UserProvider interface {
@@ -33,7 +37,9 @@ func SessionHandler(up UserProvider, store sessions.Store) func(http.Handler) ht
 			if username, ok := s.Values[sessionUserKey]; ok {
 				user := up.User(username.(string))
 				if user != nil {
-					request = request.WithContext(context.WithValue(request.Context(), contextUserKey, user))
+					if key := s.Values[sessionSessionKey]; fmt.Sprintf(sessionKeyFormat, user.SessionKey) == key {
+						request = request.WithContext(context.WithValue(request.Context(), contextUserKey, user))
+					}
 				}
 			}
 
