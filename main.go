@@ -24,7 +24,7 @@ import (
 	"github.com/mdbot/wiki/markdown"
 )
 
-//go:embed static templates content/*
+//go:embed resources/static resources/templates resources/content/*
 var embeddedFiles embed.FS
 
 var staticFiles fs.FS
@@ -171,15 +171,15 @@ func main() {
 }
 
 func initFileSystem() {
-	staticFs, _ := fs.Sub(embeddedFiles, "static")
-	staticFiles = merged_fs.NewMergedFS(os.DirFS("static"), staticFs)
+	staticFs, _ := fs.Sub(embeddedFiles, "resources/static")
+	staticFiles = merged_fs.NewMergedFS(os.DirFS("resources/static"), staticFs)
 
-	templateFs, _ := fs.Sub(embeddedFiles, "templates")
-	templateFiles = merged_fs.NewMergedFS(os.DirFS("templates"), templateFs)
+	templateFs, _ := fs.Sub(embeddedFiles, "resources/templates")
+	templateFiles = merged_fs.NewMergedFS(os.DirFS("resources/templates"), templateFs)
 }
 
 func createDefaultPages(b *GitBackend) error {
-	files, err := embeddedFiles.ReadDir("content")
+	files, err := embeddedFiles.ReadDir("resources/content")
 	if err != nil {
 		return err
 	}
