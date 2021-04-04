@@ -32,7 +32,8 @@ func (w *errorInterceptingWriter) shouldProxy() bool {
 	return w.status != http.StatusNotFound &&
 		w.status != http.StatusUnauthorized &&
 		w.status != http.StatusForbidden &&
-		w.status != http.StatusInternalServerError
+		w.status != http.StatusInternalServerError &&
+		w.status != http.StatusBadRequest
 }
 
 func PageErrorHandler(t *Templates) func(http.Handler) http.Handler {
