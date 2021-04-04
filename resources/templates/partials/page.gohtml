@@ -22,7 +22,11 @@
 
         <header class="container pageheader">
             <h1>
-                {{.PageTitle}}
+                {{if ne $.RequestedUrl  (print "/view/" $.PageTitle)}}
+                    <a href="/view/{{.PageTitle}}">{{.PageTitle}}</a>
+                {{else}}
+                    {{.PageTitle}}
+                {{end}}
             </h1>
             <nav>
                 {{if and (and .IsWikiPage .CanEdit) (not .IsError)}}
