@@ -244,6 +244,15 @@ func (t *Templates) RenderInternalError(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+func (t *Templates) RenderBadRequest(w http.ResponseWriter, r *http.Request) {
+	t.render("error.gohtml", http.StatusInternalServerError, w, &ErrorPageArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Bad Request",
+			IsError:   true,
+		}),
+	})
+}
+
 func (t *Templates) render(name string, statusCode int, w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(statusCode)

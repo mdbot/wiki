@@ -11,6 +11,10 @@ type PageProvider interface {
 	GetPage(title string) (*Page, error)
 }
 
+type PageExists interface {
+	PageExists(name string) bool
+}
+
 type ContentRenderer interface {
 	Render([]byte) (string, error)
 }
@@ -115,9 +119,13 @@ type RenamePageProvider interface {
 	RenamePage(name string, newName string, message string, user string) error
 }
 
-func RenamePageConfirmHandler(t  *Templates) http.HandlerFunc {
+func RenamePageConfirmHandler(backend PageExists, t  *Templates) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := strings.TrimPrefix(r.URL.Path, "/rename/")
+		if !backend.PageExists(name) {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		t.RenderRenamePage(w, r, name)
 	}
 }

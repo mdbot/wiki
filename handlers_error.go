@@ -59,6 +59,8 @@ func PageErrorHandler(t *Templates) func(http.Handler) http.Handler {
 				t.RenderForbidden(w, r)
 			case http.StatusInternalServerError:
 				t.RenderInternalError(w, r)
+			case http.StatusBadRequest:
+				t.RenderBadRequest(w, r)
 			}
 		})
 	}
