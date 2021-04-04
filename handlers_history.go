@@ -10,7 +10,7 @@ type HistoryProvider interface {
 }
 
 func PageHistoryHandler(t *Templates, pp HistoryProvider) http.HandlerFunc {
-	const historySize = 20
+	const historySize = 50
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		pageTitle := strings.TrimPrefix(r.URL.Path, "/history/")
@@ -32,28 +32,49 @@ func PageHistoryHandler(t *Templates, pp HistoryProvider) http.HandlerFunc {
 			return
 		}
 
-		var entries []*HistoryEntry
-		for i := range history.Entries {
-			c := history.Entries[i]
-			if c.ChangeId == start {
-				continue
-			}
-			entries = append(entries, &HistoryEntry{
-				Id:      c.ChangeId,
-				User:    c.User,
-				Time:    c.Time,
-				Message: c.Message,
-			})
-			if len(entries) == historySize {
-				break
-			}
+		var next string
+		if len(history.Entries) == number {
+			next = history.Entries[number-1].ChangeId
+		} else {
+			number = len(history.Entries) + 1
+		}
+
+		t.RenderHistory(w, r, pageTitle, history.Entries[:number-1], next)
+	}
+}
+
+type RecentChangesProvider interface {
+	RecentChanges(start string, count int) ([]*RecentChange, error)
+}
+
+func RecentChangesHandler(t *Templates, rp RecentChangesProvider) http.HandlerFunc {
+	const historySize = 50
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var start string
+		var number = historySize + 1
+
+		q := r.URL.Query()["after"]
+		if q != nil {
+			// If the user is paginating, request 22 items so we get the start item, the 20 we want to show, then
+			// an extra one to tell if there's a next page or not.
+			start = q[0]
+			number = historySize + 2
+		}
+
+		history, err := rp.RecentChanges(start, number)
+		if err != nil {
+			http.NotFound(w, r)
+			return
 		}
 
 		var next string
-		if len(history.Entries) == number {
-			next = history.Entries[number-2].ChangeId
+		if len(history) == number {
+			next = history[number-1].ChangeId
+		} else {
+			number = len(history) + 1
 		}
 
-		t.RenderHistory(w, r, pageTitle, entries, next)
+		t.RenderRecentChanges(w, r, history[:number-1], next)
 	}
 }

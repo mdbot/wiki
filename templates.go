@@ -136,24 +136,33 @@ func (t *Templates) RenderUploadForm(w http.ResponseWriter, r *http.Request) {
 
 type HistoryPageArgs struct {
 	Common  CommonArgs
-	History []*HistoryEntry
+	History []*LogEntry
 	Next    string
 }
 
-type HistoryEntry struct {
-	Id      string
-	User    string
-	Time    time.Time
-	Message string
-}
-
-func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title string, entries []*HistoryEntry, next string) {
+func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title string, entries []*LogEntry, next string) {
 	t.render("history.gohtml", http.StatusOK, w, &HistoryPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle:  title,
 			IsWikiPage: true,
 		}),
 		History: entries,
+		Next:    next,
+	})
+}
+
+type RecentChangesArgs struct {
+	Common  CommonArgs
+	Changes []*RecentChange
+	Next    string
+}
+
+func (t *Templates) RenderRecentChanges(w http.ResponseWriter, r *http.Request, entries []*RecentChange, next string) {
+	t.render("changes.gohtml", http.StatusOK, w, &RecentChangesArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Recent changes",
+		}),
+		Changes: entries,
 		Next:    next,
 	})
 }

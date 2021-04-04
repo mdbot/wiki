@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -62,25 +63,21 @@ func (g *GitBackend) PageExists(title string) bool {
 	return err == nil && !fi.IsDir()
 }
 
-func (g *GitBackend) PageHistory(title string, start string, end int) (*History, error) {
+func (g *GitBackend) PageHistory(title string, start string, count int) (*History, error) {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
-	var history []*LogEntry
 	_, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", title))
 	if err != nil {
 		return nil, err
 	}
-	var revision *plumbing.Hash
-	var commitIter object.CommitIter
-	if start == "" {
-		start = "HEAD"
-	}
-	revision, err = g.repo.ResolveRevision(plumbing.Revision(start))
+
+	revision, err := g.resolveRevision(start)
 	if err != nil {
 		return nil, err
 	}
-	commitIter, err = g.repo.Log(&git.LogOptions{
+
+	commitIter, err := g.repo.Log(&git.LogOptions{
 		From: *revision,
 		PathFilter: func(s string) bool {
 			return s == gitPath
@@ -89,7 +86,9 @@ func (g *GitBackend) PageHistory(title string, start string, end int) (*History,
 	if err != nil {
 		return nil, err
 	}
-	for i := 0; i < end; i++ {
+
+	var history []*LogEntry
+	for i := 0; i < count; i++ {
 		commit, err := commitIter.Next()
 		if err != nil {
 			if err == io.EOF {
@@ -104,6 +103,7 @@ func (g *GitBackend) PageHistory(title string, start string, end int) (*History,
 			Message:  commit.Message,
 		})
 	}
+
 	return &History{Entries: history}, nil
 }
 
@@ -314,6 +314,9 @@ func (g *GitBackend) writeFile(filePath, gitPath string, content io.Reader, user
 }
 
 func (g *GitBackend) RenamePage(name string, newName string, message string, user string) error {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
 	_, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", name))
 	if err != nil {
 		log.Printf("Unable to resolve old path: %s -> %s: %s", name, newName, err.Error())
@@ -345,6 +348,9 @@ func (g *GitBackend) RenamePage(name string, newName string, message string, use
 }
 
 func (g *GitBackend) DeletePage(name string, message string, user string) error {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
 	_, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", name))
 	if err != nil {
 		return err
@@ -365,6 +371,70 @@ func (g *GitBackend) DeletePage(name string, message string, user string) error 
 		},
 	})
 	return nil
+}
+
+func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, error) {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	revision, err := g.resolveRevision(start)
+	if err != nil {
+		return nil, err
+	}
+
+	commitIter, err := g.repo.Log(&git.LogOptions{From: *revision})
+	if err != nil {
+		return nil, err
+	}
+
+	var history []*RecentChange
+	for i := 0; i < count; i++ {
+		commit, err := commitIter.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
+		stats, err := commit.Stats()
+		if err != nil {
+			return nil, err
+		}
+
+		entry := &RecentChange{
+			LogEntry: LogEntry{
+				ChangeId: commit.Hash.String(),
+				User:     commit.Author.Name,
+				Time:     commit.Author.When,
+				Message:  commit.Message,
+			},
+		}
+
+		for j := range stats {
+			file := stats[j]
+			if filepath.Dir(file.Name) == ".wiki" {
+				entry.Config = strings.TrimSuffix(filepath.Base(file.Name), ".json.enc")
+				break
+			} else if path.Ext(file.Name) == ".md" {
+				entry.Page = strings.TrimSuffix(file.Name, ".md")
+				break
+			} else {
+				entry.File = file.Name
+				break
+			}
+		}
+
+		history = append(history, entry)
+	}
+	return history, nil
+}
+
+func (g *GitBackend) resolveRevision(rv string) (*plumbing.Hash, error) {
+	if rv == "" {
+		rv = "HEAD"
+	}
+	return g.repo.ResolveRevision(plumbing.Revision(rv))
 }
 
 func resolvePath(base, name string) (string, string, error) {

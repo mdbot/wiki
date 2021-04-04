@@ -130,6 +130,7 @@ func main() {
 	wikiRouter.Path("/wiki/account").Handler(auth(ModifyAccountHandler(userManager))).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/index").Handler(read(ListPagesHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/files").Handler(read(ListFilesHandler(templates, gitBackend))).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/changes").Handler(read(RecentChangesHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/upload").Handler(write(UploadFormHandler(templates))).Methods(http.MethodGet)

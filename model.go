@@ -2,6 +2,13 @@ package main
 
 import "time"
 
+type RecentChange struct {
+	Page   string
+	File   string
+	Config string
+	LogEntry
+}
+
 type LogEntry struct {
 	ChangeId string
 	User     string
