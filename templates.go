@@ -18,17 +18,18 @@ type Templates struct {
 }
 
 type CommonArgs struct {
-	RequestedUrl string
-	PageTitle    string
-	IsWikiPage   bool
-	IsError      bool
-	CanEdit      bool
-	Error        string
-	Notice       string
-	Sidebar      template.HTML
-	User         *config.User
-	LastModified *LastModifiedDetails
-	CsrfField    template.HTML
+	RequestedUrl   string
+	PageTitle      string
+	IsWikiPage     bool
+	IsError        bool
+	CanEdit        bool
+	Error          string
+	Notice         string
+	ShowLinkToView bool
+	Sidebar        template.HTML
+	User           *config.User
+	LastModified   *LastModifiedDetails
+	CsrfField      template.HTML
 }
 
 type LastModifiedDetails struct {
@@ -61,31 +62,34 @@ func (t *Templates) RenderEditPage(w http.ResponseWriter, r *http.Request, title
 	t.render("edit.gohtml", http.StatusOK, w, &EditPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: title,
+			ShowLinkToView: true,
 		}),
 		PageContent: content,
 	})
 }
 
 type DeletePageArgs struct {
-	Common   CommonArgs
+	Common CommonArgs
 }
 
 func (t *Templates) RenderDeletePage(w http.ResponseWriter, r *http.Request, pageName string) {
 	t.render("delete.gohtml", http.StatusOK, w, &DeletePageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: pageName,
+			ShowLinkToView: true,
 		}),
 	})
 }
 
 type RenamePageArgs struct {
-	Common  CommonArgs
+	Common CommonArgs
 }
 
 func (t *Templates) RenderRenamePage(w http.ResponseWriter, r *http.Request, oldName string) {
 	t.render("rename.gohtml", http.StatusOK, w, &RenamePageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: oldName,
+			ShowLinkToView: true,
 		}),
 	})
 }
@@ -141,6 +145,7 @@ func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title 
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle:  title,
 			IsWikiPage: true,
+			ShowLinkToView: true,
 		}),
 		History: entries,
 		Next:    next,

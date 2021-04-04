@@ -22,7 +22,7 @@
 
         <header class="container pageheader">
             <h1>
-                {{if ne $.RequestedUrl  (print "/view/" $.PageTitle)}}
+                {{if .ShowLinkToView}}
                     <a href="/view/{{.PageTitle}}">{{.PageTitle}}</a>
                 {{else}}
                     {{.PageTitle}}
