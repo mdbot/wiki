@@ -31,11 +31,48 @@
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
          theme = 'monokai'
       }
-      CodeMirror.fromTextArea(document.querySelector('textarea#content'), {
+      let codeMirror = CodeMirror.fromTextArea(document.querySelector('textarea#content'), {
           theme: theme,
           mode: 'gfm',
-          extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList"}
+          extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList"},
       })
+      const uploadFile = (file) => {
+          return new Promise(function(resolve, reject) {
+              let data = new FormData()
+              data.append('file', file)
+              data.append('name', file.name)
+              data.append('message', 'Adding file: '+file.name)
+              data.append('gorilla.csrf.Token', document.querySelector("input[name='gorilla.csrf.Token']").value)
+
+              return fetch('/wiki/upload', {
+                  method: 'POST',
+                  body: data
+              })
+              .then(response => {
+                  if (response.status === 204) {
+                      resolve(file.name)
+                  } else {
+                      reject("status: "+response.status)
+                  }
+              })
+              .catch(e => reject(e))
+          });
+      }
+      const insertEmbedAtCursor = (editor, link) => {
+          let doc = editor.getDoc();
+          let cursor = doc.getCursor();
+          doc.replaceRange("![["+link+"]]", cursor);
+      }
+      codeMirror.on("drop", function(editor, e) {
+          Array.prototype.forEach.call(e.dataTransfer.files, function (file) {
+              uploadFile(file)
+                  .then(file => {
+                      insertEmbedAtCursor(editor, file)
+                  })
+                  .catch(e => console.log("Error uploading file: "+e))
+          });
+          e.preventDefault()
+      });
   })
 </script>
 {{template "footer" .Common}}
