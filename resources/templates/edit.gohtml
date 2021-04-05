@@ -27,11 +27,15 @@
 <script src="/static/codemirror/addon/mode/overlay.js"></script>
 <script defer>
   document.addEventListener('DOMContentLoaded', function () {
-    CodeMirror.fromTextArea(document.querySelector('textarea#content'), {
-      theme: 'monokai',
-      mode: 'gfm',
-      extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList"}
-    })
+      let theme = 'base16-light'
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+         theme = 'monokai'
+      }
+      CodeMirror.fromTextArea(document.querySelector('textarea#content'), {
+          theme: theme,
+          mode: 'gfm',
+          extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList"}
+      })
   })
 </script>
 {{template "footer" .Common}}
