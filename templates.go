@@ -14,10 +14,19 @@ import (
 
 type Templates struct {
 	fs              fs.FS
+	siteConfig      *config.Site
 	sidebarProvider func() string
 }
 
+type SiteArgs struct {
+	SiteName    string
+	HasMainLogo bool
+	HasDarkLogo bool
+	HasFavicon  bool
+}
+
 type CommonArgs struct {
+	Site           *SiteArgs
 	RequestedUrl   string
 	PageTitle      string
 	IsWikiPage     bool
@@ -61,7 +70,7 @@ type EditPageArgs struct {
 func (t *Templates) RenderEditPage(w http.ResponseWriter, r *http.Request, title, content string) {
 	t.render("edit.gohtml", http.StatusOK, w, &EditPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
-			PageTitle: title,
+			PageTitle:      title,
 			ShowLinkToView: true,
 		}),
 		PageContent: content,
@@ -75,7 +84,7 @@ type DeletePageArgs struct {
 func (t *Templates) RenderDeletePage(w http.ResponseWriter, r *http.Request, pageName string) {
 	t.render("delete.gohtml", http.StatusOK, w, &DeletePageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
-			PageTitle: pageName,
+			PageTitle:      pageName,
 			ShowLinkToView: true,
 		}),
 	})
@@ -88,7 +97,7 @@ type RenamePageArgs struct {
 func (t *Templates) RenderRenamePage(w http.ResponseWriter, r *http.Request, oldName string) {
 	t.render("rename.gohtml", http.StatusOK, w, &RenamePageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
-			PageTitle: oldName,
+			PageTitle:      oldName,
 			ShowLinkToView: true,
 		}),
 	})
@@ -143,8 +152,8 @@ type HistoryPageArgs struct {
 func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title string, entries []*LogEntry, next string) {
 	t.render("history.gohtml", http.StatusOK, w, &HistoryPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
-			PageTitle:  title,
-			IsWikiPage: true,
+			PageTitle:      title,
+			IsWikiPage:     true,
 			ShowLinkToView: true,
 		}),
 		History: entries,
@@ -184,6 +193,18 @@ func (t *Templates) RenderManageUsers(w http.ResponseWriter, r *http.Request, us
 			PageTitle: "Manage users",
 		}),
 		Users: users,
+	})
+}
+
+type ViewSiteArgs struct {
+	Common CommonArgs
+}
+
+func (t *Templates) RenderViewSiteConfig(w http.ResponseWriter, r *http.Request) {
+	t.render("siteconfig.gohtml", http.StatusOK, w, &ViewSiteArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Manage site",
+		}),
 	})
 }
 
@@ -285,6 +306,12 @@ func (t *Templates) formatBytes(size int64) string {
 
 func (t *Templates) populateArgs(w http.ResponseWriter, r *http.Request, args CommonArgs) CommonArgs {
 	user := getUserForRequest(r)
+	args.Site = &SiteArgs{
+		SiteName:    t.siteConfig.Name,
+		HasMainLogo: t.siteConfig.MainLogo != nil,
+		HasDarkLogo: t.siteConfig.DarkLogo != nil,
+		HasFavicon:  t.siteConfig.Favicon != nil,
+	}
 	args.User = user
 	args.CanEdit = user != nil
 

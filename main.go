@@ -77,10 +77,16 @@ func main() {
 		log.Fatalf("Unable to create default pages: %s", err.Error())
 	}
 
+	siteConfig, err := config.LoadSite(configStore)
+	if err != nil {
+		log.Fatalf("Unable to load site config: %v", err)
+	}
+
 	sessionStore := sessions.NewCookieStore(secrets.SessionKey)
 	renderer := markdown.NewRenderer(gitBackend, *dangerousHtml, *codeStyle)
 	templates := &Templates{
 		fs: templateFiles,
+		siteConfig: siteConfig,
 		sidebarProvider: func() string {
 			p, err := gitBackend.GetPage("_sidebar")
 			if err != nil {
@@ -131,10 +137,15 @@ func main() {
 	wikiRouter.Path("/wiki/index").Handler(read(ListPagesHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/files").Handler(read(ListFilesHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/changes").Handler(read(RecentChangesHandler(templates, gitBackend))).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/logo/favicon").Handler(ServeFavicon(siteConfig)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/logo/main").Handler(ServeMainLogo(siteConfig)).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/logo/dark").Handler(ServeDarkLogo(siteConfig)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/upload").Handler(write(UploadFormHandler(templates))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/upload").Handler(write(UploadHandler(gitBackend))).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/site").Handler(admin(ViewSiteConfigHandler(templates))).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/site").Handler(admin(UpdateSiteConfigHandler(siteConfig))).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/users").Handler(admin(ManageUsersHandler(templates, userManager))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/users").Handler(admin(ModifyUserHandler(userManager))).Methods(http.MethodPost)
 

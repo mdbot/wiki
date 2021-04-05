@@ -4,14 +4,31 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>{{.PageTitle}} &middot; Wiki</title>
-        <link rel="stylesheet" href="/static/style.css" type="text/css"/>
-        <link rel="shortcut icon" href="#"/>
+        <title>{{.PageTitle}} &middot; {{.Site.SiteName}}</title>
+        <link rel="stylesheet" href="/static/style.css" type="text/css">
+        {{if .Site.HasFavicon}}
+            <link rel="shortcut icon" href="/wiki/logo/favicon">
+        {{else}}
+            <link rel="shortcut icon" href="#">
+        {{end}}
     </head>
     <body>
 
         <header class="container title">
-            <h1 class="title"><a href="/">Wiki</a></h1>
+            <h1 class="title">
+                <a href="/">
+                    {{- if .Site.HasMainLogo -}}
+                        <picture>
+                            {{if .Site.HasDarkLogo}}
+                                <source media="(prefers-color-scheme: dark)" srcset="/wiki/logo/dark"/>
+                            {{end}}
+                            <img src="/wiki/logo/normal" alt="{{.Site.SiteName}}" class="logo">
+                        </picture>
+                    {{- else -}}
+                        {{.Site.SiteName}}
+                    {{- end -}}
+                </a>
+            </h1>
         </header>
 
         <nav class="sidebar">
