@@ -432,6 +432,7 @@ func resolvePath(base, name string) (string, string, error) {
 			return "", "", fmt.Errorf("attempt to write to reserved directory")
 		}
 	}
+	rel = strings.ReplaceAll(rel, string(filepath.Separator), "/")
 
 	return p, rel, nil
 }
