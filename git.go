@@ -222,7 +222,7 @@ func (g *GitBackend) listFiles(dir string, prefix string) ([]File, error) {
 
 			files, err := g.listFiles(
 				filepath.Join(dir, files[i].Name()),
-				filepath.Join(prefix, files[i].Name()),
+				path.Join(prefix, files[i].Name()),
 			)
 			if err != nil {
 				return nil, err
@@ -231,7 +231,7 @@ func (g *GitBackend) listFiles(dir string, prefix string) ([]File, error) {
 		} else if filepath.Ext(files[i].Name()) != ".md" {
 			stat, _ := files[i].Info()
 			res = append(res, File{
-				Name: filepath.Join(prefix, files[i].Name()),
+				Name: path.Join(prefix, files[i].Name()),
 				Size: stat.Size(),
 			})
 		}
@@ -353,7 +353,6 @@ func (g *GitBackend) DeletePage(name string, message string, user string) error 
 
 	return g.delete(fmt.Sprintf("%s.md", name), message, user)
 }
-
 
 func (g *GitBackend) DeleteFile(name string, message string, user string) error {
 	g.mutex.Lock()
