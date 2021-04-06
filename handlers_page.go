@@ -111,7 +111,8 @@ func DeletePageHandler(provider DeletePageProvider) http.HandlerFunc {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(writer, request, "/", http.StatusOK)
+		putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("Deleted page %s", name))
+		http.Redirect(writer, request, "/", http.StatusTemporaryRedirect)
 	}
 }
 

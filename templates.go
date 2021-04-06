@@ -131,6 +131,18 @@ func (t *Templates) RenderFileList(w http.ResponseWriter, r *http.Request, files
 	})
 }
 
+type DeleteFileArgs struct {
+	Common CommonArgs
+}
+
+func (t *Templates) RenderDeleteFile(w http.ResponseWriter, r *http.Request, fileName string) {
+	t.render("delete_file.gohtml", http.StatusOK, w, &DeleteFileArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: fileName,
+		}),
+	})
+}
+
 type UploadFileArgs struct {
 	Common CommonArgs
 }

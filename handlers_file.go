@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"mime"
@@ -103,5 +104,39 @@ func FileHandler(provider FileProvider) http.HandlerFunc {
 			writer.Header().Add("Content-Disposition", "attachment")
 		}
 		_, _ = io.Copy(writer, reader)
+	}
+}
+
+type DeleteFileProvider interface {
+	DeleteFile(name string, message string, user string) error
+}
+
+func DeleteFileConfirmHandler(t *Templates) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := strings.TrimPrefix(r.URL.Path, "/files/delete/")
+		t.RenderDeleteFile(w, r, name)
+	}
+}
+
+func DeleteFileHandler(provider DeleteFileProvider) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		name := strings.TrimPrefix(request.URL.Path, "/files/delete/")
+		confirm := request.FormValue("confirm")
+		if confirm == "" {
+			http.Redirect(writer, request, "/files/delete/"+name, http.StatusTemporaryRedirect)
+			return
+		}
+		message := request.FormValue("message")
+		username := "Anonymoose"
+		if user := getUserForRequest(request); user != nil {
+			username = user.Name
+		}
+		err := provider.DeleteFile(name, message, username)
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("Deleted file %s", name))
+		http.Redirect(writer, request, "/", http.StatusTemporaryRedirect)
 	}
 }

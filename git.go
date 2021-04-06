@@ -351,7 +351,19 @@ func (g *GitBackend) DeletePage(name string, message string, user string) error 
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
-	_, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", name))
+	return g.delete(fmt.Sprintf("%s.md", name), message, user)
+}
+
+
+func (g *GitBackend) DeleteFile(name string, message string, user string) error {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	return g.delete(name, message, user)
+}
+
+func (g *GitBackend) delete(name, message, user string) error {
+	_, gitPath, err := resolvePath(g.dir, name)
 	if err != nil {
 		return err
 	}
