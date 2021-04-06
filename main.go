@@ -127,7 +127,7 @@ func main() {
 	wikiRouter.PathPrefix("/edit/").Handler(write(SubmitPageHandler(gitBackend))).Methods(http.MethodPost)
 	wikiRouter.PathPrefix("/view/").Handler(read(ViewPageHandler(templates, renderer, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/history/").Handler(read(PageHistoryHandler(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/file/").Handler(read(FileHandler(gitBackend))).Methods(http.MethodGet)
+	wikiRouter.PathPrefix("/files/view/").Handler(read(FileHandler(gitBackend))).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/delete/").Handler(write(DeletePageConfirmHandler(templates))).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/delete/").Handler(write(DeletePageHandler(gitBackend))).Methods(http.MethodPost)
 	wikiRouter.PathPrefix("/rename/").Handler(write(RenamePageConfirmHandler(gitBackend, templates))).Methods(http.MethodGet)

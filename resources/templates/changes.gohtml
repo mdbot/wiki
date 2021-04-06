@@ -7,7 +7,7 @@
             {{if .Page}}
                 <a href="/view/{{.Page}}" class="wikilink">{{.Page}}</a>
             {{else if .File}}
-                <a href="/file/{{.File}}">{{.File}}</a>
+                <a href="/files/view/{{.File}}">{{.File}}</a>
             {{else if .Config}}
                 {{.Config}} config
             {{else}}

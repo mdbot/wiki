@@ -3,7 +3,7 @@
 All files:
 <ul>
     {{range .Files}}
-        <li><a href="/file/{{.Name}}">{{.Name}}</a> ({{.Size | bytes}})</li>
+        <li><a href="/files/view/{{.Name}}">{{.Name}}</a> ({{.Size | bytes}})</li>
     {{end}}
 </ul>
 {{template "footer" .Common}}

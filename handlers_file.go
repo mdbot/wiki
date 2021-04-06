@@ -84,7 +84,7 @@ func FileHandler(provider FileProvider) http.HandlerFunc {
 	}
 
 	return func(writer http.ResponseWriter, request *http.Request) {
-		name := strings.TrimPrefix(request.URL.Path, "/file/")
+		name := strings.TrimPrefix(request.URL.Path, "/files/view/")
 		reader, err := provider.GetFile(name)
 		if err != nil {
 			writer.WriteHeader(http.StatusNotFound)

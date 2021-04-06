@@ -44,7 +44,7 @@ func (w *embedParser) Parse(_ ast.Node, block text.Reader, _ parser.Context) ast
 		block.Advance(endIndex + 2)
 		link := ast.NewLink()
 		link.Title = target
-		link.Destination = []byte(fmt.Sprintf("/file/%s", target))
+		link.Destination = []byte(fmt.Sprintf("/files/view/%s", target))
 		return ast.NewImage(link)
 	}
 
