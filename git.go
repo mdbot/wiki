@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -158,86 +158,55 @@ func (g *GitBackend) GetConfig(name string) ([]byte, error) {
 }
 
 func (g *GitBackend) ListPages() ([]string, error) {
-	pages, err := g.listPages(g.dir, "")
-	if err != nil {
-		return nil, err
-	}
-	sort.Strings(pages)
-	return pages, nil
-}
-
-// listPages recursively finds pages within the given directory. The prefix is prepended to each returned path.
-func (g *GitBackend) listPages(dir string, prefix string) ([]string, error) {
-	var res []string
-
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range files {
-		if files[i].IsDir() {
-			files, err := g.listPages(
-				filepath.Join(dir, files[i].Name()),
-				filepath.Join(prefix, files[i].Name()),
-			)
-			if err != nil {
-				return nil, err
-			}
-			res = append(res, files...)
-		} else if filepath.Ext(files[i].Name()) == ".md" {
-			res = append(res, strings.TrimSuffix(filepath.Join(prefix, files[i].Name()), ".md"))
+	var pages []string
+	return pages, g.walkFiles(func(filePath, webPath string, info fs.DirEntry) error {
+		if filepath.Ext(filePath) == ".md" {
+			pages = append(pages, strings.TrimSuffix(webPath, ".md"))
 		}
-	}
-
-	return res, nil
+		return nil
+	})
 }
 
 func (g *GitBackend) ListFiles() ([]File, error) {
-	files, err := g.listFiles(g.dir, "")
-	if err != nil {
-		return nil, err
-	}
-	sort.Slice(files, func(i, j int) bool {
-		return files[i].Name < files[j].Name
-	})
-	return files, nil
-}
+	var files []File
 
-// listFiles recursively finds files (non-pages) within the given directory. The prefix is prepended to each returned
-// path.
-func (g *GitBackend) listFiles(dir string, prefix string) ([]File, error) {
-	var res []File
-
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range files {
-		if files[i].IsDir() {
-			if strings.EqualFold(files[i].Name(), ".git") || strings.EqualFold(files[i].Name(), ".wiki") {
-				continue
-			}
-
-			files, err := g.listFiles(
-				filepath.Join(dir, files[i].Name()),
-				path.Join(prefix, files[i].Name()),
-			)
+	return files, g.walkFiles(func(filePath, webPath string, info fs.DirEntry) error {
+		if filepath.Ext(filePath) != ".md" {
+			stat, err := os.Stat(filePath)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			res = append(res, files...)
-		} else if filepath.Ext(files[i].Name()) != ".md" {
-			stat, _ := files[i].Info()
-			res = append(res, File{
-				Name: path.Join(prefix, files[i].Name()),
+
+			files = append(files, File{
+				Name: webPath,
 				Size: stat.Size(),
 			})
 		}
-	}
+		return nil
+	})
+}
 
-	return res, nil
+// walkFiles calls filepath.WalkDir, filtering out private data (.git and .wiki folders), and supplying
+// both the path on disk and the web-appropriate path to the handler function.
+func (g *GitBackend) walkFiles(handler func(filePath, webPath string, info fs.DirEntry) error) error {
+	return filepath.WalkDir(g.dir, func(path string, info fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			if info.Name() == ".git" || info.Name() == ".wiki" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		rel, err := filepath.Rel(g.dir, path)
+		if err != nil {
+			return err
+		}
+		return handler(path, strings.ReplaceAll(rel, string(filepath.Separator), "/"), info)
+	})
 }
 
 func (g *GitBackend) PutPage(title string, content []byte, user string, message string) error {
