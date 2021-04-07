@@ -38,14 +38,15 @@
         </nav>
 
         <header class="container pageheader">
-            <h1>
+            <h1 class="pagetitle">
                 {{if .ShowLinkToView}}
                     <a href="/view/{{.PageTitle}}">{{.PageTitle}}</a>
                 {{else}}
                     {{.PageTitle}}
                 {{end}}
             </h1>
-            <nav>
+
+            <nav class="pagelinks">
                 {{if and (and .IsWikiPage .CanEdit) (not .IsError)}}
                     <a href="/edit/{{.PageTitle}}">Edit</a>
                     <a href="/rename/{{.PageTitle}}">Rename</a>
@@ -55,6 +56,39 @@
                     <a href="/history/{{.PageTitle}}">History</a>
                 {{end}}
             </nav>
+
+            <div class="search">
+                {{if not .IsError}}
+                    <form id="search">
+                        <input list="pagenames" id="page" autocomplete="off" placeholder="Enter a page to navigate to">
+                        <datalist id="pagenames"></datalist>
+                        <input type="submit" value="Go">
+                    </form>
+                    <script>
+                      document.addEventListener('DOMContentLoaded', function () {
+                        const searchForm = document.querySelector('form#search')
+                        const searchInput = document.querySelector('input#page')
+                        const searchList = document.querySelector('datalist#pagenames')
+
+                        searchForm.addEventListener('submit', function (e) {
+                          e.preventDefault()
+                          document.location.href = '/view/' + searchInput.value
+                        })
+
+                        searchInput.addEventListener('focus', function () {
+                          if (searchList.children.length === 0) {
+                            fetch('/api/list')
+                              .then(response => response.json())
+                              .then(words => words.map(w => new Option(w, w)))
+                              .then(els => searchList.append(...els))
+                          }
+                        })
+
+                      })
+                    </script>
+                {{end}}
+            </div>
+
             <div class="login">
                 {{if .User}}
                     <form action="/wiki/logout" method="post">
