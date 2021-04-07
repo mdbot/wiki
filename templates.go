@@ -286,6 +286,20 @@ func (t *Templates) RenderBadRequest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type SearchPageArgs struct {
+	Common  CommonArgs
+	Results []SearchResult
+}
+
+func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, results []SearchResult) {
+	t.render("search.gohtml", http.StatusOK, w, &SearchPageArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Search",
+		}),
+		Results: results,
+	})
+}
+
 func (t *Templates) render(name string, statusCode int, w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(statusCode)

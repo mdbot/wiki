@@ -410,6 +410,19 @@ func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, er
 	return history, nil
 }
 
+func (g *GitBackend) SearchWiki(pattern string) []SearchResult {
+	trimPrefix := filepath.Clean(g.dir) + string(filepath.Separator)
+	results := searchDirectory(g.dir, pattern)
+	var output []SearchResult
+	for index := range results {
+		output = append(output, SearchResult{
+			Filename:   strings.TrimSuffix(strings.TrimPrefix(results[index].Filename, trimPrefix), ".md"),
+			FoundLines: results[index].FoundLines,
+		})
+	}
+	return output
+}
+
 func (g *GitBackend) resolveRevision(rv string) (*plumbing.Hash, error) {
 	if rv == "" {
 		rv = "HEAD"

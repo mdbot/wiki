@@ -147,6 +147,7 @@ func main() {
 	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/upload").Handler(write(UploadFormHandler(templates))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/upload").Handler(write(UploadHandler(gitBackend))).Methods(http.MethodPost)
+	wikiRouter.Path("/wiki/search").Handler(read(SearchHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/site").Handler(admin(ViewSiteConfigHandler(templates))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/site").Handler(admin(UpdateSiteConfigHandler(siteConfig))).Methods(http.MethodPost)
 	wikiRouter.Path("/wiki/users").Handler(admin(ManageUsersHandler(templates, userManager))).Methods(http.MethodGet)

@@ -11,8 +11,8 @@ import (
 )
 
 type SearchResult struct {
-	filename   string
-	foundLines []string
+	Filename   string
+	FoundLines []string
 }
 
 func searchDirectory(path string, pattern string) []SearchResult {
@@ -42,15 +42,15 @@ func searchFile(file string, pattern string) (SearchResult, error) {
 		_ = f.Close()
 	}()
 	result := SearchResult{
-		filename:   file,
-		foundLines: nil,
+		Filename:   file,
+		FoundLines: nil,
 	}
 	found := false
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		if bytes.Contains(scanner.Bytes(), []byte(pattern)) {
 			found = true
-			result.foundLines = append(result.foundLines, scanner.Text())
+			result.FoundLines = append(result.FoundLines, scanner.Text())
 		}
 	}
 	if found {
