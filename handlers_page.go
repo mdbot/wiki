@@ -9,6 +9,7 @@ import (
 
 type PageProvider interface {
 	GetPage(title string) (*Page, error)
+	GetPageAt(title, revision string) (*Page, error)
 }
 
 type PageExists interface {
@@ -23,7 +24,16 @@ func ViewPageHandler(t *Templates, renderer ContentRenderer, pp PageProvider) ht
 	return func(w http.ResponseWriter, r *http.Request) {
 		pageTitle := strings.TrimPrefix(r.URL.Path, "/view/")
 
-		page, err := pp.GetPage(pageTitle)
+		revision := r.FormValue("rev")
+		var page *Page
+		var err error
+
+		if revision == "" {
+			page, err = pp.GetPage(pageTitle)
+		} else {
+			page, err = pp.GetPageAt(pageTitle, revision)
+		}
+
 		if err != nil {
 			http.NotFound(w, r)
 			return

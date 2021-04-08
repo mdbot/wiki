@@ -143,6 +143,51 @@ func (g *GitBackend) GetPage(title string) (*Page, error) {
 	}, nil
 }
 
+func (g *GitBackend) GetPageAt(title, revision string) (*Page, error) {
+	g.mutex.RLock()
+	defer g.mutex.RUnlock()
+
+	_, gitPath, err := resolvePath(g.dir, fmt.Sprintf("%s.md", title))
+	if err != nil {
+		return nil, err
+	}
+
+	commitHash, err := g.resolveRevision(revision)
+	if err != nil {
+		return nil, err
+	}
+	commit, err := g.repo.CommitObject(*commitHash)
+	if err != nil {
+		return nil, err
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, err
+	}
+	file, err := tree.File(gitPath)
+	if err != nil {
+		return nil, err
+	}
+	reader, err := file.Blob.Reader()
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	b, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return &Page{
+		Content: b,
+		LastModified: &LogEntry{
+			ChangeId: commit.Hash.String(),
+			User:     commit.Author.Name,
+			Time:     commit.Author.When,
+			Message:  commit.Message,
+		},
+	}, nil
+}
+
 func (g *GitBackend) GetFile(name string) (io.ReadCloser, error) {
 	filePath, _, err := resolvePath(g.dir, name)
 	if err != nil {
