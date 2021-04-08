@@ -412,7 +412,8 @@ func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, er
 
 func (g *GitBackend) SearchWiki(pattern string) []SearchResult {
 	trimPrefix := filepath.Clean(g.dir) + string(filepath.Separator)
-	results := searchDirectory(g.dir, pattern)
+	patternBytes := bytes.ToLower([]byte(pattern))
+	results := searchDirectory(g.dir, patternBytes)
 	var output []SearchResult
 	for index := range results {
 		output = append(output, SearchResult{

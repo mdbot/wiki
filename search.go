@@ -15,7 +15,7 @@ type SearchResult struct {
 	FoundLines []string
 }
 
-func searchDirectory(path string, pattern string) []SearchResult {
+func searchDirectory(path string, pattern []byte) []SearchResult {
 	results := make([]SearchResult, 0)
 	_ = filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() ||
@@ -33,7 +33,7 @@ func searchDirectory(path string, pattern string) []SearchResult {
 	return results
 }
 
-func searchFile(file string, pattern string) (SearchResult, error) {
+func searchFile(file string, pattern []byte) (SearchResult, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return SearchResult{}, err
@@ -48,7 +48,7 @@ func searchFile(file string, pattern string) (SearchResult, error) {
 	found := false
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		if bytes.Contains(scanner.Bytes(), []byte(pattern)) {
+		if bytes.Contains(bytes.ToLower(scanner.Bytes()), pattern) {
 			found = true
 			result.FoundLines = append(result.FoundLines, scanner.Text())
 		}
