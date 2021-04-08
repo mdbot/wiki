@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -76,6 +77,10 @@ func (g *GitBackend) resolveRevision(rv string) (*plumbing.Hash, error) {
 func (g *GitBackend) resolvePath(base, name string) (string, string, error) {
 	p := filepath.Clean(filepath.Join(base, name))
 	p = strings.ToLower(p)
+
+	if strings.ContainsRune(p, '%') {
+		return "", "", errors.New("paths cannot contain '%'")
+	}
 
 	rel, err := filepath.Rel(base, p)
 	if err != nil || strings.HasPrefix(rel, ".") {
