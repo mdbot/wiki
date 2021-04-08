@@ -143,6 +143,7 @@ main {
     grid-area: main;
     padding: 0.5em 1em;
     background-color: var(--mainBackgroundcolour);
+    overflow: hidden;
 }
 
 .editor #content, .editor .CodeMirror {
