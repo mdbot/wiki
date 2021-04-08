@@ -15,6 +15,6 @@ func SearchHandler(templates *Templates, backend SearchRequest) http.HandlerFunc
 		if pattern != "" {
 			results = backend.SearchWiki(pattern)
 		}
-		templates.RenderSearch(w, r, results)
+		templates.RenderSearch(w, r, pattern, results)
 	}
 }

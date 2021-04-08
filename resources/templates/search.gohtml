@@ -1,12 +1,16 @@
 {{- /*gotype: github.com/mdbot/wiki.SearchPageArgs*/ -}}
 {{template "header" .Common}}
-<h1>Search</h1>
+<h1>
+    Search
+    {{if .Pattern}}
+        results for {{.Pattern}}
+    {{end}}
+</h1>
 <form action="/wiki/search" method="GET">
     <label for="pattern">Pattern</label>
-    <input id="pattern" name="pattern" type="text" />
+    <input id="pattern" name="pattern" type="text" value="{{.Pattern}}" />
 </form>
 {{if .Results}}
-    <h2>Results</h2>
     {{range $val := .Results}}
         <h3><a href="/view/{{$val.Filename}}">{{$val.Filename}}</a></h3>
             {{if $val.FoundLines}}
@@ -17,5 +21,7 @@
                 </ol>
             {{end}}
     {{end}}
+{{else if .Pattern}}
+    <p>No results found.</p>
 {{end}}
 {{template "footer" .Common}}

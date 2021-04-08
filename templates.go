@@ -289,14 +289,16 @@ func (t *Templates) RenderBadRequest(w http.ResponseWriter, r *http.Request) {
 type SearchPageArgs struct {
 	Common  CommonArgs
 	Results []SearchResult
+	Pattern string
 }
 
-func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, results []SearchResult) {
+func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, pattern string, results []SearchResult) {
 	t.render("search.gohtml", http.StatusOK, w, &SearchPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Search",
 		}),
 		Results: results,
+		Pattern: pattern,
 	})
 }
 
