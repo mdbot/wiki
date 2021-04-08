@@ -28,7 +28,7 @@ func PageHistoryHandler(t *Templates, pp HistoryProvider) http.HandlerFunc {
 
 		history, err := pp.PageHistory(pageTitle, start, number)
 		if err != nil {
-			http.NotFound(w, r)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
@@ -64,7 +64,7 @@ func RecentChangesHandler(t *Templates, rp RecentChangesProvider) http.HandlerFu
 
 		history, err := rp.RecentChanges(start, number)
 		if err != nil {
-			http.NotFound(w, r)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
@@ -76,5 +76,19 @@ func RecentChangesHandler(t *Templates, rp RecentChangesProvider) http.HandlerFu
 		}
 
 		t.RenderRecentChanges(w, r, history[:number-1], next)
+	}
+}
+
+func RecentChangesFeed(t *Templates, rp RecentChangesProvider) http.HandlerFunc {
+	const historySize = 50
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		history, err := rp.RecentChanges("", historySize)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		t.RenderRecentChangesFeed(w, r, history)
 	}
 }
