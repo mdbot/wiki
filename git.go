@@ -160,11 +160,7 @@ func (g *GitBackend) GetPageAt(title, revision string) (*Page, error) {
 	if err != nil {
 		return nil, err
 	}
-	tree, err := commit.Tree()
-	if err != nil {
-		return nil, err
-	}
-	file, err := tree.File(gitPath)
+	file, err := commit.File(gitPath)
 	if err != nil {
 		return nil, err
 	}
