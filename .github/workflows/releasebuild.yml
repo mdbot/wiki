@@ -23,7 +23,7 @@ jobs:
       - name: Build for Linux
         run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-extldflags "-static"' -o dist/linux-${{ steps.tags.outputs.version}}-amd64 .
       - name: Build for Windows
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -a -ldflags '-extldflags "-static"' -o dist/windows-${{ steps.tags.outputs.version}}-amd64 .
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -a -ldflags '-extldflags "-static"' -o dist/windows-${{ steps.tags.outputs.version}}-amd64.exe .
       - name: Build for MacOS AMD64
         run: CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -a -ldflags '-extldflags "-static"' -o dist/darwin-${{ steps.tags.outputs.version}}-arm64 .
       - name: Build for MacOS ARM64
@@ -35,6 +35,6 @@ jobs:
         with:
           files: |
             dist/linux-${{ steps.tags.outputs.version}}-amd64
-            dist/windows-${{ steps.tags.outputs.version}}-amd64
+            dist/windows-${{ steps.tags.outputs.version}}-amd64.exe
             dist/darwin-${{ steps.tags.outputs.version}}-arm64
             dist/darwin-${{ steps.tags.outputs.version}}-amd64
