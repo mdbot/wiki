@@ -35,7 +35,7 @@ func ViewPageHandler(t *Templates, renderer ContentRenderer, pp PageProvider) ht
 		}
 
 		if err != nil {
-			http.NotFound(w, r)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 

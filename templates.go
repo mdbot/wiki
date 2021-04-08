@@ -329,7 +329,6 @@ func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, pattern
 
 func (t *Templates) render(name string, statusCode int, w http.ResponseWriter, data interface{}) {
 	w.WriteHeader(statusCode)
-
 	tpl := template.New(name)
 	tpl.Funcs(map[string]interface{}{
 		"bytes": t.formatBytes,
