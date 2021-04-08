@@ -111,7 +111,7 @@ func Test_resolvePath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotFilePath, gotGitPath, err := resolvePath(tt.args.base, tt.args.title)
+			gotFilePath, gotGitPath, err := (&GitBackend{}).resolvePath(tt.args.base, tt.args.title)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("resolvePath() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -10,6 +10,20 @@ import (
 	"strings"
 )
 
+func (g *GitBackend) SearchWiki(pattern string) []SearchResult {
+	trimPrefix := filepath.Clean(g.dir) + string(filepath.Separator)
+	patternBytes := bytes.ToLower([]byte(pattern))
+	results := searchDirectory(g.dir, patternBytes)
+	var output []SearchResult
+	for index := range results {
+		output = append(output, SearchResult{
+			Filename:   strings.TrimSuffix(strings.TrimPrefix(results[index].Filename, trimPrefix), ".md"),
+			FoundLines: results[index].FoundLines,
+		})
+	}
+	return output
+}
+
 type SearchResult struct {
 	Filename   string
 	FoundLines []string
