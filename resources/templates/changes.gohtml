@@ -1,27 +1,53 @@
 {{- /*gotype: github.com/mdbot/wiki.RecentChangesArgs*/ -}}
 {{template "header" .Common}}
-<ul>
-    {{range .Changes}}
-        <li>
-            <code class="commitish">{{.LogEntry.ChangeId}}</code>
-            {{if .Page}}
-                <a href="/view/{{.Page}}" class="wikilink">{{.Page}}</a>
-            {{else if .File}}
-                <a href="/files/view/{{.File}}">{{.File}}</a>
-            {{else if .Config}}
-                <code class="configname">{{.Config}}</code> config
-            {{else}}
-                <em>nothing</em>
-            {{end}}
-            changed by {{.LogEntry.User}} at {{.LogEntry.Time.Format "Jan 02, 2006 15:04:05 UTC"}}
-            {{if .LogEntry.Message}}
-                ({{.LogEntry.Message}})
-            {{else}}
-                <em>[No message supplied]</em>
-            {{end}}
-        </li>
-    {{end}}
-</ul>
+<table>
+    <thead>
+        <tr>
+            <th>Revision</th>
+            <th>Time</th>
+            <th>Change</th>
+            <th>User</th>
+            <th>Message</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Changes}}
+            <tr>
+                <td><code class="commitish">{{.LogEntry.ChangeId}}</code></td>
+                <td>{{.LogEntry.Time.Format "Jan 02, 2006 15:04:05 UTC"}}</td>
+                <td>
+                    {{if .Page}}
+                        <a href="/view/{{.Page}}" class="wikilink">{{.Page}}</a>
+                    {{else if .File}}
+                        <a href="/files/view/{{.File}}">{{.File}}</a>
+                    {{else if .Config}}
+                        <code class="configname">{{.Config}}</code> config
+                    {{else}}
+                        <em>nothing</em>
+                    {{end}}
+                </td>
+                <td>{{.LogEntry.User}}</td>
+                <td>
+                    {{if .LogEntry.Message}}
+                        {{.LogEntry.Message}}
+                    {{else}}
+                        <em>no message supplied</em>
+                    {{end}}
+                </td>
+                <td>
+                    {{if .Page}}
+                        <a href="/view/{{.Page}}?rev={{.LogEntry.ChangeId}}">view this revision</a>
+                        <a href="/delete/{{.Page}}">delete page</a>
+                    {{end}}
+                    {{if .File}}
+                        <a href="/files/delete/{{.File}}">delete file</a>
+                    {{end}}
+                </td>
+            </tr>
+        {{end}}
+    </tbody>
+</table>
 {{if .Next}}
     <p><a href="?after={{.Next}}">Next &raquo;</a></p>
 {{end}}

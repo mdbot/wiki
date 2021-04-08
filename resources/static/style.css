@@ -13,6 +13,7 @@
     --error-text-color: #ffffff;
     --notice-color: #1e5f0a;
     --notice-text-color: #ffffff;
+    --table-row-alt-colour: #999999;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,6 +28,7 @@
         --input-background: #333333;
         --input-color: #d6d6d6;
         --input-border: #5b5b5b;
+        --table-row-alt-colour: #333333;
     }
 }
 
@@ -207,4 +209,22 @@ nav ul li {
 
 nav a {
     text-decoration: none;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+}
+
+th,td {
+    border: 1px solid var(--divider);
+    margin: 0;
+    padding: 0.3em 0.8em;
+}
+
+tr:nth-child(2n) td {
+    background-color: var(--table-row-alt-colour);
 }
