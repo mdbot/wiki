@@ -60,7 +60,7 @@
             <div class="search">
                 {{if not .IsError}}
                     <form id="search">
-                        <input list="pagenames" id="page" autocomplete="off" placeholder="Enter a page to navigate to">
+                        <input list="pagenames" id="page" autocomplete="off" placeholder="Search or go to page">
                         <datalist id="pagenames"></datalist>
                         <input type="submit" value="Go">
                     </form>
@@ -72,7 +72,11 @@
 
                         searchForm.addEventListener('submit', function (e) {
                           e.preventDefault()
-                          document.location.href = '/view/' + searchInput.value
+                          if (searchList.querySelector('[value='+searchInput.value+']')) {
+                            document.location.href = '/view/' + searchInput.value
+                          } else {
+                            document.location.href = '/wiki/search?pattern=' + searchInput.value
+                          }
                         })
 
                         searchInput.addEventListener('focus', function () {
