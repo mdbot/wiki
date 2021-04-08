@@ -1,0 +1,13 @@
+{{- /*gotype: github.com/mdbot/wiki.RevertPageArgs*/ -}}
+{{template "header" .Common}}
+<form action="/revert/{{.Common.PageTitle}}" method="post" class="editor">
+    {{.Common.CsrfField}}
+    <input type="hidden" id="confirm" name="confirm" value="confirm">
+    <input type="hidden" name="rev" value="{{.Revision}}">
+    <div class="form-group">
+        <label for="message">Reason:</label>
+        <input id="message" type="text" name="message" value="Revert to revision {{.Revision}}">
+    </div>
+    <button type="submit" class="btn btn-primary" value="Edit">Confirm delete</button>
+</form>
+{{template "footer" .Common}}

@@ -90,6 +90,21 @@ func (t *Templates) RenderDeletePage(w http.ResponseWriter, r *http.Request, pag
 	})
 }
 
+type RevertPageArgs struct {
+	Common   CommonArgs
+	Revision string
+}
+
+func (t *Templates) RenderRevertPage(w http.ResponseWriter, r *http.Request, pageName, revision string) {
+	t.render("revert.gohtml", http.StatusOK, w, &RevertPageArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle:      pageName,
+			ShowLinkToView: true,
+		}),
+		Revision: revision,
+	})
+}
+
 type RenamePageArgs struct {
 	Common CommonArgs
 }

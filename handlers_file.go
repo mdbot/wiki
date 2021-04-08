@@ -123,7 +123,7 @@ func DeleteFileHandler(provider DeleteFileProvider) http.HandlerFunc {
 		name := strings.TrimPrefix(request.URL.Path, "/files/delete/")
 		confirm := request.FormValue("confirm")
 		if confirm == "" {
-			http.Redirect(writer, request, "/files/delete/"+name, http.StatusTemporaryRedirect)
+			http.Redirect(writer, request, "/files/delete/"+name, http.StatusSeeOther)
 			return
 		}
 		message := request.FormValue("message")
@@ -137,6 +137,6 @@ func DeleteFileHandler(provider DeleteFileProvider) http.HandlerFunc {
 			return
 		}
 		putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("Deleted file %s", name))
-		http.Redirect(writer, request, "/", http.StatusTemporaryRedirect)
+		http.Redirect(writer, request, "/", http.StatusSeeOther)
 	}
 }

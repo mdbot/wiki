@@ -11,7 +11,8 @@
             {{else}}
                 <em>[No message supplied]</em>
             {{end}}
-            [<a href="/view/{{$.Common.PageTitle}}?rev={{.ChangeId}}">view</a>]
+            [<a href="/view/{{$.Common.PageTitle}}?rev={{.ChangeId}}">view</a>,
+            <a href="/revert/{{$.Common.PageTitle}}?rev={{.ChangeId}}">revert to this version</a>]
         </li>
     {{end}}
 </ul>

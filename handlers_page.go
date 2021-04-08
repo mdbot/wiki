@@ -91,7 +91,6 @@ func SubmitPageHandler(pe PageEditor) http.HandlerFunc {
 	}
 }
 
-
 type DeletePageProvider interface {
 	DeletePage(name string, message string, user string) error
 }
@@ -108,7 +107,7 @@ func DeletePageHandler(provider DeletePageProvider) http.HandlerFunc {
 		name := strings.TrimPrefix(request.URL.Path, "/delete/")
 		confirm := request.FormValue("confirm")
 		if confirm == "" {
-			http.Redirect(writer, request, "/delete/"+name, http.StatusTemporaryRedirect)
+			http.Redirect(writer, request, "/delete/"+name, http.StatusSeeOther)
 			return
 		}
 		message := request.FormValue("message")
@@ -122,7 +121,7 @@ func DeletePageHandler(provider DeletePageProvider) http.HandlerFunc {
 			return
 		}
 		putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("Deleted page %s", name))
-		http.Redirect(writer, request, "/", http.StatusTemporaryRedirect)
+		http.Redirect(writer, request, "/", http.StatusSeeOther)
 	}
 }
 
@@ -130,7 +129,7 @@ type RenamePageProvider interface {
 	RenamePage(name string, newName string, message string, user string) error
 }
 
-func RenamePageConfirmHandler(backend PageExists, t  *Templates) http.HandlerFunc {
+func RenamePageConfirmHandler(backend PageExists, t *Templates) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := strings.TrimPrefix(r.URL.Path, "/rename/")
 		if !backend.PageExists(name) {
@@ -146,7 +145,7 @@ func RenamePageHandler(provider RenamePageProvider) http.HandlerFunc {
 		name := strings.TrimPrefix(request.URL.Path, "/rename/")
 		newName := request.FormValue("newName")
 		if newName == "" {
-			http.Redirect(writer, request, "/rename/"+name, http.StatusTemporaryRedirect)
+			http.Redirect(writer, request, "/rename/"+name, http.StatusSeeOther)
 			return
 		}
 		message := request.FormValue("message")
@@ -159,7 +158,54 @@ func RenamePageHandler(provider RenamePageProvider) http.HandlerFunc {
 			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(writer, request, "/view/"+newName, http.StatusTemporaryRedirect)
+		http.Redirect(writer, request, "/view/"+newName, http.StatusSeeOther)
+	}
+}
+
+type RevertPageProvider interface {
+	RevertPage(name, revision, user, message string) error
+}
+
+func RevertPageConfirmHandler(t *Templates) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := strings.TrimPrefix(r.URL.Path, "/revert/")
+		revision := r.FormValue("rev")
+		if revision == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		t.RenderRevertPage(w, r, name, revision)
+	}
+}
+
+func RevertPageHandler(provider RevertPageProvider) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		name := strings.TrimPrefix(request.URL.Path, "/revert/")
+		confirm := request.FormValue("confirm")
+		if confirm == "" {
+			http.Redirect(writer, request, "/revert/"+name, http.StatusSeeOther)
+			return
+		}
+
+		revision := request.FormValue("rev")
+		if revision == "" {
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		message := request.FormValue("message")
+		username := "Anonymoose"
+		if user := getUserForRequest(request); user != nil {
+			username = user.Name
+		}
+
+		err := provider.RevertPage(name, revision, username, message)
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		putSessionKey(writer, request, sessionNoticeKey, fmt.Sprintf("Reverted page %s", name))
+		http.Redirect(writer, request, fmt.Sprintf("/view/%s", name), http.StatusSeeOther)
 	}
 }
 

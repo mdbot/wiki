@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"path"
@@ -78,6 +79,23 @@ func (g *GitBackend) GetPageAt(title, revision string) (*Page, error) {
 			Message:  commit.Message,
 		},
 	}, nil
+}
+
+func (g *GitBackend) RevertPage(title, revision, user, message string) error {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	filePath, gitPath, err := g.resolvePath(g.dir, fmt.Sprintf("%s.md", title))
+	if err != nil {
+		return err
+	}
+
+	_, b, err := g.pathAtRevision(gitPath, revision)
+	if err != nil {
+		return err
+	}
+
+	return g.writeFile(filePath, gitPath, bytes.NewReader(b), user, message)
 }
 
 // pathAtRevision gets the contents of the given path at the given revision, along the with commit object.
