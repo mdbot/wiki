@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
   })
   const uploadFile = (file) => {
     return new Promise(function (resolve, reject) {
-      let folder = document.location.pathname.replace(/^\/edit\//, '').replace(/[^\/]*$/, '')
+      let folder = decodeURIComponent(document.location.pathname.replace(/^\/edit\//, '').replace(/[^\/]*$/, ''))
       let data = new FormData()
       data.append('file', file)
       data.append('name', folder + file.name)
