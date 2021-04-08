@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 func (g *GitBackend) PageHistory(title string, start string, count int) (*History, error) {
@@ -63,27 +64,11 @@ func (g *GitBackend) GetPageAt(title, revision string) (*Page, error) {
 		return nil, err
 	}
 
-	commitHash, err := g.resolveRevision(revision)
+	commit, b, err := g.pathAtRevision(gitPath, revision)
 	if err != nil {
 		return nil, err
 	}
-	commit, err := g.repo.CommitObject(*commitHash)
-	if err != nil {
-		return nil, err
-	}
-	file, err := commit.File(gitPath)
-	if err != nil {
-		return nil, err
-	}
-	reader, err := file.Blob.Reader()
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	b, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
+
 	return &Page{
 		Content: b,
 		LastModified: &LogEntry{
@@ -93,6 +78,32 @@ func (g *GitBackend) GetPageAt(title, revision string) (*Page, error) {
 			Message:  commit.Message,
 		},
 	}, nil
+}
+
+// pathAtRevision gets the contents of the given path at the given revision, along the with commit object.
+func (g *GitBackend) pathAtRevision(gitPath, revision string) (*object.Commit, []byte, error) {
+	commitHash, err := g.resolveRevision(revision)
+	if err != nil {
+		return nil, nil, err
+	}
+	commit, err := g.repo.CommitObject(*commitHash)
+	if err != nil {
+		return nil, nil, err
+	}
+	file, err := commit.File(gitPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	reader, err := file.Blob.Reader()
+	if err != nil {
+		return nil, nil, err
+	}
+	defer reader.Close()
+	b, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, nil, err
+	}
+	return commit, b, nil
 }
 
 func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, error) {
