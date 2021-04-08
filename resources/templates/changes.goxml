@@ -1,5 +1,5 @@
 {{- /*gotype: github.com/mdbot/wiki.RecentChangesArgs*/ -}}
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+{{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | unsafeHtml }}
 <rss version="2.0">
     <channel>
         <title>{{.Common.Site.SiteName}} - recent changes</title>
