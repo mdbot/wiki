@@ -1,21 +1,37 @@
 {{- /*gotype: github.com/mdbot/wiki.HistoryPageArgs*/ -}}
 {{template "header" .Common}}
 <h1>Page history</h1>
-<ul>
-    {{range .History}}
-        <li>
-            <span class="commitish">{{.ChangeId}}</span>
-            changed by {{.User}} at {{.Time.Format "Jan 02, 2006 15:04:05 UTC"}}
-            {{if .Message}}
-                ({{.Message}})
-            {{else}}
-                <em>[No message supplied]</em>
-            {{end}}
-            [<a href="/view/{{$.Common.PageTitle}}?rev={{.ChangeId}}">view</a>,
-            <a href="/revert/{{$.Common.PageTitle}}?rev={{.ChangeId}}">revert to this version</a>]
-        </li>
-    {{end}}
-</ul>
+<table>
+    <thead>
+        <tr>
+            <th>Revision</th>
+            <th>Time</th>
+            <th>User</th>
+            <th>Message</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .History}}
+            <tr>
+                <td><code class="commitish">{{.ChangeId}}</code></td>
+                <td>{{.Time.Format "Jan 02, 2006 15:04:05 UTC"}}</td>
+                <td>{{.User}}</td>
+                <td>
+                    {{if .Message}}
+                        {{.Message}}
+                    {{else}}
+                        <em>no message supplied</em>
+                    {{end}}
+                </td>
+                <td>
+                    <a href="/view/{{$.Common.PageTitle}}?rev={{.ChangeId}}">view</a>
+                    <a href="/revert/{{$.Common.PageTitle}}?rev={{.ChangeId}}">revert to this version</a>
+                </td>
+            </tr>
+        {{end}}
+    </tbody>
+</table>
 {{if .Next}}
     <p><a href="?after={{.Next}}">Next &raquo;</a></p>
 {{end}}
