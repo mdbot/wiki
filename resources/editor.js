@@ -19,10 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
   })
   const uploadFile = (file) => {
     return new Promise(function (resolve, reject) {
+      let folder = document.location.pathname.replace(/^\/edit\//, '').replace(/[^\/]*$/, '')
       let data = new FormData()
       data.append('file', file)
-      data.append('name', file.name)
-      data.append('message', 'Adding file: ' + file.name)
+      data.append('name', folder + file.name)
+      data.append('message', 'Adding file: ' + folder + file.name)
       data.append('gorilla.csrf.Token', document.querySelector('input[name=\'gorilla.csrf.Token\']').value)
 
       return fetch('/wiki/upload', {
@@ -31,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
         .then(response => {
           if (response.status === 204) {
-            resolve(file.name)
+            resolve(folder + file.name)
           } else {
             reject('status: ' + response.status)
           }
