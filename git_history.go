@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
@@ -148,7 +149,17 @@ func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, er
 			return nil, err
 		}
 
-		stats, err := commit.Stats()
+		myTree, err := commit.Tree()
+		if err != nil {
+			return nil, err
+		}
+
+		parent, err := commit.Parent(0)
+		if err != nil {
+			return nil, err
+		}
+
+		parentTree, err := parent.Tree()
 		if err != nil {
 			return nil, err
 		}
@@ -162,21 +173,61 @@ func (g *GitBackend) RecentChanges(start string, count int) ([]*RecentChange, er
 			},
 		}
 
-		for j := range stats {
-			file := stats[j]
-			if filepath.Dir(file.Name) == ".wiki" {
-				entry.Config = strings.TrimSuffix(filepath.Base(file.Name), ".json.enc")
-				break
-			} else if path.Ext(file.Name) == ".md" {
-				entry.Page = strings.TrimSuffix(file.Name, ".md")
-				break
+		addFile := func(name string) {
+			if filepath.Dir(name) == ".wiki" {
+				entry.Config = strings.TrimSuffix(filepath.Base(name), ".json.enc")
+			} else if path.Ext(name) == ".md" {
+				entry.Page = strings.TrimSuffix(name, ".md")
 			} else {
-				entry.File = file.Name
-				break
+				entry.File = name
 			}
+		}
+
+		var hashes = make(map[string]plumbing.Hash)
+		if err := g.walkTreeFiles(myTree, "", func(name string, entry object.TreeEntry) error {
+			hashes[name] = entry.Hash
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+
+		// Find any hashes that have changed, or files that exist in the parent tree that no longer do
+		if err := g.walkTreeFiles(parentTree, "", func(name string, entry object.TreeEntry) error {
+			if hash := hashes[name]; hash != entry.Hash {
+				addFile(name)
+			}
+			delete(hashes, name)
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+
+		// Any leftover files are new compared to the parent tree
+		for j := range hashes {
+			addFile(j)
 		}
 
 		history = append(history, entry)
 	}
 	return history, nil
+}
+
+func (g *GitBackend) walkTreeFiles(tree *object.Tree, prefix string, h func(name string, entry object.TreeEntry) error) error {
+	for i := range tree.Entries {
+		entry := tree.Entries[i]
+		if entry.Mode.IsFile() {
+			if err := h(path.Join(prefix, entry.Name), entry); err != nil {
+				return err
+			}
+		} else {
+			subtree, err := tree.Tree(entry.Name)
+			if err != nil {
+				return err
+			}
+			if err := g.walkTreeFiles(subtree, path.Join(prefix, entry.Name), h); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

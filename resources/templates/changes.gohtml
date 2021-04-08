@@ -3,15 +3,15 @@
 <ul>
     {{range .Changes}}
         <li>
-            <span class="commitish">{{.LogEntry.ChangeId}}</span>
+            <code class="commitish">{{.LogEntry.ChangeId}}</code>
             {{if .Page}}
                 <a href="/view/{{.Page}}" class="wikilink">{{.Page}}</a>
             {{else if .File}}
                 <a href="/files/view/{{.File}}">{{.File}}</a>
             {{else if .Config}}
-                {{.Config}} config
+                <code class="configname">{{.Config}}</code> config
             {{else}}
-                <em>[Unknown]</em>
+                <em>nothing</em>
             {{end}}
             changed by {{.LogEntry.User}} at {{.LogEntry.Time.Format "Jan 02, 2006 15:04:05 UTC"}}
             {{if .LogEntry.Message}}
