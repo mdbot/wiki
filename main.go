@@ -142,6 +142,7 @@ func main() {
 	wikiRouter.Path("/wiki/index").Handler(read(ListPagesHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/files").Handler(read(ListFilesHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/changes").Handler(read(RecentChangesHandler(templates, gitBackend))).Methods(http.MethodGet)
+	wikiRouter.Path("/wiki/changes.xml").Handler(read(RecentChangesFeed(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/logo/favicon").Handler(ServeFavicon(siteConfig)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/logo/main").Handler(ServeMainLogo(siteConfig)).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/logo/dark").Handler(ServeDarkLogo(siteConfig)).Methods(http.MethodGet)

@@ -78,3 +78,17 @@ func RecentChangesHandler(t *Templates, rp RecentChangesProvider) http.HandlerFu
 		t.RenderRecentChanges(w, r, history[:number-1], next)
 	}
 }
+
+func RecentChangesFeed(t *Templates, rp RecentChangesProvider) http.HandlerFunc {
+	const historySize = 50
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		history, err := rp.RecentChanges("", historySize)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		t.RenderRecentChangesFeed(w, r, history)
+	}
+}

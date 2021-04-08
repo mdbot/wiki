@@ -204,6 +204,16 @@ func (t *Templates) RenderRecentChanges(w http.ResponseWriter, r *http.Request, 
 	})
 }
 
+func (t *Templates) RenderRecentChangesFeed(w http.ResponseWriter, r *http.Request, entries []*RecentChange) {
+	w.Header().Set("Content-Type", "application/rss+xml")
+	t.render("changes.goxml", http.StatusOK, w, &RecentChangesArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Recent changes",
+		}),
+		Changes: entries,
+	})
+}
+
 type ManageUsersArgs struct {
 	Common CommonArgs
 	Users  []UserInfo
@@ -318,7 +328,6 @@ func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, pattern
 }
 
 func (t *Templates) render(name string, statusCode int, w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(statusCode)
 
 	tpl := template.New(name)

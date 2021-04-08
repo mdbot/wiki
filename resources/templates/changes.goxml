@@ -1,0 +1,36 @@
+{{- /*gotype: github.com/mdbot/wiki.RecentChangesArgs*/ -}}
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0">
+    <channel>
+        <title>{{.Common.Site.SiteName}} - recent changes</title>
+        <description>Recent changes to {{.Common.Site.SiteName}}</description>
+        {{range .Changes}}
+        <item>
+            <title>
+                {{.LogEntry.User}} modified
+                {{if .Page}}
+                page {{.Page}}
+                {{else if .File}}
+                file {{.File}}
+                {{else if .Config}}
+                config {{.Config}}
+                {{else}}
+                nothing
+                {{end}}
+            </title>
+            <link>
+                {{- if .Page -}}
+                /view/{{.Page}}
+                {{- else if .File -}}
+                /files/view/{{.File}}
+                {{- else -}}
+                /
+                {{- end -}}
+            </link>
+            <pubDate>{{.LogEntry.Time.Format "Mon, 02 Jan 2006 15:04:05 -0700"}}</pubDate>
+            <author>{{.LogEntry.User}}</author>
+            <guid>{{.LogEntry.ChangeId}}</guid>
+        </item>
+        {{end}}
+    </channel>
+</rss>
