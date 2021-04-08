@@ -332,6 +332,9 @@ func (t *Templates) render(name string, statusCode int, w http.ResponseWriter, d
 	tpl := template.New(name)
 	tpl.Funcs(map[string]interface{}{
 		"bytes": t.formatBytes,
+		"unsafeHtml": func(html string) template.HTML {
+			return template.HTML(html)
+		},
 	})
 	template.Must(tpl.ParseFS(t.fs, name, "partials/*.gohtml"))
 	if err := tpl.Execute(w, data); err != nil {
