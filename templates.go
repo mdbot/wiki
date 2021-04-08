@@ -327,6 +327,20 @@ func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, pattern
 	})
 }
 
+type DiffPageArgs struct {
+	Common CommonArgs
+	Diff template.HTML
+}
+
+func (t *Templates) RenderDiff(w http.ResponseWriter, r *http.Request, diff template.HTML) {
+	t.render("diff.gohtml", http.StatusOK, w, &DiffPageArgs{
+		Common: t.populateArgs(w, r, CommonArgs{
+			PageTitle: "Diff",
+		}),
+		Diff: diff,
+	})
+}
+
 func (t *Templates) render(name string, statusCode int, w http.ResponseWriter, data interface{}) {
 	w.WriteHeader(statusCode)
 	tpl := template.New(name)

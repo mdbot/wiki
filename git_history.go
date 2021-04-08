@@ -11,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func (g *GitBackend) PageHistory(title string, start string, count int) (*History, error) {
@@ -230,4 +231,20 @@ func (g *GitBackend) walkTreeFiles(tree *object.Tree, prefix string, h func(name
 		}
 	}
 	return nil
+}
+
+func (g *GitBackend) PathDiff(path string, startRevision string, endRevision string) (string, error) {
+	_, gitPath, err := g.resolvePath(g.dir, fmt.Sprintf("%s.md", path))
+	_, startContent, err := g.pathAtRevision(gitPath, startRevision)
+	if err != nil {
+		return "", err
+	}
+	_, endContent, err := g.pathAtRevision(gitPath, endRevision)
+	if err != nil {
+		return "", err
+	}
+	thing := diffmatchpatch.New()
+	diffs := thing.DiffMain(string(startContent), string(endContent), true)
+	pretty := thing.DiffPrettyHtml(diffs)
+	return pretty, nil
 }

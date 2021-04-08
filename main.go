@@ -136,6 +136,7 @@ func main() {
 	wikiRouter.PathPrefix("/rename/").Handler(write(RenamePageHandler(gitBackend))).Methods(http.MethodPost)
 	wikiRouter.PathPrefix("/revert/").Handler(write(RevertPageConfirmHandler(templates))).Methods(http.MethodGet)
 	wikiRouter.PathPrefix("/revert/").Handler(write(RevertPageHandler(gitBackend))).Methods(http.MethodPost)
+	wikiRouter.PathPrefix("/diff/").Handler(read(DiffPageHandler(templates, gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/api/list").Handler(read(ApiListHandler(gitBackend))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/account").Handler(auth(AccountHandler(templates))).Methods(http.MethodGet)
 	wikiRouter.Path("/wiki/account").Handler(auth(ModifyAccountHandler(userManager))).Methods(http.MethodPost)

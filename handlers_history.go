@@ -1,6 +1,8 @@
 package main
 
 import (
+	"html/template"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -90,5 +92,28 @@ func RecentChangesFeed(t *Templates, rp RecentChangesProvider) http.HandlerFunc 
 		}
 
 		t.RenderRecentChangesFeed(w, r, history)
+	}
+}
+
+type DiffProvider interface {
+	PathDiff(path string, startRevision string, endRevision string) (string, error)
+}
+
+func DiffPageHandler(templates *Templates, backend DiffProvider) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		pageTitle := strings.TrimPrefix(r.URL.Path, "/diff/")
+		startRevision := r.FormValue("startrev")
+		endRevision := r.FormValue("endrev")
+		if startRevision == "" || endRevision == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		diff, err := backend.PathDiff(pageTitle, startRevision, endRevision)
+		if err != nil {
+			log.Printf("Error getting diff: %+s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		templates.RenderDiff(w, r, template.HTML(diff))
 	}
 }
