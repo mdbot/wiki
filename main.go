@@ -213,7 +213,7 @@ func createDefaultPages(b *GitBackend) error {
 			if err != nil {
 				log.Printf("Adding default file: %s", name)
 
-				bs, err := embeddedFiles.ReadFile(path.Join("content", files[i].Name()))
+				bs, err := embeddedFiles.ReadFile(path.Join("resources", "content", files[i].Name()))
 				if err != nil {
 					return err
 				}
