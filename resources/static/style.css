@@ -13,7 +13,7 @@
     --error-text-color: #ffffff;
     --notice-color: #1e5f0a;
     --notice-text-color: #ffffff;
-    --table-row-alt-colour: #999999;
+    --table-row-alt-colour: #dcdcdc;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -227,4 +227,20 @@ th,td {
 
 tr:nth-child(2n) td {
     background-color: var(--table-row-alt-colour);
+}
+
+blockquote {
+    border-left: 0.5em solid var(--divider);
+    border-right: 0.5em solid var(--divider);
+    background-color: var(--table-row-alt-colour);
+    margin: 0;
+    padding: 0.6em 0.8em;
+}
+
+blockquote > p:first-child {
+    margin-top: 0;
+}
+
+blockquote > p:last-child {
+    margin-bottom: 0;
 }
