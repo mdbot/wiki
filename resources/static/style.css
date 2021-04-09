@@ -14,6 +14,8 @@
     --notice-color: #1e5f0a;
     --notice-text-color: #ffffff;
     --table-row-alt-colour: #dcdcdc;
+    --diff-insert-colour: #e6ffed;
+    --diff-remove-colour: #ffeef0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -29,6 +31,8 @@
         --input-color: #d6d6d6;
         --input-border: #5b5b5b;
         --table-row-alt-colour: #333333;
+        --diff-insert-colour: #2ea04355;
+        --diff-remove-colour: #da363355;
     }
 }
 
@@ -244,4 +248,24 @@ blockquote > p:first-child {
 
 blockquote > p:last-child {
     margin-bottom: 0;
+}
+
+.diff {
+    line-height: 1.8em;
+}
+
+.diff > * {
+    display: block;
+    margin: 0;
+    padding: 0 1em;
+}
+
+.diff ins {
+    background-color: var(--diff-insert-colour);
+    text-decoration: none;
+}
+
+.diff del {
+    background-color: var(--diff-remove-colour);
+    text-decoration: none;
 }

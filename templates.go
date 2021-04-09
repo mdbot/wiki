@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/mdbot/wiki/config"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 type Templates struct {
@@ -329,10 +330,10 @@ func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, pattern
 
 type DiffPageArgs struct {
 	Common CommonArgs
-	Diff template.HTML
+	Diff []diffmatchpatch.Diff
 }
 
-func (t *Templates) RenderDiff(w http.ResponseWriter, r *http.Request, diff template.HTML) {
+func (t *Templates) RenderDiff(w http.ResponseWriter, r *http.Request, diff []diffmatchpatch.Diff) {
 	t.render("diff.gohtml", http.StatusOK, w, &DiffPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Diff",

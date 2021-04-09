@@ -1,10 +1,11 @@
 package main
 
 import (
-	"html/template"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 type HistoryProvider interface {
@@ -96,7 +97,7 @@ func RecentChangesFeed(t *Templates, rp RecentChangesProvider) http.HandlerFunc 
 }
 
 type DiffProvider interface {
-	PathDiff(path string, startRevision string, endRevision string) (string, error)
+	PathDiff(path string, startRevision string, endRevision string) ([]diffmatchpatch.Diff, error)
 }
 
 func DiffPageHandler(templates *Templates, backend DiffProvider) http.HandlerFunc {
@@ -114,6 +115,6 @@ func DiffPageHandler(templates *Templates, backend DiffProvider) http.HandlerFun
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		templates.RenderDiff(w, r, template.HTML(diff))
+		templates.RenderDiff(w, r, diff)
 	}
 }
