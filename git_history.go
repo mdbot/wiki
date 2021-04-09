@@ -244,6 +244,7 @@ func (g *GitBackend) PathDiff(path string, startRevision string, endRevision str
 		return nil, err
 	}
 	thing := diffmatchpatch.New()
-	diffs := thing.DiffMain(string(startContent), string(endContent), true)
+	diffs := thing.DiffMain(string(startContent), string(endContent), false)
+	diffs = thing.DiffCleanupSemantic(diffs)
 	return diffs, nil
 }
