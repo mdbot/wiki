@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/mdbot/wiki/config"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 type Templates struct {
@@ -172,11 +173,20 @@ func (t *Templates) RenderUploadForm(w http.ResponseWriter, r *http.Request) {
 
 type HistoryPageArgs struct {
 	Common  CommonArgs
-	History []*LogEntry
+	History []*HistoryEntry
 	Next    string
 }
 
-func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title string, entries []*LogEntry, next string) {
+type HistoryEntry struct {
+	ChangeId         string
+	PreviousChangeId string
+	Latest           bool
+	User             string
+	Time             time.Time
+	Message          string
+}
+
+func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title string, entries []*HistoryEntry, next string) {
 	t.render("history.gohtml", http.StatusOK, w, &HistoryPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle:      title,
@@ -264,6 +274,8 @@ type ErrorPageArgs struct {
 }
 
 func (t *Templates) RenderNotFound(w http.ResponseWriter, r *http.Request, isWiki bool, pageName string) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("404.gohtml", http.StatusNotFound, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle:  "Page not found",
@@ -275,6 +287,8 @@ func (t *Templates) RenderNotFound(w http.ResponseWriter, r *http.Request, isWik
 }
 
 func (t *Templates) RenderUnauthorised(w http.ResponseWriter, r *http.Request) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("error.gohtml", http.StatusUnauthorized, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Unauthorized",
@@ -285,6 +299,8 @@ func (t *Templates) RenderUnauthorised(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Templates) RenderForbidden(w http.ResponseWriter, r *http.Request) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("error.gohtml", http.StatusForbidden, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Forbidden",
@@ -294,6 +310,8 @@ func (t *Templates) RenderForbidden(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Templates) RenderInternalError(w http.ResponseWriter, r *http.Request) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("error.gohtml", http.StatusInternalServerError, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Server Error",
@@ -303,6 +321,8 @@ func (t *Templates) RenderInternalError(w http.ResponseWriter, r *http.Request) 
 }
 
 func (t *Templates) RenderBadRequest(w http.ResponseWriter, r *http.Request) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("error.gohtml", http.StatusInternalServerError, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Bad Request",
@@ -329,10 +349,10 @@ func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, pattern
 
 type DiffPageArgs struct {
 	Common CommonArgs
-	Diff template.HTML
+	Diff   []diffmatchpatch.Diff
 }
 
-func (t *Templates) RenderDiff(w http.ResponseWriter, r *http.Request, diff template.HTML) {
+func (t *Templates) RenderDiff(w http.ResponseWriter, r *http.Request, diff []diffmatchpatch.Diff) {
 	t.render("diff.gohtml", http.StatusOK, w, &DiffPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Diff",

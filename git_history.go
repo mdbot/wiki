@@ -233,18 +233,18 @@ func (g *GitBackend) walkTreeFiles(tree *object.Tree, prefix string, h func(name
 	return nil
 }
 
-func (g *GitBackend) PathDiff(path string, startRevision string, endRevision string) (string, error) {
+func (g *GitBackend) PathDiff(path string, startRevision string, endRevision string) ([]diffmatchpatch.Diff, error) {
 	_, gitPath, err := g.resolvePath(g.dir, fmt.Sprintf("%s.md", path))
 	_, startContent, err := g.pathAtRevision(gitPath, startRevision)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	_, endContent, err := g.pathAtRevision(gitPath, endRevision)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	thing := diffmatchpatch.New()
-	diffs := thing.DiffMain(string(startContent), string(endContent), true)
-	pretty := thing.DiffPrettyHtml(diffs)
-	return pretty, nil
+	diffs := thing.DiffMain(string(startContent), string(endContent), false)
+	diffs = thing.DiffCleanupSemantic(diffs)
+	return diffs, nil
 }

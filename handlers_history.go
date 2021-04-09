@@ -1,10 +1,11 @@
 package main
 
 import (
-	"html/template"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 type HistoryProvider interface {
@@ -41,7 +42,26 @@ func PageHistoryHandler(t *Templates, pp HistoryProvider) http.HandlerFunc {
 			number = len(history.Entries) + 1
 		}
 
-		t.RenderHistory(w, r, pageTitle, history.Entries[:number-1], next)
+		var entries []*HistoryEntry
+		for i := range history.Entries[:number-1] {
+			e := history.Entries[i]
+
+			var previousChange = ""
+			if i+1 < len(history.Entries) {
+				previousChange = history.Entries[i+1].ChangeId
+			}
+
+			entries = append(entries, &HistoryEntry{
+				Latest:           start == "" && i == 0,
+				ChangeId:         e.ChangeId,
+				PreviousChangeId: previousChange,
+				User:             e.User,
+				Time:             e.Time,
+				Message:          e.Message,
+			})
+		}
+
+		t.RenderHistory(w, r, pageTitle, entries, next)
 	}
 }
 
@@ -96,7 +116,7 @@ func RecentChangesFeed(t *Templates, rp RecentChangesProvider) http.HandlerFunc 
 }
 
 type DiffProvider interface {
-	PathDiff(path string, startRevision string, endRevision string) (string, error)
+	PathDiff(path string, startRevision string, endRevision string) ([]diffmatchpatch.Diff, error)
 }
 
 func DiffPageHandler(templates *Templates, backend DiffProvider) http.HandlerFunc {
@@ -114,6 +134,6 @@ func DiffPageHandler(templates *Templates, backend DiffProvider) http.HandlerFun
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		templates.RenderDiff(w, r, template.HTML(diff))
+		templates.RenderDiff(w, r, diff)
 	}
 }

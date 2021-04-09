@@ -1,6 +1,14 @@
 {{- /*gotype: github.com/mdbot/wiki.DiffPageArgs*/ -}}
 {{template "header" .Common}}
-    <p>
-        {{.Diff}}
-    </p>
+<pre class="diff">
+    {{- range $.Diff -}}
+        {{- if eq .Type -1 -}}
+            <del>{{.Text}}</del>
+        {{- else if eq .Type 1 -}}
+            <ins>{{.Text}}</ins>
+        {{- else -}}
+            <span>{{.Text}}</span>
+        {{- end -}}
+    {{- end -}}
+</pre>
 {{template "footer" .Common}}
