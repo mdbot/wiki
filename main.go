@@ -22,6 +22,8 @@ import (
 	"github.com/kouhin/envflag"
 	"github.com/mdbot/wiki/config"
 	"github.com/mdbot/wiki/markdown"
+
+	_ "net/http/pprof"
 )
 
 //go:embed resources/static resources/templates resources/content/*
@@ -168,6 +170,7 @@ func main() {
 	router.Path("/").Handler(RedirectMainPageHandler())
 	router.Path("/view/").Handler(RedirectMainPageHandler())
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.FS(staticFiles))))
+	router.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	router.NewRoute().Handler(wikiRouter)
 
 	log.Print("Starting server.")
