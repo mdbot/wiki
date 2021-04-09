@@ -173,11 +173,20 @@ func (t *Templates) RenderUploadForm(w http.ResponseWriter, r *http.Request) {
 
 type HistoryPageArgs struct {
 	Common  CommonArgs
-	History []*LogEntry
+	History []*HistoryEntry
 	Next    string
 }
 
-func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title string, entries []*LogEntry, next string) {
+type HistoryEntry struct {
+	ChangeId         string
+	PreviousChangeId string
+	Latest           bool
+	User             string
+	Time             time.Time
+	Message          string
+}
+
+func (t *Templates) RenderHistory(w http.ResponseWriter, r *http.Request, title string, entries []*HistoryEntry, next string) {
 	t.render("history.gohtml", http.StatusOK, w, &HistoryPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle:      title,
@@ -340,7 +349,7 @@ func (t *Templates) RenderSearch(w http.ResponseWriter, r *http.Request, pattern
 
 type DiffPageArgs struct {
 	Common CommonArgs
-	Diff []diffmatchpatch.Diff
+	Diff   []diffmatchpatch.Diff
 }
 
 func (t *Templates) RenderDiff(w http.ResponseWriter, r *http.Request, diff []diffmatchpatch.Diff) {

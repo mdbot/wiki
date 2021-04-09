@@ -42,7 +42,26 @@ func PageHistoryHandler(t *Templates, pp HistoryProvider) http.HandlerFunc {
 			number = len(history.Entries) + 1
 		}
 
-		t.RenderHistory(w, r, pageTitle, history.Entries[:number-1], next)
+		var entries []*HistoryEntry
+		for i := range history.Entries[:number-1] {
+			e := history.Entries[i]
+
+			var previousChange = ""
+			if i+1 < len(history.Entries) {
+				previousChange = history.Entries[i+1].ChangeId
+			}
+
+			entries = append(entries, &HistoryEntry{
+				Latest:           start == "" && i == 0,
+				ChangeId:         e.ChangeId,
+				PreviousChangeId: previousChange,
+				User:             e.User,
+				Time:             e.Time,
+				Message:          e.Message,
+			})
+		}
+
+		t.RenderHistory(w, r, pageTitle, entries, next)
 	}
 }
 

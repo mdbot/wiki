@@ -26,7 +26,13 @@
                 </td>
                 <td>
                     <a href="/view/{{$.Common.PageTitle}}?rev={{.ChangeId}}">view</a>
-                    <a href="/revert/{{$.Common.PageTitle}}?rev={{.ChangeId}}">revert to this version</a>
+                    {{ if not .Latest }}
+                        | <a href="/revert/{{$.Common.PageTitle}}?rev={{.ChangeId}}">revert to this version</a>
+                        | <a href="/diff/{{$.Common.PageTitle}}?startrev={{.ChangeId}}&amp;endrev=HEAD">compare to latest</a>
+                    {{ end }}
+                    {{if .PreviousChangeId}}
+                        | <a href="/diff/{{$.Common.PageTitle}}?startrev={{.PreviousChangeId}}&amp;endrev={{.ChangeId}}">compare to previous</a>
+                    {{end}}
                 </td>
             </tr>
         {{end}}
