@@ -5,8 +5,9 @@ gomod:
     - GOSUMDB=sum.golang.org
 before:
   hooks:
-    - go mod tidy
     - go generate ./...
+    - go get github.com/google/go-licenses 
+    - go-licenses --logtostderr save github.com/mdbot/wiki --save_path=./notices
 builds:
   - id: wiki
     env:
@@ -61,6 +62,11 @@ archives:
       windows: Windows
       386: i386
       amd64: x86_64
+    files:
+      - notices/**/*
+      - README*
+      - LICENSE*
+      - CHANGELOG*
 checksum:
   name_template: 'checksums.txt'
 snapshot:
