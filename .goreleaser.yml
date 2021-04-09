@@ -1,0 +1,67 @@
+gomod:
+  proxy: true
+  env:
+    - GOPROXY=https://proxy.golang.org,direct
+    - GOSUMDB=sum.golang.org
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+builds:
+  - id: wiki
+    env:
+      - CGO_ENABLED=0
+    asmflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    gcflags:
+      - all=-trimpath={{.Env.GOPATH}}
+      - ./dontoptimizeme=-N
+    ldflags:
+      - -s -w
+    flags:
+      - -trimpath
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    goos:
+      - linux
+      - windows
+      - darwin
+    ignore:
+      - goos: linux
+        goarch: 386
+      - goos: windows
+        goarch: 386
+dockers:
+  - use_buildx: false
+    goos: linux
+    goarch: amd64
+    goarm: ''
+    dockerfile: gorelease.Dockerfile
+    image_templates:
+      - "mdbot/wiki:{{ .Major }}"
+      - "mdbot/wiki:{{ .Major }}.{{ .Minor }}"
+      - "mdbot/wiki:{{ .Tag }}"
+      - "mdbot/wiki:latest"
+      - "gcr.io/mdbot/wiki:{{ .Major }}"
+      - "gcr.io/mdbot/wiki:{{ .Major }}.{{ .Minor }}"
+      - "gcr.io/mdbot/wiki:{{ .Tag }}"
+      - "gcr.io/mdbot/wiki:latest"
+    build_flag_templates:
+      - --label=org.opencontainers.image.url=https://github.com/mdbot/wiki
+      - --label=org.opencontainers.image.source=https://github.com/mdbot/wiki
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.licenses=MIT
+milestones:
+  - close: true
+changelog:
+  skip: true
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
