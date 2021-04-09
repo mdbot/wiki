@@ -24,8 +24,10 @@ func LoggingHandler(dst io.Writer) func(http.Handler) http.Handler {
 
 func LowerCaseCanonical(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if strings.ToLower(request.RequestURI) != request.RequestURI {
-			http.Redirect(writer, request, strings.ToLower(request.RequestURI), http.StatusPermanentRedirect)
+		url := request.URL
+		url.Path = strings.ToLower(url.Path)
+		if url.RequestURI() != request.RequestURI {
+			http.Redirect(writer, request, url.RequestURI(), http.StatusPermanentRedirect)
 		} else {
 			next.ServeHTTP(writer, request)
 		}
