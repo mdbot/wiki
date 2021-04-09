@@ -45,10 +45,7 @@ func PageErrorHandler(t *Templates) func(http.Handler) http.Handler {
 
 			switch fakeWriter.status {
 			case http.StatusNotFound:
-				isWiki := false
-				if strings.HasPrefix(r.RequestURI, "/view/") || strings.HasPrefix(r.RequestURI, "/history") {
-					isWiki = true
-				}
+				isWiki := strings.HasPrefix(r.RequestURI, "/view/") || strings.HasPrefix(r.RequestURI, "/history")
 				oldPageTitle := ""
 				if strings.HasPrefix(r.RequestURI, "/view/") {
 					oldPageTitle = strings.TrimPrefix(r.RequestURI, "/view/")

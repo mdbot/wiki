@@ -265,6 +265,8 @@ type ErrorPageArgs struct {
 }
 
 func (t *Templates) RenderNotFound(w http.ResponseWriter, r *http.Request, isWiki bool, pageName string) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("404.gohtml", http.StatusNotFound, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle:  "Page not found",
@@ -276,6 +278,8 @@ func (t *Templates) RenderNotFound(w http.ResponseWriter, r *http.Request, isWik
 }
 
 func (t *Templates) RenderUnauthorised(w http.ResponseWriter, r *http.Request) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("error.gohtml", http.StatusUnauthorized, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Unauthorized",
@@ -286,6 +290,8 @@ func (t *Templates) RenderUnauthorised(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Templates) RenderForbidden(w http.ResponseWriter, r *http.Request) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("error.gohtml", http.StatusForbidden, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Forbidden",
@@ -295,6 +301,8 @@ func (t *Templates) RenderForbidden(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Templates) RenderInternalError(w http.ResponseWriter, r *http.Request) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("error.gohtml", http.StatusInternalServerError, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Server Error",
@@ -304,6 +312,8 @@ func (t *Templates) RenderInternalError(w http.ResponseWriter, r *http.Request) 
 }
 
 func (t *Templates) RenderBadRequest(w http.ResponseWriter, r *http.Request) {
+	// The built in error handler sets text/plain, so make sure we're not passing that on
+	w.Header().Del("Content-type")
 	t.render("error.gohtml", http.StatusInternalServerError, w, &ErrorPageArgs{
 		Common: t.populateArgs(w, r, CommonArgs{
 			PageTitle: "Bad Request",
