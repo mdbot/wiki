@@ -41,5 +41,3 @@ dockers:
       - --label=org.opencontainers.image.source=https://github.com/mdbot/wiki
     extra_files:
     - notices
-snapshot:
-  name_template: "latest-{{.ShortCommit}}"
