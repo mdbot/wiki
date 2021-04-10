@@ -17,6 +17,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          path: "{{ env.GOPATH }}/src"
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
