@@ -3,7 +3,7 @@ FROM golang:1.16 AS build
 # Build the app
 WORKDIR /app
 COPY . /app
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -asmflags=all=-trimpath=/go -gcflags=all=-trimpath=/go -gcflags=./dontoptimizeme=-N -ldflags=-s -o /go/bin/app .
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -gcflags=./dontoptimizeme=-N -ldflags=-s -o /go/bin/app .
 RUN mkdir /data
 
 # Generate licence information
