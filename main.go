@@ -82,11 +82,17 @@ func main() {
 		log.Fatalf("Unable to load site config: %v", err)
 	}
 
+	pm := &PermissionChecker{
+		requireAuthForWrites: *requireAuthForWrites,
+		requireAuthForReads:  *requireAuthForReads,
+	}
+
 	sessionStore := sessions.NewCookieStore(secrets.SessionKey)
 	renderer := markdown.NewRenderer(gitBackend, *dangerousHtml, *codeStyle)
 	templates := &Templates{
-		fs: templateFiles,
+		fs:         templateFiles,
 		siteConfig: siteConfig,
+		checker:    pm,
 		sidebarProvider: func() string {
 			p, err := gitBackend.GetPage("_sidebar")
 			if err != nil {
@@ -102,11 +108,6 @@ func main() {
 
 			return s
 		},
-	}
-
-	pm := &PermissionChecker{
-		requireAuthForWrites: *requireAuthForWrites,
-		requireAuthForReads:  *requireAuthForReads,
 	}
 
 	wikiRouter := mux.NewRouter()

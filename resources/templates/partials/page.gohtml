@@ -32,7 +32,7 @@
         </header>
 
         <nav class="sidebar">
-            {{if not .IsError}}
+            {{if .Site.CanRead}}
                 {{.Sidebar}}
             {{end}}
         </nav>
@@ -47,7 +47,7 @@
             </h1>
 
             <nav class="pagelinks">
-                {{if and (and .IsWikiPage .CanEdit) (not .IsError)}}
+                {{if and (and .IsWikiPage .Site.CanWrite) (not .IsError)}}
                     <a href="/edit/{{.PageTitle}}">Edit</a>
                     <a href="/rename/{{.PageTitle}}">Rename</a>
                     <a href="/delete/{{.PageTitle}}">Delete</a>
@@ -58,7 +58,7 @@
             </nav>
 
             <div class="search">
-                {{if not .IsError}}
+                {{if and .Site.CanRead (not .IsError)}}
                     <form id="search">
                         <input list="pagenames" id="page" autocomplete="off" placeholder="Search or go to page">
                         <datalist id="pagenames"></datalist>

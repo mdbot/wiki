@@ -16,6 +16,7 @@ import (
 type Templates struct {
 	fs              fs.FS
 	siteConfig      *config.Site
+	checker         *PermissionChecker
 	sidebarProvider func() string
 }
 
@@ -24,6 +25,9 @@ type SiteArgs struct {
 	HasMainLogo bool
 	HasDarkLogo bool
 	HasFavicon  bool
+	CanRead     bool
+	CanWrite    bool
+	CanAdmin    bool
 }
 
 type CommonArgs struct {
@@ -32,7 +36,6 @@ type CommonArgs struct {
 	PageTitle      string
 	IsWikiPage     bool
 	IsError        bool
-	CanEdit        bool
 	Error          string
 	Notice         string
 	ShowLinkToView bool
@@ -399,9 +402,11 @@ func (t *Templates) populateArgs(w http.ResponseWriter, r *http.Request, args Co
 		HasMainLogo: t.siteConfig.MainLogo != nil,
 		HasDarkLogo: t.siteConfig.DarkLogo != nil,
 		HasFavicon:  t.siteConfig.Favicon != nil,
+		CanRead:     t.checker.CanRead(user),
+		CanWrite:    t.checker.CanWrite(user),
+		CanAdmin:    t.checker.CanAdmin(user),
 	}
 	args.User = user
-	args.CanEdit = user != nil
 
 	if args.Error = getErrorForRequest(r); args.Error != "" {
 		clearSessionKey(w, r, sessionErrorKey)

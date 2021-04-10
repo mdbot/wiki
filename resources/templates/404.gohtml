@@ -1,7 +1,7 @@
 {{- /*gotype: github.com/mdbot/wiki.ErrorPageArgs*/ -}}
 {{template "header" .Common}}
 <h1>Page not found</h1>
-{{if and .Common.IsWikiPage .Common.CanEdit}}
+{{if and .Common.IsWikiPage .Common.Site.CanWrite}}
     <p><a href="/edit/{{.OldPageTitle}}">Create it</a></p>
 {{end}}
 {{template "footer" .Common}}
