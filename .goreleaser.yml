@@ -7,7 +7,7 @@ before:
   hooks:
     - go generate ./...
     - go get github.com/google/go-licenses
-    - go-licenses save github.com/mdbot/wiki --save_path=./notices --force
+    - go-licenses save ./... --save_path=./notices --force
 builds:
   - id: wiki
     env:
