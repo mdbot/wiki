@@ -36,4 +36,4 @@ jobs:
       - name: Push to docker hub
         run: docker push mdbot/wiki:latest
       - name: Push to GHCR
-        run: docker push gcr.io/mdbot/wiki:latest
+        run: docker push ghcr.io/mdbot/wiki:latest

@@ -36,7 +36,7 @@ dockers:
     dockerfile: gorelease.Dockerfile
     image_templates:
       - "mdbot/wiki:latest"
-      - "gcr.io/mdbot/wiki:latest"
+      - "ghcr.io/mdbot/wiki:latest"
     build_flag_templates:
       - --label=org.opencontainers.image.source=https://github.com/mdbot/wiki
     extra_files:

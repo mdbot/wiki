@@ -39,10 +39,10 @@ dockers:
       - "mdbot/wiki:{{ .Major }}.{{ .Minor }}"
       - "mdbot/wiki:{{ .Tag }}"
       - "mdbot/wiki:latest"
-      - "gcr.io/mdbot/wiki:{{ .Major }}"
-      - "gcr.io/mdbot/wiki:{{ .Major }}.{{ .Minor }}"
-      - "gcr.io/mdbot/wiki:{{ .Tag }}"
-      - "gcr.io/mdbot/wiki:latest"
+      - "ghcr.io/mdbot/wiki:{{ .Major }}"
+      - "ghcr.io/mdbot/wiki:{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/mdbot/wiki:{{ .Tag }}"
+      - "ghcr.io/mdbot/wiki:latest"
     build_flag_templates:
       - --label=org.opencontainers.image.source=https://github.com/mdbot/wiki
     extra_files:
