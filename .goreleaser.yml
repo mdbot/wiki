@@ -12,6 +12,7 @@ builds:
   - id: wiki
     env:
       - CGO_ENABLED=0
+    gcflags:
       - ./dontoptimizeme=-N
     ldflags:
       - -s -w

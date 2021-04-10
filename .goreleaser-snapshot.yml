@@ -12,10 +12,7 @@ builds:
   - id: wiki
     env:
       - CGO_ENABLED=0
-    asmflags:
-      - all=-trimpath={{.Env.GOPATH}}
     gcflags:
-      - all=-trimpath={{.Env.GOPATH}}
       - ./dontoptimizeme=-N
     ldflags:
       - -s -w
