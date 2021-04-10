@@ -15,6 +15,7 @@ LABEL org.opencontainers.image.source="https://github.com/mdbot/wiki"
 
 COPY --from=build /go/bin/app /wiki
 COPY --from=build /notices /notices
+COPY --from=build /etc/mime.types /etc/mime.types
 COPY --from=build --chown=nonroot /data /data
 VOLUME /data
 WORKDIR /

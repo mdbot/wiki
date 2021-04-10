@@ -6,6 +6,7 @@ FROM gcr.io/distroless/static:nonroot
 LABEL org.opencontainers.image.source="https://github.com/mdbot/wiki"
 
 COPY --from=build --chown=nonroot /data /data
+COPY --from=build /etc/mime.types /etc/mime.types
 
 COPY wiki /wiki
 COPY notices /notices
