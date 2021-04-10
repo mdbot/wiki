@@ -13,6 +13,7 @@ FROM gcr.io/distroless/static:nonroot
 
 COPY --from=build /go/bin/app /wiki
 COPY --from=build /notices /notices
+COPY --from=build /etc/mime.types /etc/mime.types
 COPY --from=build --chown=nonroot /data /data
 VOLUME /data
 WORKDIR /
