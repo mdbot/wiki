@@ -1,12 +1,9 @@
-name: gorelease
+name: dev build
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - master
 jobs:
-  goreleaser:
-    runs-on: ubuntu-latest
-    steps:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
@@ -33,6 +30,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: release --rm-dist
+          args: release --rm-dist -f .goreleaser-snapshot.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
