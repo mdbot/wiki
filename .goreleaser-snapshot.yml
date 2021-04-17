@@ -15,7 +15,7 @@ builds:
     gcflags:
       - ./dontoptimizeme=-N
     ldflags:
-      - -s -w
+      - -s -w -X main.version={{.Version}}
     flags:
       - -trimpath
     mod_timestamp: '{{ .CommitTimestamp }}'
