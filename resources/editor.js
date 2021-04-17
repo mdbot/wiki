@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     theme: theme,
     mode: 'gfm',
     extraKeys: { 'Enter': 'newlineAndIndentContinueMarkdownList' },
+    lineWrapping: true,
   })
   const uploadFile = (file) => {
     return new Promise(function (resolve, reject) {
