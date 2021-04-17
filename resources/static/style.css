@@ -76,7 +76,7 @@ body > nav.sidebar {
     grid-area: sidebar;
 }
 
-input,textarea {
+input, textarea, .CodeMirror {
     background-color: var(--input-background);
     color: var(--input-color);
     border: 1px solid var(--input-border);
