@@ -30,6 +30,9 @@ var embeddedFiles embed.FS
 var staticFiles fs.FS
 var templateFiles fs.FS
 
+// Provided dynamically in the release process
+var version string
+
 var workDir = flag.String("workdir", "./data", "Working directory")
 var username = flag.String("username", "", "username for initial account")
 var password = flag.String("password", "", "password for initial account")
@@ -93,6 +96,7 @@ func main() {
 		fs:         templateFiles,
 		siteConfig: siteConfig,
 		checker:    pm,
+		version:    version,
 		sidebarProvider: func() string {
 			p, err := gitBackend.GetPage("_sidebar")
 			if err != nil {

@@ -17,6 +17,7 @@ type Templates struct {
 	fs              fs.FS
 	siteConfig      *config.Site
 	checker         *PermissionChecker
+	version         string
 	sidebarProvider func() string
 }
 
@@ -28,6 +29,7 @@ type SiteArgs struct {
 	CanRead     bool
 	CanWrite    bool
 	CanAdmin    bool
+	WikiVersion string
 }
 
 type CommonArgs struct {
@@ -405,6 +407,7 @@ func (t *Templates) populateArgs(w http.ResponseWriter, r *http.Request, args Co
 		CanRead:     t.checker.CanRead(user),
 		CanWrite:    t.checker.CanWrite(user),
 		CanAdmin:    t.checker.CanAdmin(user),
+		WikiVersion: t.version,
 	}
 	args.User = user
 

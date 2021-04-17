@@ -72,7 +72,7 @@
 
                         searchForm.addEventListener('submit', function (e) {
                           e.preventDefault()
-                          if (searchList.querySelector('[value='+searchInput.value+']')) {
+                          if (searchList.querySelector('[value=' + searchInput.value + ']')) {
                             document.location.href = '/view/' + searchInput.value
                           } else {
                             document.location.href = '/wiki/search?pattern=' + searchInput.value
@@ -129,6 +129,12 @@
         </main>
 
         <footer>
+            <div class="container">
+                Powered by <a href="https://github.com/mdbot/wiki">wiki</a>
+                {{if .Site.WikiVersion}}
+                    version {{.Site.WikiVersion}}
+                {{end}}
+            </div>
             <div class="container">
                 {{if .LastModified}}
                     Last modified at {{.LastModified.Time.Format "Jan 02, 2006 15:04:05 UTC"}}

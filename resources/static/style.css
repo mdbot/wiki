@@ -129,10 +129,19 @@ h1 {
     margin: 0.5em 0;
 }
 
+footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
 footer .container {
     color: var(--footerColour);
-    text-align: right;
     padding: 1em 0;
+}
+
+footer a, footer a:hover, footer a:focus {
+    color: var(--footerColour);
 }
 
 a, a:hover, a:focus {
