@@ -1,0 +1,13 @@
+name: Assign closed issues
+on:
+  push:
+    tags:
+      - v*
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign closed issues
+        uses: greboid/issue-milestone-manager@v1.0.5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
