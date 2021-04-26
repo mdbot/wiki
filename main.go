@@ -213,7 +213,9 @@ func createDefaultPages(b *GitBackend) error {
 					return err
 				}
 
-				return b.PutPage(name, bs, "system", "Creating default page")
+				if err := b.PutPage(name, bs, "system", "Creating default page"); err != nil {
+					return err
+				}
 			}
 		}
 	}
