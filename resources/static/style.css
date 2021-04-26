@@ -76,7 +76,7 @@ body > nav.sidebar {
     grid-area: sidebar;
 }
 
-input,textarea {
+input, textarea, .CodeMirror {
     background-color: var(--input-background);
     color: var(--input-color);
     border: 1px solid var(--input-border);
@@ -276,4 +276,9 @@ blockquote > p:last-child {
 .diff del {
     background-color: var(--diff-remove-colour);
     text-decoration: none;
+}
+
+.thumbnail img, .thumbnail video {
+    max-width: 200px;
+    max-height: 200px;
 }

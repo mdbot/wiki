@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	mathjax "github.com/litao91/goldmark-mathjax"
+	"github.com/mdigger/goldmark-attributes"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
@@ -38,6 +39,7 @@ func NewRenderer(checker PageChecker, dangerousHtml bool, codeStyle string) *Ren
 				highlighting.NewHighlighting(highlighting.WithStyle(codeStyle)),
 				newWikiLinks(checker),
 				newEmbedExtension(),
+				attributes.Extension,
 			),
 			goldmark.WithParserOptions(
 				parser.WithAutoHeadingID(),
