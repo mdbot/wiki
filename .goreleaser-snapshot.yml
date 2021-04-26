@@ -1,5 +1,5 @@
 gomod:
-  proxy: true
+  proxy: false
   env:
     - GOPROXY=https://proxy.golang.org,direct
     - GOSUMDB=sum.golang.org
