@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,12 +27,71 @@ var (
 		{OS: "darwin", Arch: "arm64", ArchiveType: ".tar.gz"},
 		{OS: "windows", Arch: "amd64", BinarySuffix: ".exe", ArchiveType: ".zip"},
 	}
+	timeFormat = "2006-01-02 15:04:05 -0700"
 )
 
 var goexe = "go"
+var dockerexe = "docker"
+var docker = false
+
+var buildTag = "unknown"
+var buildTime = time.Time{}
+
+func SetBuildVersion() error {
+	var err error
+	buildTag, err = getTag()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SetBuildTime() error {
+	var err error
+	commitTimestamp, err := getCommitTimestamp("HEAD")
+	if err != nil {
+		return err
+	}
+	buildTime, err = time.Parse(timeFormat, commitTimestamp)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func Release() error {
+	mg.Deps(Docker, Archive)
+	return nil
+}
+
+func Docker() error {
+	docker = true
+	bytesRead, err := ioutil.ReadFile("gorelease.Dockerfile")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = ioutil.WriteFile(filepath.Join(outputPath, "Dockerfile"), bytesRead, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	mg.Deps(Notices, SetBuildTime, SetBuildVersion, LinuxAmd64)
+	return nil
+}
+
+func BuildDocker() error {
+	if !docker {
+		return nil
+	}
+	fmt.Printf("Building docker container\n")
+	err := sh.Run(dockerexe, "build", "-t", "test2", outputPath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func Archive() error {
-	mg.Deps(Build, Notices)
+	mg.Deps(Notices, Binaries)
 	fmt.Printf("Creating archives\n")
 	version, err := getTag()
 	if err != nil {
@@ -62,53 +122,135 @@ func Notices() error {
 	if err != nil {
 		return err
 	}
-	err = sh.Run(goexe, "run", "github.com/google/go-licenses", "save", "./...", fmt.Sprintf("--save_path=%s", noticesPath), "--force")
+	err = sh.Run(goexe, "get", "github.com/google/go-licenses")
+	if err != nil {
+		return err
+	}
+	err = sh.Run("go-licenses", "save", "./...", fmt.Sprintf("--save_path=%s", noticesPath), "--force")
 	if err != nil {
 		return err
 	}
 	return filepath.WalkDir(noticesPath, setTimeFunc(*buildtime))
 }
 
-func Build() error {
-	fmt.Printf("Compiling binaries\n")
-	err := os.Setenv("GO111MODULE", "on")
-	if err != nil {
-		return err
-	}
-	err = os.Setenv("CGOENABLED", "0")
-	if err != nil {
-		return err
-	}
-	buildTime, err := getBuildtime("HEAD")
-	if err != nil {
-		return err
-	}
-	version, err := getTag()
-	if err != nil {
-		return err
-	}
-	options, err := getCompileOptions(version)
-	if err != nil {
-		return err
-	}
-	if err := sh.Run("go", "mod", "download"); err != nil {
-		return err
-	}
-	for index := range architectures {
-		compile := Compile{
-			arch:         architectures[index],
-			options:      options,
-			version:      version,
-			binaryName:   executableName,
-			binaryFolder: outputPath,
-			buildTime:    *buildTime,
-		}
-		err = build(compile)
-		if err != nil {
-			log.Printf("Error building: %s%s: %s", architectures[index].OS, architectures[index].Arch, err.Error())
-		}
-	}
+func Binaries() error {
+	mg.Deps(LinuxAmd64,	LinuxArm64,	DarwinAmd64, DarwinArm64, WindowsAmd64)
 	return nil
+}
+
+func WindowsAmd64() error {
+	fmt.Printf("Building Windows AMD64\n")
+	mg.Deps(SetBuildVersion, SetBuildTime)
+	options, err := getCompileOptions()
+	if err != nil {
+		return err
+	}
+	return build(Compile{
+		arch:         Architecture{
+			OS:           "windows",
+			Arch:         "amd64",
+			BinarySuffix: ".exe",
+			ArchiveType:  ".zip",
+		},
+		options:      options,
+		version:      buildTag,
+		binaryName:   executableName,
+		binaryFolder: outputPath,
+		buildTime:    buildTime,
+	})
+}
+
+func LinuxAmd64() error {
+	fmt.Printf("Building Linux AMD64\n")
+	mg.Deps(SetBuildVersion, SetBuildTime)
+	options, err := getCompileOptions()
+	if err != nil {
+		return err
+	}
+	err = build(Compile{
+		arch:         Architecture{
+			OS:           "linux",
+			Arch:         "amd64",
+			BinarySuffix: "",
+			ArchiveType:  ".tar.gz",
+		},
+		options:      options,
+		version:      buildTag,
+		binaryName:   executableName,
+		binaryFolder: outputPath,
+		buildTime:    buildTime,
+	})
+	if err != nil {
+		return err
+	}
+	mg.Deps(BuildDocker)
+	return nil
+}
+
+func LinuxArm64() error {
+	fmt.Printf("Building Linux ARM64\n")
+	mg.Deps(SetBuildVersion, SetBuildTime)
+	options, err := getCompileOptions()
+	if err != nil {
+		return err
+	}
+	return build(Compile{
+		arch:         Architecture{
+			OS:           "linux",
+			Arch:         "arm64",
+			BinarySuffix: "",
+			ArchiveType:  ".tar.gz",
+		},
+		options:      options,
+		version:      buildTag,
+		binaryName:   executableName,
+		binaryFolder: outputPath,
+		buildTime:    buildTime,
+	})
+}
+
+func DarwinAmd64() error {
+	fmt.Printf("Building Darwin AMD64\n")
+	mg.Deps(SetBuildVersion, SetBuildTime)
+	options, err := getCompileOptions()
+	if err != nil {
+		return err
+	}
+	return build(Compile{
+		arch:         Architecture{
+			OS:           "darwin",
+			Arch:         "amd64",
+			BinarySuffix: "",
+			ArchiveType:  ".tar.gz",
+		},
+		options:      options,
+		version:      buildTag,
+		binaryName:   executableName,
+		binaryFolder: outputPath,
+		buildTime:    buildTime,
+	})
+}
+
+func DarwinArm64() error {
+	fmt.Printf("Building Darwin ARM64\n")
+	mg.Deps(SetBuildVersion, SetBuildTime)
+	options, err := getCompileOptions()
+	if err != nil {
+		return err
+	}
+	return build(Compile{
+		arch:         Architecture{
+			OS:           "darwin",
+			Arch:         "arm64",
+			BinarySuffix: "",
+			ArchiveType:  ".tar.gz",
+		},
+		options:      options,
+		version:      buildTag,
+		binaryName:   executableName,
+		binaryFolder: outputPath,
+		buildTime:    buildTime,
+	})
 }
 
 func setTimeFunc(buildtime time.Time) func(path string, info fs.DirEntry, err error) error {
@@ -161,7 +303,7 @@ func getTag() (string, error) {
 	return s, nil
 }
 
-func getCompileOptions(version string) (options CompilerOptions, err error) {
+func getCompileOptions() (options CompilerOptions, err error) {
 	options = CompilerOptions{
 		GCFlags: []string{
 			`./dontoptimizeme=-N`,
@@ -169,7 +311,7 @@ func getCompileOptions(version string) (options CompilerOptions, err error) {
 		LDFlags: []string{
 			`-s`,
 			`-w`,
-			fmt.Sprintf(`-X "main.version=%s"`, version),
+			fmt.Sprintf(`-X "main.version=%s"`, buildTag),
 		},
 		MiscFlags: []string{
 			`-trimpath`,
