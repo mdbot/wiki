@@ -176,6 +176,26 @@ func (Release) Notices() error {
 	return filepath.WalkDir(noticesPath, setTimeFunc(buildTime))
 }
 
+func (Build) Clean() error {
+	err := sh.Rm(filepath.Join(DistFolder, "binaries"))
+	if err != nil {
+		return err
+	}
+	err = sh.Rm(filepath.Join(DistFolder, "archives"))
+	if err != nil {
+		return err
+	}
+	err = sh.Rm(filepath.Join(DistFolder, "releases"))
+	if err != nil {
+		return err
+	}
+	err = sh.Rm(filepath.Join(DistFolder, "notices"))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (Build) All() error {
 	mg.Deps(Build.LinuxAmd64, Build.LinuxArm64, Build.DarwinAmd64, Build.DarwinArm64, Build.WindowsAmd64)
 	return nil
