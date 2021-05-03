@@ -26,6 +26,7 @@ const (
 	TimeFormat  = "2006-01-02 15:04:05 -0700"
 	GoExe       = "go"
 	DockerEXE   = "docker"
+	GitExe      = "git"
 )
 
 var (
@@ -49,13 +50,12 @@ var (
 			`-trimpath`,
 		},
 	}
-	docker = false
-	isTag = false
+	isTag      = false
 	semverTags []string
-	buildTag = "unknown"
-	buildTime = time.Time{}
+	buildTag   = "unknown"
+	buildTime  = time.Time{}
 
-	Default = Release.Artifacts
+	Default = Release.All
 )
 
 type Build mg.Namespace
@@ -76,13 +76,14 @@ func init() {
 	}
 }
 
-func (Release) Artifacts() error {
+func (Release) All() error {
 	mg.Deps(Release.Docker, Release.Archive)
 	return nil
 }
 
 func (Release) Docker() error {
-	docker = true
+	mg.Deps(Release.Notices, Build.LinuxAmd64)
+	fmt.Printf("Building docker container\n")
 	bytesRead, err := ioutil.ReadFile("gorelease.Dockerfile")
 	if err != nil {
 		log.Fatal(err)
@@ -91,17 +92,7 @@ func (Release) Docker() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mg.Deps(Build.Notices, Build.LinuxAmd64)
-	return nil
-}
-
-func (Release) BuildDocker() error {
-	if !docker {
-		return nil
-	}
-	mg.Deps(Build.Notices)
-	fmt.Printf("Building docker container\n")
-	err := sh.Run(DockerEXE, "build", "-t", ProjectName, DistFolder)
+	err = sh.Run(DockerEXE, "build", "-t", ProjectName, DistFolder)
 	if err != nil {
 		return err
 	}
@@ -119,7 +110,7 @@ func (Release) BuildDocker() error {
 }
 
 func (Release) Archive() error {
-	mg.Deps(Build.Notices, Build.Binaries)
+	mg.Deps(Release.Notices, Build.All)
 	fmt.Printf("Creating archives\n")
 	for _, architecture := range arches {
 		binaryName := fmt.Sprintf("%s_%s_%s_%s", ProjectName, architecture.OS, architecture.Arch, buildTag)
@@ -137,7 +128,7 @@ func (Release) Archive() error {
 			log.Printf("Error reading archive: %s%s: %s", architecture.OS, architecture.Arch, err.Error())
 		}
 		checksum := sha256.Sum256(data)
-		err = os.WriteFile(outputName+"_checksum.txt", []byte(fmt.Sprintf("%x", checksum)), 0644)
+		err = os.WriteFile(outputName+"_checksum.sha256", []byte(fmt.Sprintf("%x", checksum)), 0644)
 		if err != nil {
 			log.Printf("Error writing checksum: %s%s: %s", architecture.OS, architecture.Arch, err.Error())
 		}
@@ -145,7 +136,7 @@ func (Release) Archive() error {
 	return nil
 }
 
-func (Build) Notices() error {
+func (Release) Notices() error {
 	fmt.Printf("Getting licenses\n")
 	noticesPath := filepath.Join(DistFolder, "notices")
 	err := sh.Run(GoExe, "get", "")
@@ -163,7 +154,7 @@ func (Build) Notices() error {
 	return filepath.WalkDir(noticesPath, setTimeFunc(buildTime))
 }
 
-func (Build) Binaries() error {
+func (Build) All() error {
 	mg.Deps(Build.LinuxAmd64, Build.LinuxArm64, Build.DarwinAmd64, Build.DarwinArm64, Build.WindowsAmd64)
 	return nil
 }
@@ -180,17 +171,12 @@ func (Build) WindowsAmd64() error {
 
 func (Build) LinuxAmd64() error {
 	fmt.Printf("Building Linux AMD64\n")
-	err := build(Architecture{
+	return build(Architecture{
 		OS:           "linux",
 		Arch:         "amd64",
 		BinarySuffix: "",
 		ArchiveType:  ".tar.gz",
 	})
-	if err != nil {
-		return err
-	}
-	mg.Deps(Release.BuildDocker)
-	return nil
 }
 
 func (Build) LinuxArm64() error {
@@ -241,7 +227,7 @@ func setBuildVersion() error {
 
 func setBuildTime() error {
 	var err error
-	commitTimestamp, err := sh.Output("git", "show", "-s", "--format=%ci", "HEAD")
+	commitTimestamp, err := sh.Output(GitExe, "show", "-s", "--format=%ci", "HEAD")
 	if err != nil {
 		return err
 	}
@@ -283,11 +269,11 @@ func setSemVerTags() error {
 }
 
 func getTag() (string, error) {
-	_, err := sh.Output("git", "fetch", "--tags")
+	_, err := sh.Output(GitExe, "fetch", "--tags")
 	if err != nil {
 		return "", err
 	}
-	s, err := sh.Output("git", "describe", "--tags")
+	s, err := sh.Output(GitExe, "describe", "--tags")
 	if err != nil {
 		return "", err
 	}
@@ -295,12 +281,12 @@ func getTag() (string, error) {
 }
 
 func getExactTag() (string, bool, error) {
-	_, err := sh.Output("git", "fetch", "--tags")
+	_, err := sh.Output(GitExe, "fetch", "--tags")
 	if err != nil {
 		return "", false, err
 	}
 	buf := &bytes.Buffer{}
-	ran, err := sh.Exec(nil, buf, nil, "git", "describe", "--exact-match", "--tags")
+	ran, err := sh.Exec(nil, buf, nil, GitExe, "describe", "--exact-match", "--tags")
 	if !ran && err != nil {
 		return "", false, err
 	}

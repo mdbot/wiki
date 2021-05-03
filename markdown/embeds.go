@@ -69,7 +69,7 @@ var mimePrefixes = map[string]mediaType{
 
 type mediaEmbed struct {
 	mediaType mediaType
-	file string
+	file      string
 	ast.BaseBlock
 }
 
@@ -78,7 +78,7 @@ var kindMediaEmbed = ast.NewNodeKind("MediaEmbed")
 func newMediaEmbed(m mediaType, file string) *mediaEmbed {
 	return &mediaEmbed{
 		mediaType: m,
-		file: file,
+		file:      file,
 	}
 }
 

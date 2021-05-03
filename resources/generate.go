@@ -68,7 +68,7 @@ func copyFile(file, dir string) {
 	}
 }
 
-func extractZip(b []byte, dir string, replacements... string) {
+func extractZip(b []byte, dir string, replacements ...string) {
 	replacer := strings.NewReplacer(replacements...)
 
 	zr, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
