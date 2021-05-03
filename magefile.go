@@ -3,13 +3,12 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -64,14 +63,17 @@ type Release mg.Namespace
 func init() {
 	err := setBuildTime()
 	if err != nil {
+		fmt.Printf("Error getting build time: %s", err.Error())
 		os.Exit(1)
 	}
 	err = setBuildVersion()
 	if err != nil {
+		fmt.Printf("Error getting build version: %s", err.Error())
 		os.Exit(1)
 	}
 	err = setSemVerTags()
 	if err != nil {
+		fmt.Printf("Error getting semantic versions: %s", err.Error())
 		os.Exit(1)
 	}
 }
@@ -84,11 +86,7 @@ func (Release) All() error {
 func (Release) Docker() error {
 	mg.Deps(Release.Notices, Build.LinuxAmd64)
 	fmt.Printf("Building docker container\n")
-	bytesRead, err := ioutil.ReadFile("gorelease.Dockerfile")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = ioutil.WriteFile(filepath.Join(DistFolder, "Dockerfile"), bytesRead, 0755)
+	err := sh.Copy("gorelease.Dockerfile", filepath.Join(DistFolder, "Dockerfile"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -96,7 +94,7 @@ func (Release) Docker() error {
 	if err != nil {
 		return err
 	}
-	err = os.Remove(filepath.Join(DistFolder, "Dockerfile"))
+	err = sh.Rm(filepath.Join(DistFolder, "Dockerfile"))
 	if err != nil {
 		return err
 	}
@@ -225,19 +223,6 @@ func setBuildVersion() error {
 	return nil
 }
 
-func setBuildTime() error {
-	var err error
-	commitTimestamp, err := sh.Output(GitExe, "show", "-s", "--format=%ci", "HEAD")
-	if err != nil {
-		return err
-	}
-	buildTime, err = time.Parse(TimeFormat, commitTimestamp)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func setTimeFunc(buildtime time.Time) func(path string, info fs.DirEntry, err error) error {
 	return func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
@@ -249,6 +234,21 @@ func setTimeFunc(buildtime time.Time) func(path string, info fs.DirEntry, err er
 		}
 		return nil
 	}
+}
+
+func setBuildTime() error {
+	var err error
+	cmd := exec.Command(GitExe, "show", "-s", "--format=%ci", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	commitTimestamp := strings.TrimSpace(string(output))
+	buildTime, err = time.Parse(TimeFormat, commitTimestamp)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func setSemVerTags() error {
@@ -269,31 +269,31 @@ func setSemVerTags() error {
 }
 
 func getTag() (string, error) {
-	_, err := sh.Output(GitExe, "fetch", "--tags")
+	cmd := exec.Command(GitExe, "fetch", "--tags")
+	err := cmd.Run()
 	if err != nil {
 		return "", err
 	}
-	s, err := sh.Output(GitExe, "describe", "--tags")
+	cmd = exec.Command(GitExe, "describe", "--tags")
+	output, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
-	return s, nil
+	return strings.TrimSpace(string(output)), nil
 }
 
 func getExactTag() (string, bool, error) {
-	_, err := sh.Output(GitExe, "fetch", "--tags")
+	cmd := exec.Command(GitExe, "fetch", "--tags")
+	err := cmd.Run()
 	if err != nil {
 		return "", false, err
 	}
-	buf := &bytes.Buffer{}
-	ran, err := sh.Exec(nil, buf, nil, GitExe, "describe", "--exact-match", "--tags")
-	if !ran && err != nil {
+	cmd = exec.Command(GitExe, "describe", "--exact-match", "--tags")
+	output, err := cmd.Output()
+	if err != nil {
 		return "", false, err
 	}
-	if ran && err != nil {
-		return "", false, err
-	}
-	return buf.String(), true, err
+	return strings.TrimSpace(string(output)), true, err
 }
 
 func build(arch Architecture) error {
