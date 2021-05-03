@@ -22,6 +22,7 @@ import (
 
 const (
 	ProjectName = "wiki"
+	ProjectGroup = "mdbot"
 	DistFolder  = "dist"
 	TimeFormat  = "2006-01-02 15:04:05 -0700"
 	GoExe       = "go"
@@ -36,6 +37,10 @@ var (
 		{OS: "darwin", Arch: "amd64", ArchiveType: ".tar.gz"},
 		{OS: "darwin", Arch: "arm64", ArchiveType: ".tar.gz"},
 		{OS: "windows", Arch: "amd64", BinarySuffix: ".exe", ArchiveType: ".zip"},
+	}
+	registries = []string{
+		"index.docker.io",
+		"ghcr.io",
 	}
 	options = CompilerOptions{
 		GCFlags: []string{
@@ -52,10 +57,11 @@ var (
 	}
 	isTag      = false
 	semverTags []string
+	dockerTags []string
 	buildTag   = "unknown"
 	buildTime  = time.Time{}
 
-	Default = Release.All
+	Default = Release.Build
 )
 
 type Build mg.Namespace
@@ -77,9 +83,25 @@ func init() {
 		fmt.Printf("Error getting semantic versions: %s", err.Error())
 		os.Exit(1)
 	}
+	setDockerTags()
 }
 
-func (Release) All() error {
+func (Release) BuildAndPush() error {
+	mg.Deps(Release.Build)
+	for _, dockerTag := range dockerTags {
+		err := sh.Run(DockerEXE, "tag", ProjectName, dockerTag)
+		if err != nil {
+			return err
+		}
+		err = sh.Run(DockerEXE, "push", dockerTag)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (Release) Build() error {
 	mg.Deps(Release.Docker, Release.Archive)
 	return nil
 }
@@ -90,7 +112,7 @@ func (Release) Docker() error {
 	dockerTemplate := template.Must(template.ParseFiles("dockerfile.gotpl"))
 	binaryName := fmt.Sprintf("%s_%s_%s_%s", ProjectName, "linux", "amd64", buildTag)
 	binaryPath := filepath.Join("binaries", binaryName)
-	file, err := os.OpenFile(filepath.Join(DistFolder, "Dockerfile"), os.O_TRUNC|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(filepath.Join(DistFolder, "Dockerfile"), os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return err
 	}
@@ -105,12 +127,6 @@ func (Release) Docker() error {
 	err = sh.Rm(filepath.Join(DistFolder, "Dockerfile"))
 	if err != nil {
 		return err
-	}
-	for _, semverTag := range semverTags {
-		err = sh.Run(DockerEXE, "tag", ProjectName, fmt.Sprintf("%s:%s", ProjectName, semverTag))
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -274,6 +290,14 @@ func setSemVerTags() error {
 	semverTags = append(semverTags, fmt.Sprintf("%d.%d", semVer.Major, semVer.Minor))
 	semverTags = append(semverTags, fmt.Sprintf("%d", semVer.Major))
 	return nil
+}
+
+func setDockerTags() {
+	for _, semverTag := range semverTags {
+		for _, registry := range registries {
+			dockerTags = append(dockerTags, fmt.Sprintf("%s/%s/%s:%s", registry, ProjectGroup, ProjectName, semverTag))
+		}
+	}
 }
 
 func getTag() (string, error) {
