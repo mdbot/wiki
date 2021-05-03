@@ -5,6 +5,7 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
+	"html/template"
 	"io/fs"
 	"log"
 	"os"
@@ -86,9 +87,16 @@ func (Release) All() error {
 func (Release) Docker() error {
 	mg.Deps(Release.Notices, Build.LinuxAmd64)
 	fmt.Printf("Building docker container\n")
-	err := sh.Copy("gorelease.Dockerfile", filepath.Join(DistFolder, "Dockerfile"))
+	dockerTemplate := template.Must(template.ParseFiles("dockerfile.gotpl"))
+	binaryName := fmt.Sprintf("%s_%s_%s_%s", ProjectName, "linux", "amd64", buildTag)
+	binaryPath := filepath.Join("binaries", binaryName)
+	file, err := os.OpenFile(filepath.Join(DistFolder, "Dockerfile"), os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+	err = dockerTemplate.Execute(file, binaryPath)
+	if err != nil {
+		return err
 	}
 	err = sh.Run(DockerEXE, "build", "-t", ProjectName, DistFolder)
 	if err != nil {
