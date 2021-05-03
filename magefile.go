@@ -3,6 +3,8 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -12,51 +14,63 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 	"github.com/mholt/archiver"
 )
 
+const (
+	ProjectName = "wiki"
+	DistFolder  = "dist"
+	TimeFormat  = "2006-01-02 15:04:05 -0700"
+	GoExe       = "go"
+	DockerEXE   = "docker"
+)
+
 var (
-	executableName = "wiki"
-	outputPath     = "dist"
-	architectures  = []Architecture{
+	arches = []Architecture{
 		{OS: "linux", Arch: "amd64", ArchiveType: ".tar.gz"},
 		{OS: "linux", Arch: "arm64", ArchiveType: ".tar.gz"},
 		{OS: "darwin", Arch: "amd64", ArchiveType: ".tar.gz"},
 		{OS: "darwin", Arch: "arm64", ArchiveType: ".tar.gz"},
 		{OS: "windows", Arch: "amd64", BinarySuffix: ".exe", ArchiveType: ".zip"},
 	}
-	timeFormat = "2006-01-02 15:04:05 -0700"
+	options = CompilerOptions{
+		GCFlags: []string{
+			`./dontoptimizeme=-N`,
+		},
+		LDFlags: []string{
+			`-s`,
+			`-w`,
+			fmt.Sprintf(`-X "main.version=%s"`, buildTag),
+		},
+		MiscFlags: []string{
+			`-trimpath`,
+		},
+	}
+	docker = false
+	isTag = false
+	semverTags []string
+	buildTag = "unknown"
+	buildTime = time.Time{}
+
+	Default = Release
 )
 
-var goexe = "go"
-var dockerexe = "docker"
-var docker = false
-
-var buildTag = "unknown"
-var buildTime = time.Time{}
-
-func SetBuildVersion() error {
-	var err error
-	buildTag, err = getTag()
+func init() {
+	err := SetBuildTime()
 	if err != nil {
-		return err
+		os.Exit(1)
 	}
-	return nil
-}
-
-func SetBuildTime() error {
-	var err error
-	commitTimestamp, err := getCommitTimestamp("HEAD")
+	err = SetBuildVersion()
 	if err != nil {
-		return err
+		os.Exit(1)
 	}
-	buildTime, err = time.Parse(timeFormat, commitTimestamp)
+	err = SetSemVerTags()
 	if err != nil {
-		return err
+		os.Exit(1)
 	}
-	return nil
 }
 
 func Release() error {
@@ -70,11 +84,11 @@ func Docker() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = ioutil.WriteFile(filepath.Join(outputPath, "Dockerfile"), bytesRead, 0755)
+	err = ioutil.WriteFile(filepath.Join(DistFolder, "Dockerfile"), bytesRead, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
-	mg.Deps(Notices, SetBuildTime, SetBuildVersion, LinuxAmd64)
+	mg.Deps(Notices, LinuxAmd64)
 	return nil
 }
 
@@ -82,10 +96,21 @@ func BuildDocker() error {
 	if !docker {
 		return nil
 	}
+	mg.Deps(Notices)
 	fmt.Printf("Building docker container\n")
-	err := sh.Run(dockerexe, "build", "-t", "test2", outputPath)
+	err := sh.Run(DockerEXE, "build", "-t", ProjectName, DistFolder)
 	if err != nil {
 		return err
+	}
+	err = os.Remove(filepath.Join(DistFolder, "Dockerfile"))
+	if err != nil {
+		return err
+	}
+	for _, semverTag := range semverTags {
+		err = sh.Run(DockerEXE, "tag", ProjectName, fmt.Sprintf("%s:%s", ProjectName, semverTag))
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -93,19 +118,25 @@ func BuildDocker() error {
 func Archive() error {
 	mg.Deps(Notices, Binaries)
 	fmt.Printf("Creating archives\n")
-	version, err := getTag()
-	if err != nil {
-		return err
-	}
-	for _, architecture := range architectures {
-		binaryName := fmt.Sprintf("%s_%s_%s_%s", executableName, architecture.OS, architecture.Arch, version)
-		outputName := filepath.Join(outputPath, binaryName)
+	for _, architecture := range arches {
+		binaryName := fmt.Sprintf("%s_%s_%s_%s", ProjectName, architecture.OS, architecture.Arch, buildTag)
+		outputName := filepath.Join(DistFolder, "archives", binaryName)
 		err := archiver.Archive([]string{
-			"dist/"+binaryName+architecture.BinarySuffix,
+			"dist/" + binaryName + architecture.BinarySuffix,
 			"dist/notices",
 		}, outputName+architecture.ArchiveType)
 		if err != nil {
 			log.Printf("Error archiving: %s%s: %s", architecture.OS, architecture.Arch, err.Error())
+		}
+		var data []byte
+		data, err = os.ReadFile(outputName + architecture.ArchiveType)
+		if err != nil {
+			log.Printf("Error reading archive: %s%s: %s", architecture.OS, architecture.Arch, err.Error())
+		}
+		checksum := sha256.Sum256(data)
+		err = os.WriteFile(outputName+"_checksum.txt", []byte(fmt.Sprintf("%x", checksum)), 0644)
+		if err != nil {
+			log.Printf("Error writing checksum: %s%s: %s", architecture.OS, architecture.Arch, err.Error())
 		}
 	}
 	return nil
@@ -113,16 +144,12 @@ func Archive() error {
 
 func Notices() error {
 	fmt.Printf("Getting licenses\n")
-	buildtime, err := getBuildtime("HEAD")
+	noticesPath := filepath.Join(DistFolder, "notices")
+	err := sh.Run(GoExe, "get", "")
 	if err != nil {
 		return err
 	}
-	noticesPath := filepath.Join(outputPath, "notices")
-	err = sh.Run(goexe, "get", "")
-	if err != nil {
-		return err
-	}
-	err = sh.Run(goexe, "get", "github.com/google/go-licenses")
+	err = sh.Run(GoExe, "get", "github.com/google/go-licenses")
 	if err != nil {
 		return err
 	}
@@ -130,55 +157,31 @@ func Notices() error {
 	if err != nil {
 		return err
 	}
-	return filepath.WalkDir(noticesPath, setTimeFunc(*buildtime))
+	return filepath.WalkDir(noticesPath, setTimeFunc(buildTime))
 }
 
 func Binaries() error {
-	mg.Deps(LinuxAmd64,	LinuxArm64,	DarwinAmd64, DarwinArm64, WindowsAmd64)
+	mg.Deps(LinuxAmd64, LinuxArm64, DarwinAmd64, DarwinArm64, WindowsAmd64)
 	return nil
 }
 
 func WindowsAmd64() error {
 	fmt.Printf("Building Windows AMD64\n")
-	mg.Deps(SetBuildVersion, SetBuildTime)
-	options, err := getCompileOptions()
-	if err != nil {
-		return err
-	}
-	return build(Compile{
-		arch:         Architecture{
-			OS:           "windows",
-			Arch:         "amd64",
-			BinarySuffix: ".exe",
-			ArchiveType:  ".zip",
-		},
-		options:      options,
-		version:      buildTag,
-		binaryName:   executableName,
-		binaryFolder: outputPath,
-		buildTime:    buildTime,
+	return build(Architecture{
+		OS:           "windows",
+		Arch:         "amd64",
+		BinarySuffix: ".exe",
+		ArchiveType:  ".zip",
 	})
 }
 
 func LinuxAmd64() error {
 	fmt.Printf("Building Linux AMD64\n")
-	mg.Deps(SetBuildVersion, SetBuildTime)
-	options, err := getCompileOptions()
-	if err != nil {
-		return err
-	}
-	err = build(Compile{
-		arch:         Architecture{
-			OS:           "linux",
-			Arch:         "amd64",
-			BinarySuffix: "",
-			ArchiveType:  ".tar.gz",
-		},
-		options:      options,
-		version:      buildTag,
-		binaryName:   executableName,
-		binaryFolder: outputPath,
-		buildTime:    buildTime,
+	err := build(Architecture{
+		OS:           "linux",
+		Arch:         "amd64",
+		BinarySuffix: "",
+		ArchiveType:  ".tar.gz",
 	})
 	if err != nil {
 		return err
@@ -189,68 +192,61 @@ func LinuxAmd64() error {
 
 func LinuxArm64() error {
 	fmt.Printf("Building Linux ARM64\n")
-	mg.Deps(SetBuildVersion, SetBuildTime)
-	options, err := getCompileOptions()
-	if err != nil {
-		return err
-	}
-	return build(Compile{
-		arch:         Architecture{
-			OS:           "linux",
-			Arch:         "arm64",
-			BinarySuffix: "",
-			ArchiveType:  ".tar.gz",
-		},
-		options:      options,
-		version:      buildTag,
-		binaryName:   executableName,
-		binaryFolder: outputPath,
-		buildTime:    buildTime,
+	return build(Architecture{
+		OS:           "linux",
+		Arch:         "arm64",
+		BinarySuffix: "",
+		ArchiveType:  ".tar.gz",
 	})
 }
 
 func DarwinAmd64() error {
 	fmt.Printf("Building Darwin AMD64\n")
-	mg.Deps(SetBuildVersion, SetBuildTime)
-	options, err := getCompileOptions()
-	if err != nil {
-		return err
-	}
-	return build(Compile{
-		arch:         Architecture{
-			OS:           "darwin",
-			Arch:         "amd64",
-			BinarySuffix: "",
-			ArchiveType:  ".tar.gz",
-		},
-		options:      options,
-		version:      buildTag,
-		binaryName:   executableName,
-		binaryFolder: outputPath,
-		buildTime:    buildTime,
+	return build(Architecture{
+		OS:           "darwin",
+		Arch:         "amd64",
+		BinarySuffix: "",
+		ArchiveType:  ".tar.gz",
 	})
 }
 
 func DarwinArm64() error {
 	fmt.Printf("Building Darwin ARM64\n")
-	mg.Deps(SetBuildVersion, SetBuildTime)
-	options, err := getCompileOptions()
+	return build(Architecture{
+		OS:           "darwin",
+		Arch:         "arm64",
+		BinarySuffix: "",
+		ArchiveType:  ".tar.gz",
+	})
+}
+
+func SetBuildVersion() error {
+	var err error
+	buildTag, err = getTag()
 	if err != nil {
 		return err
 	}
-	return build(Compile{
-		arch:         Architecture{
-			OS:           "darwin",
-			Arch:         "arm64",
-			BinarySuffix: "",
-			ArchiveType:  ".tar.gz",
-		},
-		options:      options,
-		version:      buildTag,
-		binaryName:   executableName,
-		binaryFolder: outputPath,
-		buildTime:    buildTime,
-	})
+	var exactTag string
+	exactTag, isTag, err = getExactTag()
+	if isTag {
+		fmt.Printf("Tagged build: %s\n", exactTag)
+	} else {
+		fmt.Printf("Snapshot build: %s\n", buildTag)
+	}
+	return nil
+}
+
+func SetBuildTime() error {
+	var err error
+	commitTimestamp, err := sh.Output("git", "show", "-s", "--format=%ci", "HEAD")
+	if err != nil {
+		return err
+	}
+	buildTime, err = time.Parse(TimeFormat, commitTimestamp)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func setTimeFunc(buildtime time.Time) func(path string, info fs.DirEntry, err error) error {
@@ -266,29 +262,21 @@ func setTimeFunc(buildtime time.Time) func(path string, info fs.DirEntry, err er
 	}
 }
 
-func getBuildtime(commit string) (*time.Time, error) {
-	var err error
-	buildTime := time.Now()
-	envBuildtime := os.Getenv("BUILDTIME")
-	if envBuildtime == "" {
-		envBuildtime, err = getCommitTimestamp(commit)
-		if err != nil {
-			return nil, err
-		}
+func SetSemVerTags() error {
+	if !isTag {
+		semverTags = append(semverTags, "latest")
+		return nil
 	}
-	buildTime, err = time.Parse("2006-01-02 15:04:05 -0700", envBuildtime)
+	buildTag = strings.TrimPrefix(buildTag, "v")
+	semVer, err := semver.NewVersion(buildTag)
 	if err != nil {
-		return nil, err
+		fmt.Printf("Not a semver release: %s\n", err)
+		return err
 	}
-	return &buildTime, nil
-}
-
-func getCommitTimestamp(commit string) (string, error) {
-	s, err := sh.Output("git", "show", "-s", "--format=%ci", commit)
-	if err != nil {
-		return "", err
-	}
-	return s, nil
+	semverTags = append(semverTags, fmt.Sprintf("%d.%d.%d", semVer.Major, semVer.Minor, semVer.Patch))
+	semverTags = append(semverTags, fmt.Sprintf("%d.%d", semVer.Major, semVer.Minor))
+	semverTags = append(semverTags, fmt.Sprintf("%d", semVer.Major))
+	return nil
 }
 
 func getTag() (string, error) {
@@ -303,37 +291,37 @@ func getTag() (string, error) {
 	return s, nil
 }
 
-func getCompileOptions() (options CompilerOptions, err error) {
-	options = CompilerOptions{
-		GCFlags: []string{
-			`./dontoptimizeme=-N`,
-		},
-		LDFlags: []string{
-			`-s`,
-			`-w`,
-			fmt.Sprintf(`-X "main.version=%s"`, buildTag),
-		},
-		MiscFlags: []string{
-			`-trimpath`,
-		},
+func getExactTag() (string, bool, error) {
+	_, err := sh.Output("git", "fetch", "--tags")
+	if err != nil {
+		return "", false, err
 	}
-	return
+	buf := &bytes.Buffer{}
+	ran, err := sh.Exec(nil, buf, nil, "git", "describe", "--exact-match", "--tags")
+	if !ran && err != nil {
+		return "", false, err
+	}
+	if ran && err != nil {
+		return "", false, err
+	}
+	return buf.String(), true, err
 }
 
-func build(compile Compile) error {
-	err := os.Setenv("GOOS", compile.arch.OS)
+func build(arch Architecture) error {
+	err := os.Setenv("GOOS", arch.OS)
 	if err != nil {
 		return err
 	}
-	err = os.Setenv("GOARCH", compile.arch.Arch)
+	err = os.Setenv("GOARCH", arch.Arch)
 	if err != nil {
 		return err
 	}
-	err = sh.RunV(goexe, compile.options.getAllFlags(compile.getOutputName())...)
+	outputName := arch.getOutputName()
+	err = sh.RunV(GoExe, options.getAllFlags(outputName)...)
 	if err != nil {
 		return err
 	}
-	err = filepath.WalkDir(compile.getOutputName(), setTimeFunc(compile.buildTime))
+	err = filepath.WalkDir(outputName, setTimeFunc(buildTime))
 	if err != nil {
 		return err
 	}
@@ -345,6 +333,10 @@ type Architecture struct {
 	Arch         string
 	BinarySuffix string
 	ArchiveType  string
+}
+
+func (a *Architecture) getOutputName() string {
+	return filepath.Join(DistFolder, "binaries", fmt.Sprintf("%s_%s_%s_%s%s", ProjectName, a.OS, a.Arch, buildTag, a.BinarySuffix))
 }
 
 type CompilerOptions struct {
@@ -364,18 +356,4 @@ func (c *CompilerOptions) getAllFlags(output string) []string {
 	buildFlags = append(buildFlags, output)
 	buildFlags = append(buildFlags, ".")
 	return buildFlags
-}
-
-type Compile struct {
-	arch         Architecture
-	options      CompilerOptions
-	version      string
-	binaryName   string
-	binaryFolder string
-	buildTime    time.Time
-}
-
-func (c *Compile) getOutputName() string {
-	binaryName := fmt.Sprintf("%s_%s_%s_%s%s", c.binaryName, c.arch.OS, c.arch.Arch, c.version, c.arch.BinarySuffix)
-	return filepath.Join(c.binaryFolder, binaryName)
 }

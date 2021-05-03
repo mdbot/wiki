@@ -3,11 +3,13 @@ module github.com/mdbot/wiki
 go 1.16
 
 require (
+	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/evanw/esbuild v0.11.5
 	github.com/frankban/quicktest v1.12.0 // indirect
 	github.com/go-git/go-git/v5 v5.3.0
 	github.com/golang/snappy v0.0.3 // indirect
+	github.com/google/go-licenses v0.0.0-20210329231322-ce1d9163b77d // indirect
 	github.com/gorilla/csrf v1.7.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
