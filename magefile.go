@@ -173,7 +173,7 @@ func (Release) Notices() error {
 	if err != nil {
 		return err
 	}
-	return filepath.WalkDir(noticesPath, setTimeFunc(buildTime))
+	return filepath.WalkDir(noticesPath, setTimeFunc())
 }
 
 func (Build) Clean() error {
@@ -267,12 +267,12 @@ func setBuildVersion() error {
 	return nil
 }
 
-func setTimeFunc(buildtime time.Time) func(path string, info fs.DirEntry, err error) error {
+func setTimeFunc() func(path string, info fs.DirEntry, err error) error {
 	return func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		err = os.Chtimes(path, buildtime, buildtime)
+		err = os.Chtimes(path, buildTime, buildTime)
 		if err != nil {
 			return err
 		}
@@ -362,7 +362,7 @@ func build(arch Architecture) error {
 	if err != nil {
 		return err
 	}
-	err = filepath.WalkDir(outputName, setTimeFunc(buildTime))
+	err = filepath.WalkDir(outputName, setTimeFunc())
 	if err != nil {
 		return err
 	}
