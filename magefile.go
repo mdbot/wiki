@@ -55,30 +55,33 @@ var (
 	buildTag = "unknown"
 	buildTime = time.Time{}
 
-	Default = Release
+	Default = Release.Artifacts
 )
 
+type Build mg.Namespace
+type Release mg.Namespace
+
 func init() {
-	err := SetBuildTime()
+	err := setBuildTime()
 	if err != nil {
 		os.Exit(1)
 	}
-	err = SetBuildVersion()
+	err = setBuildVersion()
 	if err != nil {
 		os.Exit(1)
 	}
-	err = SetSemVerTags()
+	err = setSemVerTags()
 	if err != nil {
 		os.Exit(1)
 	}
 }
 
-func Release() error {
-	mg.Deps(Docker, Archive)
+func (Release) Artifacts() error {
+	mg.Deps(Release.Docker, Release.Archive)
 	return nil
 }
 
-func Docker() error {
+func (Release) Docker() error {
 	docker = true
 	bytesRead, err := ioutil.ReadFile("gorelease.Dockerfile")
 	if err != nil {
@@ -88,15 +91,15 @@ func Docker() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mg.Deps(Notices, LinuxAmd64)
+	mg.Deps(Build.Notices, Build.LinuxAmd64)
 	return nil
 }
 
-func BuildDocker() error {
+func (Release) BuildDocker() error {
 	if !docker {
 		return nil
 	}
-	mg.Deps(Notices)
+	mg.Deps(Build.Notices)
 	fmt.Printf("Building docker container\n")
 	err := sh.Run(DockerEXE, "build", "-t", ProjectName, DistFolder)
 	if err != nil {
@@ -115,8 +118,8 @@ func BuildDocker() error {
 	return nil
 }
 
-func Archive() error {
-	mg.Deps(Notices, Binaries)
+func (Release) Archive() error {
+	mg.Deps(Build.Notices, Build.Binaries)
 	fmt.Printf("Creating archives\n")
 	for _, architecture := range arches {
 		binaryName := fmt.Sprintf("%s_%s_%s_%s", ProjectName, architecture.OS, architecture.Arch, buildTag)
@@ -142,7 +145,7 @@ func Archive() error {
 	return nil
 }
 
-func Notices() error {
+func (Build) Notices() error {
 	fmt.Printf("Getting licenses\n")
 	noticesPath := filepath.Join(DistFolder, "notices")
 	err := sh.Run(GoExe, "get", "")
@@ -160,12 +163,12 @@ func Notices() error {
 	return filepath.WalkDir(noticesPath, setTimeFunc(buildTime))
 }
 
-func Binaries() error {
-	mg.Deps(LinuxAmd64, LinuxArm64, DarwinAmd64, DarwinArm64, WindowsAmd64)
+func (Build) Binaries() error {
+	mg.Deps(Build.LinuxAmd64, Build.LinuxArm64, Build.DarwinAmd64, Build.DarwinArm64, Build.WindowsAmd64)
 	return nil
 }
 
-func WindowsAmd64() error {
+func (Build) WindowsAmd64() error {
 	fmt.Printf("Building Windows AMD64\n")
 	return build(Architecture{
 		OS:           "windows",
@@ -175,7 +178,7 @@ func WindowsAmd64() error {
 	})
 }
 
-func LinuxAmd64() error {
+func (Build) LinuxAmd64() error {
 	fmt.Printf("Building Linux AMD64\n")
 	err := build(Architecture{
 		OS:           "linux",
@@ -186,11 +189,11 @@ func LinuxAmd64() error {
 	if err != nil {
 		return err
 	}
-	mg.Deps(BuildDocker)
+	mg.Deps(Release.BuildDocker)
 	return nil
 }
 
-func LinuxArm64() error {
+func (Build) LinuxArm64() error {
 	fmt.Printf("Building Linux ARM64\n")
 	return build(Architecture{
 		OS:           "linux",
@@ -200,7 +203,7 @@ func LinuxArm64() error {
 	})
 }
 
-func DarwinAmd64() error {
+func (Build) DarwinAmd64() error {
 	fmt.Printf("Building Darwin AMD64\n")
 	return build(Architecture{
 		OS:           "darwin",
@@ -210,7 +213,7 @@ func DarwinAmd64() error {
 	})
 }
 
-func DarwinArm64() error {
+func (Build) DarwinArm64() error {
 	fmt.Printf("Building Darwin ARM64\n")
 	return build(Architecture{
 		OS:           "darwin",
@@ -220,7 +223,7 @@ func DarwinArm64() error {
 	})
 }
 
-func SetBuildVersion() error {
+func setBuildVersion() error {
 	var err error
 	buildTag, err = getTag()
 	if err != nil {
@@ -236,7 +239,7 @@ func SetBuildVersion() error {
 	return nil
 }
 
-func SetBuildTime() error {
+func setBuildTime() error {
 	var err error
 	commitTimestamp, err := sh.Output("git", "show", "-s", "--format=%ci", "HEAD")
 	if err != nil {
@@ -262,7 +265,7 @@ func setTimeFunc(buildtime time.Time) func(path string, info fs.DirEntry, err er
 	}
 }
 
-func SetSemVerTags() error {
+func setSemVerTags() error {
 	if !isTag {
 		semverTags = append(semverTags, "latest")
 		return nil
