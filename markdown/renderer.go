@@ -30,7 +30,7 @@ func NewRenderer(checker PageChecker, dangerousHtml bool, codeStyle string) *Ren
 	}
 
 	return &Renderer{
-		checker: checker,
+		checker:    checker,
 		htmlPolicy: htmlPolicy,
 		gm: goldmark.New(
 			goldmark.WithExtensions(
