@@ -24,7 +24,7 @@ require (
 	github.com/sergi/go-diff v1.2.0
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	github.com/yalue/merged_fs v1.0.5
+	github.com/yalue/merged_fs v1.0.6
 	github.com/yuin/goldmark v1.3.3
 	github.com/yuin/goldmark-highlighting v0.0.0-20200307114337-60d527fdb691
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2

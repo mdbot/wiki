@@ -150,8 +150,8 @@ github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI
 github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6eAcqrDh0=
 github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 h1:nIPpBwaJSVYIxUFsDv3M8ofmx9yWTog9BfvIu0q41lo=
 github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8/go.mod h1:HUYIGzjTL3rfEspMxjDjgmT5uz5wzYJKVo23qUhYTos=
-github.com/yalue/merged_fs v1.0.5 h1:guytDJUNPcSfw8Fsfc6TqoNMRkdmcoJzDmHa/WlasWc=
-github.com/yalue/merged_fs v1.0.5/go.mod h1:WqqchfVYQyclV2tnR7wtRhBddzBvLVR83Cjw9BKQw0M=
+github.com/yalue/merged_fs v1.0.6 h1:5Rn/a4udFTJwRDrzBYLgCViGo6sX4QANobfOtaRF2Xc=
+github.com/yalue/merged_fs v1.0.6/go.mod h1:WqqchfVYQyclV2tnR7wtRhBddzBvLVR83Cjw9BKQw0M=
 github.com/yuin/goldmark v1.1.18/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.22/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
