@@ -18,7 +18,7 @@ require (
 	github.com/magefile/mage v1.11.0
 	github.com/mdigger/goldmark-attributes v0.0.0-20191228154645-1cb795f70464
 	github.com/mholt/archiver v3.1.1+incompatible
-	github.com/microcosm-cc/bluemonday v1.0.5
+	github.com/microcosm-cc/bluemonday v1.0.15
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
 	github.com/sergi/go-diff v1.2.0
@@ -28,7 +28,6 @@ require (
 	github.com/yuin/goldmark v1.3.3
 	github.com/yuin/goldmark-highlighting v0.0.0-20200307114337-60d527fdb691
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/text v0.3.5 // indirect
 )
 
 replace github.com/litao91/goldmark-mathjax v0.0.0-20210217064022-a43cf739a50f => github.com/csmith/goldmark-mathjax v0.0.0-20210331090840-083b73b9825f
