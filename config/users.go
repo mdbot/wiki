@@ -200,6 +200,13 @@ func (a *UserManager) AddUser(user, password, responsible string) error {
 	}
 
 	a.users[strings.ToLower(user)] = u
+
+	if len(a.users) == 1 {
+		a.users[strings.ToLower(user)].Permissions = PermissionAdmin
+		log.Printf("Initial account created (%s), granting admin permission", user)
+		return a.save(responsible, fmt.Sprintf("Adding initial admin user: %s", user))
+	}
+
 	return a.save(responsible, fmt.Sprintf("Adding new user: %s", user))
 }
 
