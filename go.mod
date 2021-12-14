@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/dsnet/compress v0.0.1 // indirect
-	github.com/evanw/esbuild v0.14.2
+	github.com/evanw/esbuild v0.14.4
 	github.com/frankban/quicktest v1.12.0 // indirect
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang/snappy v0.0.3 // indirect
