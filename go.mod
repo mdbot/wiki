@@ -15,7 +15,7 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
 	github.com/litao91/goldmark-mathjax v0.0.0-20210217064022-a43cf739a50f
-	github.com/magefile/mage v1.12.0
+	github.com/magefile/mage v1.12.1
 	github.com/mdigger/goldmark-attributes v0.0.0-20191228154645-1cb795f70464
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/microcosm-cc/bluemonday v1.0.16
