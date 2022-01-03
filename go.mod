@@ -18,7 +18,7 @@ require (
 	github.com/magefile/mage v1.12.1
 	github.com/mdigger/goldmark-attributes v0.0.0-20191228154645-1cb795f70464
 	github.com/mholt/archiver v3.1.1+incompatible
-	github.com/microcosm-cc/bluemonday v1.0.16
+	github.com/microcosm-cc/bluemonday v1.0.17
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
 	github.com/sergi/go-diff v1.2.0
