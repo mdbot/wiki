@@ -8,3 +8,6 @@ updates:
       timezone: "Europe/London"
     labels:
       - "dependencies"
+    ignore:
+      - dependency-name: "github.com/evanw/esbuild"
+        update-types: ["version-update:semver-major"]
