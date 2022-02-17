@@ -10,4 +10,4 @@ updates:
       - "dependencies"
     ignore:
       - dependency-name: "github.com/evanw/esbuild"
-        update-types: ["version-update:semver-major"]
+        update-types: ["version-update:semver-patch"]
