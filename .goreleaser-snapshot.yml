@@ -29,8 +29,7 @@ builds:
       - goos: windows
         goarch: 386
 dockers:
-  - use_buildx: false
-    goos: linux
+  - goos: linux
     goarch: amd64
     goarm: ''
     dockerfile: gorelease.Dockerfile
