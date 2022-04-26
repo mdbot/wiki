@@ -15,7 +15,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.18
 	github.com/sergi/go-diff v1.2.0
 	github.com/yalue/merged_fs v1.2.2
-	github.com/yuin/goldmark v1.4.11
+	github.com/yuin/goldmark v1.4.12
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064
 )
@@ -26,7 +26,6 @@ require (
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
