@@ -12,7 +12,7 @@ require (
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
 	github.com/litao91/goldmark-mathjax v0.0.0-20210217064022-a43cf739a50f
 	github.com/mdigger/goldmark-attributes v0.0.0-20210529130523-52da21a6bf2b
-	github.com/microcosm-cc/bluemonday v1.0.18
+	github.com/microcosm-cc/bluemonday v1.0.19
 	github.com/sergi/go-diff v1.2.0
 	github.com/yalue/merged_fs v1.2.2
 	github.com/yuin/goldmark v1.4.13
