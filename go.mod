@@ -3,7 +3,7 @@ module github.com/mdbot/wiki
 go 1.17
 
 require (
-	github.com/evanw/esbuild v0.14.21
+	github.com/evanw/esbuild v0.15.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/handlers v1.5.1
@@ -41,7 +41,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.1 // indirect
 	golang.org/x/net v0.0.0-20220325170049-de3da57026de // indirect
-	golang.org/x/sys v0.0.0-20220325203850-36772127a21f // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
