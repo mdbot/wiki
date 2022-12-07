@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "gomod"
-    directory: "/" # Location of package manifests
+    directory: "/"
     schedule:
       interval: "daily"
       time: "18:00"
@@ -11,3 +11,15 @@ updates:
     ignore:
       - dependency-name: "github.com/evanw/esbuild"
         update-types: ["version-update:semver-patch"]
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: "daily"
+      time: "18:00"
+      timezone: "Europe/London"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+      time: "18:00"
+      timezone: "Europe/London"
