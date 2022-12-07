@@ -1,6 +1,6 @@
 module github.com/mdbot/wiki
 
-go 1.17
+go 1.19
 
 require (
 	github.com/evanw/esbuild v0.16.1
@@ -47,3 +47,5 @@ require (
 )
 
 replace github.com/litao91/goldmark-mathjax v0.0.0-20210217064022-a43cf739a50f => github.com/csmith/goldmark-mathjax v0.0.0-20210331090840-083b73b9825f
+
+replace github.com/pjbgf/sha1cd v0.2.0 => github.com/pjbgf/sha1cd v0.2.3
