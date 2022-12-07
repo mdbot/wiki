@@ -17,7 +17,7 @@ require (
 	github.com/yalue/merged_fs v1.2.2
 	github.com/yuin/goldmark v1.5.3
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
-	golang.org/x/crypto v0.3.0
+	golang.org/x/crypto v0.4.0
 )
 
 require (
@@ -41,8 +41,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.2 // indirect
-	golang.org/x/net v0.2.0 // indirect
-	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
