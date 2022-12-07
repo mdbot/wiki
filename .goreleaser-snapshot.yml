@@ -7,7 +7,7 @@ before:
   hooks:
     - go generate ./...
     - go get github.com/google/go-licenses
-    - go-licenses save ./... --save_path=./notices --force
+    - go-licenses save ./... --save_path=./notices --force --ignore github.com/pjbgf/sha1cd/cgo --ignore github.com/cloudflare/circl --ignore golang.org/x
 builds:
   - id: wiki
     env:
