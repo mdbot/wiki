@@ -1,4 +1,4 @@
-FROM golang:1.17 AS build
+FROM golang:1.19 AS build
 RUN mkdir /data
 
 FROM gcr.io/distroless/static:nonroot
