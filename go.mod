@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/evanw/esbuild v0.16.1
-	github.com/go-git/go-git/v5 v5.5.0
+	github.com/go-git/go-git/v5 v5.5.1
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -49,5 +49,3 @@ require (
 )
 
 replace github.com/litao91/goldmark-mathjax v0.0.0-20210217064022-a43cf739a50f => github.com/csmith/goldmark-mathjax v0.0.0-20210331090840-083b73b9825f
-
-replace github.com/pjbgf/sha1cd v0.2.0 => github.com/pjbgf/sha1cd v0.2.3

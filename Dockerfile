@@ -7,7 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -gcflags=./dontoptimizeme=-N -ld
 RUN mkdir /data
 
 # Generate licence information - Ignore some valid licenses 
-RUN go get github.com/google/go-licenses && go-licenses save ./... --save_path=/notices --ignore github.com/pjbgf/sha1cd/cgo --ignore github.com/cloudflare/circl --ignore golang.org/x
+RUN go run github.com/google/go-licenses@latest save ./... --save_path=/notices --ignore github.com/pjbgf/sha1cd/cgo --ignore github.com/cloudflare/circl --ignore golang.org/x
 
 FROM gcr.io/distroless/static:nonroot
 
