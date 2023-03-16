@@ -25,7 +25,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v4
         with:
           version: latest
-          args: release --clean -f .goreleaser-snapshot.yml
+          args: release --clean --snapshot -f .goreleaser-snapshot.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Push to GHCR
