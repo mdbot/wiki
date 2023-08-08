@@ -3,7 +3,7 @@ module github.com/mdbot/wiki
 go 1.20
 
 require (
-	github.com/evanw/esbuild v0.18.3
+	github.com/evanw/esbuild v0.19.0
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/handlers v1.5.1
