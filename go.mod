@@ -9,7 +9,7 @@ require (
 	github.com/go-git/go-git/v5 v5.10.0
 	github.com/gorilla/csrf v1.7.2
 	github.com/gorilla/handlers v1.5.2
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.2.2
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
 	github.com/litao91/goldmark-mathjax v0.0.0-20210217064022-a43cf739a50f
