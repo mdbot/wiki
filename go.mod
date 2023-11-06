@@ -7,7 +7,7 @@ toolchain go1.21.3
 require (
 	github.com/evanw/esbuild v0.19.0
 	github.com/go-git/go-git/v5 v5.10.0
-	github.com/gorilla/csrf v1.7.1
+	github.com/gorilla/csrf v1.7.2
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
@@ -38,11 +38,10 @@ require (
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gorilla/css v1.0.0 // indirect
-	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/skeema/knownhosts v1.2.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/mod v0.12.0 // indirect
