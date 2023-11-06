@@ -8,7 +8,7 @@ require (
 	github.com/evanw/esbuild v0.19.0
 	github.com/go-git/go-git/v5 v5.10.0
 	github.com/gorilla/csrf v1.7.2
-	github.com/gorilla/handlers v1.5.1
+	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
