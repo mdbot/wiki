@@ -33,7 +33,7 @@ dockers:
     goarm: ''
     dockerfile: gorelease.Dockerfile
     image_templates:
-      - "ghcr.io/mdbot/wiki:latest"
+      - "ghcr.io/mdbot/wiki:dev"
     build_flag_templates:
       - --label=org.opencontainers.image.source=https://github.com/mdbot/wiki
     extra_files:
