@@ -59,12 +59,23 @@ const (
 	image mediaType = iota
 	video
 	audio
+	pdf
 )
 
 var mimePrefixes = map[string]mediaType{
-	"image/": image,
-	"video/": video,
-	"audio/": audio,
+	"image/":          image,
+	"video/":          video,
+	"audio/":          audio,
+	"application/pdf": pdf,
+}
+
+func CanEmbed(mimeType string) bool {
+	for m, _ := range mimePrefixes {
+		if strings.HasPrefix(mimeType, m) {
+			return true
+		}
+	}
+	return false
 }
 
 type mediaEmbed struct {
@@ -117,6 +128,8 @@ func (m mediaRenderer) render(w util.BufWriter, source []byte, n ast.Node, enter
 		_, _ = w.WriteString(fmt.Sprintf(`<audio controls src="%s" class="embed">`, embed.file))
 	case video:
 		_, _ = w.WriteString(fmt.Sprintf(`<video controls src="%s" class="embed">`, embed.file))
+	case pdf:
+		_, _ = w.WriteString(fmt.Sprintf(`<iframe src="%s" class="embed"></iframe>`, embed.file))
 	}
 
 	return ast.WalkContinue, nil

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/mdbot/wiki/markdown"
 	"io"
 	"log"
 	"mime"
@@ -78,12 +79,6 @@ type FileProvider interface {
 }
 
 func FileHandler(provider FileProvider) http.HandlerFunc {
-	canEmbed := func(mimeType string) bool {
-		return strings.HasPrefix(mimeType, "image/") ||
-			strings.HasPrefix(mimeType, "video/") ||
-			strings.HasPrefix(mimeType, "audio/")
-	}
-
 	return func(writer http.ResponseWriter, request *http.Request) {
 		name := strings.TrimPrefix(request.URL.Path, "/files/view/")
 		reader, err := provider.GetFile(name)
@@ -100,7 +95,7 @@ func FileHandler(provider FileProvider) http.HandlerFunc {
 
 		writer.Header().Add("Content-Type", mimeType)
 		writer.Header().Add("X-Content-Type-Options", "nosniff")
-		if !canEmbed(mimeType) {
+		if !markdown.CanEmbed(mimeType) {
 			writer.Header().Add("Content-Disposition", "attachment")
 		}
 		_, _ = io.Copy(writer, reader)
