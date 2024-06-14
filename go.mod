@@ -17,7 +17,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3
 	github.com/yalue/merged_fs v1.3.0
-	github.com/yuin/goldmark v1.7.1
+	github.com/yuin/goldmark v1.7.2
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	golang.org/x/crypto v0.24.0
 )
