@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.3
 
 require (
-	github.com/evanw/esbuild v0.21.1
+	github.com/evanw/esbuild v0.23.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/gorilla/csrf v1.7.2
 	github.com/gorilla/handlers v1.5.2
