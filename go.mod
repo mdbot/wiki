@@ -17,7 +17,7 @@ require (
 	github.com/yalue/merged_fs v1.3.0
 	github.com/yuin/goldmark v1.7.8
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
-	golang.org/x/crypto v0.30.0
+	golang.org/x/crypto v0.31.0
 )
 
 require (
