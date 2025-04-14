@@ -7,7 +7,7 @@ toolchain go1.24.0
 require (
 	github.com/evanw/esbuild v0.25.0
 	github.com/go-git/go-git/v5 v5.15.0
-	github.com/gorilla/csrf v1.7.2
+	github.com/gorilla/csrf v1.7.3
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.4.0
