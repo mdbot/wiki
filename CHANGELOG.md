@@ -1,15 +1,31 @@
-# v5.0.1, v5.0.2, v5.0.3
+# Changelog
 
-No code changes since v5.0.0, just changes to the release process.
+## 5.0.4 - 2025-05-09
 
-# v5.0.0
+### Bug fixes
 
-## Features
+* Fixed bad request errors being served with 500 error codes
+
+## 5.0.3 - 2023-12-08
+
+_No code changes, just changes to the release process._
+
+## 5.0.2 - 2023-12-08
+
+_No code changes, just changes to the release process._
+
+## 5.0.1 - 2023-12-08
+
+_No code changes, just changes to the release process._
+
+## 5.0.0 - 2023-12-08
+
+### Features
 
 * Add support for making tables sortable by including the `{.sortable}` class
 * Add support for embedding PDF files
 
-## Bug fixes
+### Bug fixes
 
 * All default pages are now created properly, previously only the first
   missing page was created
@@ -17,9 +33,9 @@ No code changes since v5.0.0, just changes to the release process.
   had to restart the wiki after creating the first user to upgrade them to an
   admin
 
-# v4.0.0
+## 4.0.0 - 2021-04-26
 
-## Features
+### Features
 
 * Support for embedding video and audio files
 * Edit links are no longer shown if the user lacks permission
@@ -32,9 +48,9 @@ No code changes since v5.0.0, just changes to the release process.
    [[image]]
    ```
 
-# v3.0.0
+## 3.0.0 - 2021-04-09
 
-## Features
+### Features
 
 * Added basic search and go-to-page functionality
 * Added API endpoint to list files and pages
@@ -47,15 +63,15 @@ No code changes since v5.0.0, just changes to the release process.
 * Files uploaded through drag-and-drop are now automatically placed in the
   same folder as the page they're inserted into
 
-## Bug fixes
+### Bug fixes
 
 * Fix the file list always using windows formatted paths
 * Fix performance issues with the recent changes list
 * Fixed some error pages being sent as plain text
 
-# v2.0.0
+## 2.0.0 - 2021-04-06
 
-## Features
+### Features
 
 * Support for deleting files
 * Site name, favicon and logo are now customisable
@@ -68,13 +84,17 @@ No code changes since v5.0.0, just changes to the release process.
   login, read, write, admin.
 * Added customisable site-wide side bar
 
-## Bug fixes
+### Bug fixes
 
 * Don't allow page renames if the source page doesn't exist
 * Renaming a page now redirects you to the new location, instead of the wrong one
 
-# v1.0.1
+## 1.0.1 - 2021-04-03
 
-## Features
+### Features
 
 * Allow use of safe HTML tags in pages, and add flag to enable dangerous ones
+
+## 1.0.0 - 2021-04-03
+
+_Initial release._
