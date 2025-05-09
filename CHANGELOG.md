@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.0.6 - 2025-05-09
+
+_No code changes, just changes to the release process._
+
 ## 5.0.5 - 2025-05-09
 
 _No code changes, just changes to the release process._

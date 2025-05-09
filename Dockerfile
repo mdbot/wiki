@@ -1,20 +1,16 @@
-FROM golang:1.24 AS build
+FROM golang:1.24.3 AS build
+WORKDIR /go/src/app
+COPY . .
 
-# Build the app
-WORKDIR /app
-COPY . /app
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -gcflags=./dontoptimizeme=-N -ldflags=-s -o /go/bin/app .
-RUN mkdir /data
+RUN set -eux; \
+    CGO_ENABLED=0 GO111MODULE=on go install .; \
+    go run github.com/google/go-licenses@latest save ./... --save_path=/notices; \
+    mkdir -p /mounts/data;
 
-# Generate licence information - Ignore some valid licenses 
-RUN go run github.com/google/go-licenses@latest save ./... --save_path=/notices --ignore github.com/pjbgf/sha1cd/cgo --ignore github.com/cloudflare/circl --ignore golang.org/x
-
-FROM gcr.io/distroless/static:nonroot
-
-COPY --from=build /go/bin/app /wiki
+FROM ghcr.io/greboid/dockerbase/nonroot:1.20250326.0
+COPY --from=build /go/bin/wiki /wiki
 COPY --from=build /notices /notices
-COPY --from=build /etc/mime.types /etc/mime.types
-COPY --from=build --chown=nonroot /data /data
+COPY --from=build --chown=65532:65532 /mounts /
 VOLUME /data
 WORKDIR /
-CMD ["/wiki"]
+ENTRYPOINT ["/wiki"]
