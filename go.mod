@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/evanw/esbuild v0.27.0
-	github.com/go-git/go-git/v5 v5.16.3
+	github.com/go-git/go-git/v5 v5.16.4
 	github.com/gorilla/csrf v1.7.3
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
