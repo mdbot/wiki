@@ -3,9 +3,9 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "daily"
-      time: "18:00"
-      timezone: "Europe/London"
+      interval: "weekly"
+    cooldown:
+      default-days: 28
     labels:
       - "dependencies"
     ignore:
@@ -14,12 +14,12 @@ updates:
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: "daily"
-      time: "18:00"
-      timezone: "Europe/London"
+      interval: "weekly"
+    cooldown:
+      default-days: 28
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
-      time: "18:00"
-      timezone: "Europe/London"
+      interval: weekly
+    cooldown:
+      default-days: 28
