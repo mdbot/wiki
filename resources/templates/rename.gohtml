@@ -1,8 +1,6 @@
 {{- /*gotype: github.com/mdbot/wiki.RenamePageArgs*/ -}}
 {{template "header" .Common}}
 <form action="/rename/{{.Common.PageTitle}}" method="post" class="editor">
-    {{.Common.CsrfField}}
-
     <div class="form-group">
         <label for="newName">New Name:</label>
         <input id="newName" type="text" name="newName">

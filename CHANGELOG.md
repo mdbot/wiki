@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.1.0 - 2025-12-01
+
+* Migrate away from `gorilla/csrf` for CSRF protection
+* Minimum version of Go for building is now 1.25
+
 ## 5.0.6 - 2025-05-09
 
 _No code changes, just changes to the release process._

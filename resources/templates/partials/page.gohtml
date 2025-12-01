@@ -97,14 +97,11 @@
                 {{if .User}}
                     <form action="/wiki/logout" method="post">
                         Logged in as {{.User.Name}}
-
-                        {{.CsrfField}}
                         <input type="hidden" name="redirect" value="{{.RequestedUrl}}">
                         <input type="submit" value="Logout">
                     </form>
                 {{else}}
                     <form action="/wiki/login" method="post">
-                        {{.CsrfField}}
                         <input type="hidden" name="redirect" value="{{.RequestedUrl}}">
                         <input type="text" name="username" placeholder="Username">
                         <input type="password" name="password" placeholder="Password">

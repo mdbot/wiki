@@ -75,7 +75,7 @@ variables. The following configuration options are supported:
 
 ### Encryption key
 
-In order to persist runtime settings (user accounts, session keys, CSRF tokens),
+In order to persist runtime settings (user accounts, session keys),
 you must provide an encryption key either as a CLI argument (`-key`) or
 an environment variable (`KEY`). The key should be 32 bytes and
 hex-encoded; you can generate such a key using `openssl rand -hex 32`.

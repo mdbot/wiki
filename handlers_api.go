@@ -15,6 +15,12 @@ func ApiListHandler(l Lister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var res []string
 
+		if err := r.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		if r.FormValue("type") == "file" {
 			files, err := l.ListFiles()
 			if err != nil {

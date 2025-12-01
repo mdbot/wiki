@@ -1,7 +1,6 @@
 {{- /*gotype: github.com/mdbot/wiki.RevertPageArgs*/ -}}
 {{template "header" .Common}}
 <form action="/revert/{{.Common.PageTitle}}" method="post" class="editor">
-    {{.Common.CsrfField}}
     <input type="hidden" id="confirm" name="confirm" value="confirm">
     <input type="hidden" name="rev" value="{{.Revision}}">
     <div class="form-group">

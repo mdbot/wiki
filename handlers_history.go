@@ -121,6 +121,12 @@ type DiffProvider interface {
 
 func DiffPageHandler(templates *Templates, backend DiffProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		
 		pageTitle := strings.TrimPrefix(r.URL.Path, "/diff/")
 		startRevision := r.FormValue("startrev")
 		endRevision := r.FormValue("endrev")

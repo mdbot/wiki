@@ -5,7 +5,6 @@
     <h3>{{.Name}}</h3>
 
     <form action="/wiki/users" method="post" class="form-group">
-        {{$.Common.CsrfField}}
         <input type="hidden" name="user" value="{{.Name}}">
         <input type="hidden" name="action" value="password">
         <input type="password" name="password" placeholder="New password">
@@ -13,7 +12,6 @@
     </form>
 
     <form action="/wiki/users" method="post" class="form-group">
-        {{$.Common.CsrfField}}
         <input type="hidden" name="user" value="{{.Name}}">
         <input type="hidden" name="action" value="permissions">
         <select name="permissions">
@@ -27,7 +25,6 @@
     </form>
 
     <form action="/wiki/users" method="post" class="form-group">
-        {{$.Common.CsrfField}}
         <input type="hidden" name="user" value="{{.Name}}">
         <input type="hidden" name="action" value="delete">
         <input type="submit" value="Delete user">
@@ -36,7 +33,6 @@
 
 <h2>Add new user</h2>
 <form action="/wiki/users" method="post">
-    {{$.Common.CsrfField}}
     <input type="hidden" name="action" value="new">
     <input type="text" name="user" placeholder="username">
     <input type="password" name="password" placeholder="password">

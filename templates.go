@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/mdbot/wiki/config"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -44,7 +43,6 @@ type CommonArgs struct {
 	Sidebar        template.HTML
 	User           *config.User
 	LastModified   *LastModifiedDetails
-	CsrfField      template.HTML
 }
 
 type LastModifiedDetails struct {
@@ -419,7 +417,6 @@ func (t *Templates) populateArgs(w http.ResponseWriter, r *http.Request, args Co
 		clearSessionKey(w, r, sessionNoticeKey)
 	}
 
-	args.CsrfField = csrf.TemplateField(r)
 	args.RequestedUrl = r.URL.String()
 	args.Sidebar = template.HTML(t.sidebarProvider())
 	return args

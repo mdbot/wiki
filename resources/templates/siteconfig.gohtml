@@ -2,8 +2,6 @@
 {{template "header" .Common}}
 <h2>Site configuration</h2>
 <form action="/wiki/site" enctype="multipart/form-data" method="post">
-    {{.Common.CsrfField}}
-
     <div class="form-group">
         <label for="name">Site name:</label>
         <input type="text" id="name" name="name" value="{{.Common.Site.SiteName}}">

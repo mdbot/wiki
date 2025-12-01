@@ -3,7 +3,6 @@
 <h2>My account</h2>
 <h3>Change password</h3>
 <form action="/wiki/account" method="post">
-    {{$.Common.CsrfField}}
     <input type="hidden" name="action" value="password">
     <div class="form-group">
         <input type="password" name="password" placeholder="Current password">

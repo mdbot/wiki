@@ -1,8 +1,6 @@
 {{- /*gotype: github.com/mdbot/wiki.UploadFileArgs*/ -}}
 {{template "header" .Common}}
 <form action="/wiki/upload" enctype="multipart/form-data" method="post">
-    {{.Common.CsrfField}}
-
     <div class="form-group">
         <label for="file">File:</label>
         <input type="file" id="file" name="file">

@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/yalue/merged_fs"
 
 	"github.com/gorilla/mux"
@@ -153,7 +152,7 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.Use(csrf.Protect(secrets.CsrfKey, csrf.SameSite(csrf.SameSiteStrictMode), csrf.Path("/")))
+	router.Use(http.NewCrossOriginProtection().Handler)
 	router.Use(SessionHandler(userManager, sessionStore))
 	router.Use(LoggingHandler(os.Stdout))
 	router.Use(PageErrorHandler(templates))

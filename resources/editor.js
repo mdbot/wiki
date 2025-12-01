@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function () {
       data.append('file', file)
       data.append('name', folder + file.name)
       data.append('message', 'Adding file: ' + folder + file.name)
-      data.append('gorilla.csrf.Token', document.querySelector('input[name=\'gorilla.csrf.Token\']').value)
 
       return fetch('/wiki/upload', {
         method: 'POST',

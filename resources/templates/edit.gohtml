@@ -1,8 +1,6 @@
 {{- /*gotype: github.com/mdbot/wiki.EditPageArgs*/ -}}
 {{template "header" .Common}}
 <form action="/edit/{{.Common.PageTitle}}" method="post" class="editor">
-    {{.Common.CsrfField}}
-
     <div class="form-group">
         <label for="content">Page content:</label>
         <textarea id="content" name="content" autofocus>{{.PageContent}}</textarea>

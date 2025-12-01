@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/mdbot/wiki/markdown"
 	"io"
 	"log"
 	"mime"
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"github.com/mdbot/wiki/markdown"
 )
 
 type FileLister interface {
@@ -115,6 +116,12 @@ func DeleteFileConfirmHandler(t *Templates) http.HandlerFunc {
 
 func DeleteFileHandler(provider DeleteFileProvider) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		name := strings.TrimPrefix(request.URL.Path, "/files/delete/")
 		confirm := request.FormValue("confirm")
 		if confirm == "" {

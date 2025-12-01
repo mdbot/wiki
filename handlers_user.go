@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -15,6 +16,12 @@ type Authenticator interface {
 
 func LoginHandler(auth Authenticator) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		username := request.FormValue("username")
 		password := request.FormValue("password")
 		redirect := request.FormValue("redirect")
@@ -38,6 +45,12 @@ func LoginHandler(auth Authenticator) http.HandlerFunc {
 
 func LogoutHandler() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		redirect := request.FormValue("redirect")
 
 		// Only allow relative redirects
@@ -96,6 +109,12 @@ func ModifyUserHandler(um UserModifier) http.HandlerFunc {
 			responsible = user.Name
 		}
 
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		user := request.FormValue("user")
 		action := request.FormValue("action")
 		if action == "password" {
@@ -152,6 +171,12 @@ func ModifyAccountHandler(pu PasswordUpdater) http.HandlerFunc {
 		user := getUserForRequest(request)
 		if user == nil {
 			writer.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 

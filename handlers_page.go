@@ -24,6 +24,12 @@ func ViewPageHandler(t *Templates, renderer ContentRenderer, pp PageProvider) ht
 	return func(w http.ResponseWriter, r *http.Request) {
 		pageTitle := strings.TrimPrefix(r.URL.Path, "/view/")
 
+		if err := r.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		revision := r.FormValue("rev")
 		var page *Page
 		var err error
@@ -74,6 +80,12 @@ func SubmitPageHandler(pe PageEditor) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		pageTitle := strings.TrimPrefix(request.URL.Path, "/edit/")
 
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		content := request.FormValue("content")
 		message := request.FormValue("message")
 		username := "Anonymoose"
@@ -105,6 +117,13 @@ func DeletePageConfirmHandler(t *Templates) http.HandlerFunc {
 func DeletePageHandler(provider DeletePageProvider) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		name := strings.TrimPrefix(request.URL.Path, "/delete/")
+
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		confirm := request.FormValue("confirm")
 		if confirm == "" {
 			http.Redirect(writer, request, "/delete/"+name, http.StatusSeeOther)
@@ -142,6 +161,12 @@ func RenamePageConfirmHandler(backend PageExists, t *Templates) http.HandlerFunc
 
 func RenamePageHandler(provider RenamePageProvider) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		name := strings.TrimPrefix(request.URL.Path, "/rename/")
 		newName := request.FormValue("newName")
 		if newName == "" {
@@ -168,6 +193,12 @@ type RevertPageProvider interface {
 
 func RevertPageConfirmHandler(t *Templates) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		name := strings.TrimPrefix(r.URL.Path, "/revert/")
 		revision := r.FormValue("rev")
 		if revision == "" {
@@ -180,6 +211,12 @@ func RevertPageConfirmHandler(t *Templates) http.HandlerFunc {
 
 func RevertPageHandler(provider RevertPageProvider) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
+		if err := request.ParseForm(); err != nil {
+			log.Printf("Error parsing form: %v", err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		name := strings.TrimPrefix(request.URL.Path, "/revert/")
 		confirm := request.FormValue("confirm")
 		if confirm == "" {
