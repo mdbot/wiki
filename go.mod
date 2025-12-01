@@ -1,6 +1,6 @@
 module github.com/mdbot/wiki
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/evanw/esbuild v0.27.0
