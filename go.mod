@@ -1,6 +1,6 @@
 module github.com/mdbot/wiki
 
-go 1.25
+go 1.25.0
 
 require (
 	github.com/evanw/esbuild v0.27.0
@@ -16,7 +16,7 @@ require (
 	github.com/yalue/merged_fs v1.3.0
 	github.com/yuin/goldmark v1.7.16
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
-	golang.org/x/crypto v0.48.0
+	golang.org/x/crypto v0.49.0
 )
 
 require (
@@ -40,8 +40,8 @@ require (
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
