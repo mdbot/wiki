@@ -3,12 +3,12 @@ module github.com/mdbot/wiki
 go 1.26.0
 
 require (
+	github.com/csmith/envflag/v2 v2.0.0
 	github.com/evanw/esbuild v0.28.0
 	github.com/go-git/go-git/v5 v5.19.3
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.4.0
-	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
 	github.com/litao91/goldmark-mathjax v0.0.0-20210217064022-a43cf739a50f
 	github.com/mdigger/goldmark-attributes v0.0.0-20210529130523-52da21a6bf2b
 	github.com/microcosm-cc/bluemonday v1.0.27

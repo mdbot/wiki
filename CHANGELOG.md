@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Read environment variables with `csmith/envflag` instead of `kouhin/envflag`
+
 ## 5.1.0 - 2025-12-01
 
 * Migrate away from `gorilla/csrf` for CSRF protection

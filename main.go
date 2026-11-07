@@ -16,9 +16,9 @@ import (
 
 	"github.com/yalue/merged_fs"
 
+	"github.com/csmith/envflag/v2"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/kouhin/envflag"
 	"github.com/mdbot/wiki/config"
 	"github.com/mdbot/wiki/markdown"
 )
@@ -44,10 +44,7 @@ var requireAuthForReads = flag.Bool("authenticated-reads", false, "Whether to re
 var dangerousHtml = flag.Bool("allow-dangerous-html", false, "Whether to allow dangerous HTML such as script tags")
 
 func main() {
-	err := envflag.Parse()
-	if err != nil {
-		log.Fatalf("Unable to parse flags: %s", err.Error())
-	}
+	envflag.Parse()
 
 	if *dangerousHtml && !*requireAuthForWrites {
 		log.Fatal("Refusing to start with dangerous HTML and anonymous writes enabled")

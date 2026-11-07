@@ -68,7 +68,7 @@ variables. The following configuration options are supported:
 -password string
     [PASSWORD] password for initial account
 -username string
-    [USERNAME] username for initial account (default "chris")
+    [USERNAME] username for initial account
 -workdir string
     [WORKDIR] Working directory (default "./data")
 ```
