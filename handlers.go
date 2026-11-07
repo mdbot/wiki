@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/gorilla/handlers"
@@ -42,4 +43,30 @@ func StripSlashes(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(writer, request)
 	})
+}
+
+// CleanPath redirects requests whose decoded path contains "." or ".." segments or repeated slashes to the
+// canonical path, so later handlers (in particular StripSlashes) never see them.
+func CleanPath(next http.Handler) http.Handler {
+	return http.HandlerFunc(
+		func(writer http.ResponseWriter, request *http.Request) {
+			p := request.URL.Path
+			if p == "" || p[0] != '/' {
+				p = "/" + p
+			}
+			clean := path.Clean(p)
+			if strings.HasSuffix(p, "/") && clean != "/" {
+				clean += "/"
+			}
+
+			if clean != request.URL.Path {
+				u := *request.URL
+				u.Path = clean
+				writer.Header().Set("Location", u.String())
+				writer.WriteHeader(http.StatusMovedPermanently)
+				return
+			}
+			next.ServeHTTP(writer, request)
+		},
+	)
 }

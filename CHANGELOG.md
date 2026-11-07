@@ -3,6 +3,8 @@
 ## Unreleased
 
 * Read environment variables with `csmith/envflag` instead of `kouhin/envflag`
+* Route requests with the standard library instead of `gorilla/mux`
+* `HEAD` requests are now accepted wherever `GET` is
 
 ## 5.1.0 - 2025-12-01
 

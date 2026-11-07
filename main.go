@@ -5,6 +5,7 @@ import (
 	"embed"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"github.com/yalue/merged_fs"
 
 	"github.com/csmith/envflag/v2"
-	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/mdbot/wiki/config"
 	"github.com/mdbot/wiki/markdown"
@@ -88,82 +88,42 @@ func main() {
 
 	sessionStore := sessions.NewCookieStore(secrets.SessionKey)
 	renderer := markdown.NewRenderer(gitBackend, *dangerousHtml, *codeStyle)
-	templates := &Templates{
-		fs:         templateFiles,
-		siteConfig: siteConfig,
-		checker:    pm,
-		version:    version,
-		sidebarProvider: func() string {
-			p, err := gitBackend.GetPage("_sidebar")
-			if err != nil {
-				log.Printf("Unable to load sidebar content: %v", err)
-				return "Error loading sidebar"
-			}
+	handler := newHandler(
+		&Templates{
+			fs:         templateFiles,
+			siteConfig: siteConfig,
+			checker:    pm,
+			version:    version,
+			sidebarProvider: func() string {
+				p, err := gitBackend.GetPage("_sidebar")
+				if err != nil {
+					log.Printf("Unable to load sidebar content: %v", err)
+					return "Error loading sidebar"
+				}
 
-			s, err := renderer.Render(p.Content)
-			if err != nil {
-				log.Printf("Unable to render sidebar content: %v", err)
-				return "Error rendering sidebar"
-			}
+				s, err := renderer.Render(p.Content)
+				if err != nil {
+					log.Printf("Unable to render sidebar content: %v", err)
+					return "Error rendering sidebar"
+				}
 
-			return s
+				return s
+			},
 		},
-	}
-
-	wikiRouter := mux.NewRouter()
-	wikiRouter.Use(LowerCaseCanonical)
-
-	wikiRouter.PathPrefix("/edit/").Handler(pm.RequireWrite(EditPageHandler(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/edit/").Handler(pm.RequireWrite(SubmitPageHandler(gitBackend))).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/view/").Handler(pm.RequireRead(ViewPageHandler(templates, renderer, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/history/").Handler(pm.RequireRead(PageHistoryHandler(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/files/view/").Handler(pm.RequireRead(FileHandler(gitBackend))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/files/delete/").Handler(pm.RequireWrite(DeleteFileConfirmHandler(templates))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/files/delete/").Handler(pm.RequireWrite(DeleteFileHandler(gitBackend))).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/delete/").Handler(pm.RequireWrite(DeletePageConfirmHandler(templates))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/delete/").Handler(pm.RequireWrite(DeletePageHandler(gitBackend))).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/rename/").Handler(pm.RequireWrite(RenamePageConfirmHandler(gitBackend, templates))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/rename/").Handler(pm.RequireWrite(RenamePageHandler(gitBackend))).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/revert/").Handler(pm.RequireWrite(RevertPageConfirmHandler(templates))).Methods(http.MethodGet)
-	wikiRouter.PathPrefix("/revert/").Handler(pm.RequireWrite(RevertPageHandler(gitBackend))).Methods(http.MethodPost)
-	wikiRouter.PathPrefix("/diff/").Handler(pm.RequireRead(DiffPageHandler(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.Path("/api/list").Handler(pm.RequireRead(ApiListHandler(gitBackend))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/account").Handler(pm.RequireAccount(AccountHandler(templates))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/account").Handler(pm.RequireAccount(ModifyAccountHandler(userManager))).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/index").Handler(pm.RequireRead(ListPagesHandler(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/files").Handler(pm.RequireRead(ListFilesHandler(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/changes").Handler(pm.RequireRead(RecentChangesHandler(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/changes.xml").Handler(pm.RequireRead(RecentChangesFeed(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/logo/favicon").Handler(ServeFavicon(siteConfig)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/logo/main").Handler(ServeMainLogo(siteConfig)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/logo/dark").Handler(ServeDarkLogo(siteConfig)).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/login").Handler(LoginHandler(userManager)).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/logout").Handler(LogoutHandler()).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/upload").Handler(pm.RequireWrite(UploadFormHandler(templates))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/upload").Handler(pm.RequireWrite(UploadHandler(gitBackend))).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/search").Handler(pm.RequireRead(SearchHandler(templates, gitBackend))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/site").Handler(pm.RequireAdmin(ViewSiteConfigHandler(templates))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/site").Handler(pm.RequireAdmin(UpdateSiteConfigHandler(siteConfig))).Methods(http.MethodPost)
-	wikiRouter.Path("/wiki/users").Handler(pm.RequireAdmin(ManageUsersHandler(templates, userManager))).Methods(http.MethodGet)
-	wikiRouter.Path("/wiki/users").Handler(pm.RequireAdmin(ModifyUserHandler(userManager))).Methods(http.MethodPost)
-
-	router := mux.NewRouter()
-
-	router.Use(http.NewCrossOriginProtection().Handler)
-	router.Use(SessionHandler(userManager, sessionStore))
-	router.Use(LoggingHandler(os.Stdout))
-	router.Use(PageErrorHandler(templates))
-	router.Use(StripSlashes)
-
-	router.Path("/").Handler(RedirectMainPageHandler())
-	router.Path("/view/").Handler(RedirectMainPageHandler())
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static", http.FileServer(http.FS(staticFiles))))
-	router.NewRoute().Handler(wikiRouter)
+		pm,
+		gitBackend,
+		renderer,
+		userManager,
+		siteConfig,
+		sessionStore,
+		staticFiles,
+		os.Stdout,
+	)
 
 	log.Print("Starting server.")
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%d", *httpPort),
-		Handler: router,
+		Handler: handler,
 	}
 	go func() {
 		_ = server.ListenAndServe()
@@ -177,6 +137,94 @@ func main() {
 		log.Fatalf("Unable to shutdown: %s", err.Error())
 	}
 	log.Print("Finishing server.")
+}
+
+func newHandler(
+	templates *Templates,
+	pm *PermissionChecker,
+	gitBackend *GitBackend,
+	renderer ContentRenderer,
+	userManager *config.UserManager,
+	siteConfig *config.Site,
+	sessionStore sessions.Store,
+	static fs.FS,
+	logOutput io.Writer,
+) http.Handler {
+	wiki := newRouter(http.NotFoundHandler())
+	wiki.handle("GET /edit/", LowerCaseCanonical(pm.RequireWrite(EditPageHandler(templates, gitBackend))))
+	wiki.handle("POST /edit/", LowerCaseCanonical(pm.RequireWrite(SubmitPageHandler(gitBackend))))
+	wiki.handle("GET /view/", LowerCaseCanonical(pm.RequireRead(ViewPageHandler(templates, renderer, gitBackend))))
+	wiki.handle("GET /history/", LowerCaseCanonical(pm.RequireRead(PageHistoryHandler(templates, gitBackend))))
+	wiki.handle("GET /files/view/", LowerCaseCanonical(pm.RequireRead(FileHandler(gitBackend))))
+	wiki.handle("GET /files/delete/", LowerCaseCanonical(pm.RequireWrite(DeleteFileConfirmHandler(templates))))
+	wiki.handle("POST /files/delete/", LowerCaseCanonical(pm.RequireWrite(DeleteFileHandler(gitBackend))))
+	wiki.handle("GET /delete/", LowerCaseCanonical(pm.RequireWrite(DeletePageConfirmHandler(templates))))
+	wiki.handle("POST /delete/", LowerCaseCanonical(pm.RequireWrite(DeletePageHandler(gitBackend))))
+	wiki.handle("GET /rename/", LowerCaseCanonical(pm.RequireWrite(RenamePageConfirmHandler(gitBackend, templates))))
+	wiki.handle("POST /rename/", LowerCaseCanonical(pm.RequireWrite(RenamePageHandler(gitBackend))))
+	wiki.handle("GET /revert/", LowerCaseCanonical(pm.RequireWrite(RevertPageConfirmHandler(templates))))
+	wiki.handle("POST /revert/", LowerCaseCanonical(pm.RequireWrite(RevertPageHandler(gitBackend))))
+	wiki.handle("GET /diff/", LowerCaseCanonical(pm.RequireRead(DiffPageHandler(templates, gitBackend))))
+	wiki.handle("GET /api/list", LowerCaseCanonical(pm.RequireRead(ApiListHandler(gitBackend))))
+	wiki.handle("GET /wiki/account", LowerCaseCanonical(pm.RequireAccount(AccountHandler(templates))))
+	wiki.handle("POST /wiki/account", LowerCaseCanonical(pm.RequireAccount(ModifyAccountHandler(userManager))))
+	wiki.handle("GET /wiki/index", LowerCaseCanonical(pm.RequireRead(ListPagesHandler(templates, gitBackend))))
+	wiki.handle("GET /wiki/files", LowerCaseCanonical(pm.RequireRead(ListFilesHandler(templates, gitBackend))))
+	wiki.handle("GET /wiki/changes", LowerCaseCanonical(pm.RequireRead(RecentChangesHandler(templates, gitBackend))))
+	wiki.handle("GET /wiki/changes.xml", LowerCaseCanonical(pm.RequireRead(RecentChangesFeed(templates, gitBackend))))
+	wiki.handle("GET /wiki/logo/favicon", LowerCaseCanonical(ServeFavicon(siteConfig)))
+	wiki.handle("GET /wiki/logo/main", LowerCaseCanonical(ServeMainLogo(siteConfig)))
+	wiki.handle("GET /wiki/logo/dark", LowerCaseCanonical(ServeDarkLogo(siteConfig)))
+	wiki.handle("POST /wiki/login", LowerCaseCanonical(LoginHandler(userManager)))
+	wiki.handle("POST /wiki/logout", LowerCaseCanonical(LogoutHandler()))
+	wiki.handle("GET /wiki/upload", LowerCaseCanonical(pm.RequireWrite(UploadFormHandler(templates))))
+	wiki.handle("POST /wiki/upload", LowerCaseCanonical(pm.RequireWrite(UploadHandler(gitBackend))))
+	wiki.handle("GET /wiki/search", LowerCaseCanonical(pm.RequireRead(SearchHandler(templates, gitBackend))))
+	wiki.handle("GET /wiki/site", LowerCaseCanonical(pm.RequireAdmin(ViewSiteConfigHandler(templates))))
+	wiki.handle("POST /wiki/site", LowerCaseCanonical(pm.RequireAdmin(UpdateSiteConfigHandler(siteConfig))))
+	wiki.handle("GET /wiki/users", LowerCaseCanonical(pm.RequireAdmin(ManageUsersHandler(templates, userManager))))
+	wiki.handle("POST /wiki/users", LowerCaseCanonical(pm.RequireAdmin(ModifyUserHandler(userManager))))
+
+	router := newRouter(wiki.mux)
+	router.handle("/{$}", RedirectMainPageHandler())
+	router.handle("/view/{$}", RedirectMainPageHandler())
+	router.handle("/static/", http.StripPrefix("/static", http.FileServer(http.FS(static))))
+	router.handle("/", wiki.mux)
+
+	var handler http.Handler = router.mux
+	handler = StripSlashes(handler)
+	handler = PageErrorHandler(templates)(handler)
+	handler = LoggingHandler(logOutput)(handler)
+	handler = SessionHandler(userManager, sessionStore)(handler)
+	handler = http.NewCrossOriginProtection().Handler(handler)
+	return CleanPath(handler)
+}
+
+// router wraps a ServeMux to stop it redirecting "/foo" to "/foo/" when "/foo/" is registered, as StripSlashes
+// would immediately redirect back. Such paths are instead passed to the fallback handler.
+type router struct {
+	mux      *http.ServeMux
+	fallback http.Handler
+	parents  map[string]bool
+}
+
+func newRouter(fallback http.Handler) *router {
+	return &router{
+		mux:      http.NewServeMux(),
+		fallback: fallback,
+		parents:  map[string]bool{},
+	}
+}
+
+func (r *router) handle(pattern string, handler http.Handler) {
+	r.mux.Handle(pattern, handler)
+
+	p := pattern[strings.Index(pattern, "/"):]
+	p = strings.TrimSuffix(p, "{$}")
+	if parent, ok := strings.CutSuffix(p, "/"); ok && parent != "" && !r.parents[parent] {
+		r.parents[parent] = true
+		r.mux.Handle(parent, r.fallback)
+	}
 }
 
 func initFileSystem() {
